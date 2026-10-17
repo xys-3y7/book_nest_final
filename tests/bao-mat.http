@@ -1,0 +1,185 @@
+### =============================================================================
+### tests/bao-mat.http — Bộ kiểm thử bảo mật phủ định (14 ca kiểm thử)
+### Đồ án: BookNest - Nhà sách sinh viên UED (Nhóm 12 - Lớp 24CNTT3)
+### =============================================================================
+
+@baseUrl = http://localhost:8000
+@adminEmail = admin@ued.vn
+@customerEmail = lan@ued.vn
+@password = matkhau123
+
+# Điền cookie phiên và mã CSRF lấy từ DevTools khi chạy thử nghiệm
+@phpsessid = 
+@csrfToken = 
+
+### -----------------------------------------------------------------------------
+### CA 1: Kiểm tra Header bảo mật và Cookie phiên
+### -----------------------------------------------------------------------------
+# @name ca1_headers
+GET {{baseUrl}}/index.php HTTP/1.1
+
+### -----------------------------------------------------------------------------
+### CA 2: Gửi POST thiếu mã CSRF (Form đăng nhập)
+### Mong đợi: HTTP 403 Forbidden, trang thông báo lỗi, log có sự kiện csrf_sai
+### -----------------------------------------------------------------------------
+# @name ca2_csrf_thieu
+POST {{baseUrl}}/dang-nhap.php HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+email={{adminEmail}}&password={{password}}
+
+### -----------------------------------------------------------------------------
+### CA 2b: Gửi POST với mã CSRF sai / mảng csrf[]=...
+### Mong đợi: HTTP 403 Forbidden
+### -----------------------------------------------------------------------------
+# @name ca2b_csrf_sai
+POST {{baseUrl}}/dang-nhap.php HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+csrf=ma_csrf_gia_mao_123456&email={{adminEmail}}&password={{password}}
+
+### -----------------------------------------------------------------------------
+### CA 3a: API giỏ hàng — POST thiếu header X-CSRF-Token
+### Mong đợi: HTTP 403 Forbidden với JSON {"loi": "Trang đã hết hạn..."}
+### -----------------------------------------------------------------------------
+# @name ca3a_api_khong_header
+POST {{baseUrl}}/api/gio-hang.php HTTP/1.1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "sl": 1
+}
+
+### -----------------------------------------------------------------------------
+### CA 3b: API giỏ hàng — POST có header X-CSRF-Token hợp lệ
+### Mong đợi: HTTP 200 OK với JSON thông tin giỏ hàng
+### -----------------------------------------------------------------------------
+# @name ca3b_api_co_header
+POST {{baseUrl}}/api/gio-hang.php HTTP/1.1
+Content-Type: application/json
+Cookie: PHPSESSID={{phpsessid}}
+X-CSRF-Token: {{csrfToken}}
+
+{
+  "id": 1,
+  "sl": 1
+}
+
+### -----------------------------------------------------------------------------
+### CA 4a: Thao tác thay đổi dữ liệu bằng GET (xoa-san-pham.php)
+### Mong đợi: HTTP 405 Method Not Allowed kèm header Allow: POST
+### -----------------------------------------------------------------------------
+# @name ca4a_get_xoa
+GET {{baseUrl}}/xoa-san-pham.php?id=1 HTTP/1.1
+
+### -----------------------------------------------------------------------------
+### CA 4b: Đăng xuất bằng GET
+### Mong đợi: HTTP 405 Method Not Allowed kèm header Allow: POST
+### -----------------------------------------------------------------------------
+# @name ca4b_get_dang_xuat
+GET {{baseUrl}}/dang-xuat.php HTTP/1.1
+
+### -----------------------------------------------------------------------------
+### CA 4c: Khách hàng có mã CSRF đúng nhưng cố tình POST xóa sản phẩm
+### Mong đợi: HTTP 403 Forbidden, log có sự kiện cam_truy_cap
+### -----------------------------------------------------------------------------
+# @name ca4c_khach_xoa_sp
+POST {{baseUrl}}/xoa-san-pham.php HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Cookie: PHPSESSID={{phpsessid}}
+
+csrf={{csrfToken}}&id=1
+
+### -----------------------------------------------------------------------------
+### CA 5: Chống tấn công cố định phiên (Session Fixation)
+### Gửi cookie phiên tự đặt; máy chủ phải hủy bỏ và cấp cookie mới
+### -----------------------------------------------------------------------------
+# @name ca5_session_fixation
+GET {{baseUrl}}/index.php HTTP/1.1
+Cookie: PHPSESSID=hacker_custom_session_id_99999
+
+### -----------------------------------------------------------------------------
+### CA 6: Kiểm tra hết hạn phiên sau 30 phút không hoạt động
+### -----------------------------------------------------------------------------
+# @name ca6_session_timeout
+GET {{baseUrl}}/quan-tri.php HTTP/1.1
+Cookie: PHPSESSID={{phpsessid}}
+
+### -----------------------------------------------------------------------------
+### CA 7: Thử nghiệm tiêm mã XSS vào ô tìm kiếm và biểu mẫu liên hệ
+### Mong đợi: Ký tự đặc biệt thoát thành &lt;b&gt;, CSP chặn script nội tuyến
+### -----------------------------------------------------------------------------
+# @name ca7_xss_search
+GET {{baseUrl}}/danh-sach.php?q=%3Cb%3Eao%3C%2Fb%3E HTTP/1.1
+
+### -----------------------------------------------------------------------------
+### CA 8: Thử nghiệm truyền tham số dạng mảng (?q[]=ao, ?id[]=1, ?sx[]=x)
+### Mong đợi: Không có lỗi TypeError 500, hệ thống xử lý êm đẹp
+### -----------------------------------------------------------------------------
+# @name ca8_array_param
+GET {{baseUrl}}/danh-sach.php?q[]=ao&sx[]=x HTTP/1.1
+
+### -----------------------------------------------------------------------------
+### CA 9: Kiểm tra chế độ gỡ lỗi APP_DEBUG=false khi lỗi kết nối CSDL
+### Mong đợi: Trả trang lỗi 500 thân thiện, không lộ cấu trúc thư mục hay mật khẩu
+### -----------------------------------------------------------------------------
+# @name ca9_debug_error
+GET {{baseUrl}}/index.php HTTP/1.1
+
+### -----------------------------------------------------------------------------
+### CA 10: Kiểm tra bảo vệ Apache .htaccess (chạy trong htdocs của XAMPP)
+### -----------------------------------------------------------------------------
+# @name ca10_env_blocked
+GET http://localhost/ltweb-doan-nhom12/.env HTTP/1.1
+
+###
+# @name ca10_git_blocked
+GET http://localhost/ltweb-doan-nhom12/.git/config HTTP/1.1
+
+###
+# @name ca10_inc_blocked
+GET http://localhost/ltweb-doan-nhom12/inc/db.php HTTP/1.1
+
+###
+# @name ca10_sql_blocked
+GET http://localhost/ltweb-doan-nhom12/database/schema.sql HTTP/1.1
+
+### -----------------------------------------------------------------------------
+### CA 11: Kiểm tra tài khoản quyền tối thiểu (DROP TABLE báo lỗi 1142)
+### -----------------------------------------------------------------------------
+# @name ca11_least_privilege
+GET {{baseUrl}}/index.php HTTP/1.1
+
+### -----------------------------------------------------------------------------
+### CA 12: Chống đoán vét cạn mật khẩu (Brute-force lockout sau 5 lần sai)
+### Mong đợi: Lần 6 nhận mã HTTP 429 Too Many Requests
+### -----------------------------------------------------------------------------
+# @name ca12_bruteforce_attempt
+POST {{baseUrl}}/dang-nhap.php HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Cookie: PHPSESSID={{phpsessid}}
+
+csrf={{csrfToken}}&email=victim@ued.vn&password=wrong_pass_123
+
+### -----------------------------------------------------------------------------
+### CA 13 (Riêng): Thao túng số lượng đơn hàng âm hoặc bằng 0 trong dat-hang.php
+### Mong đợi: Hệ thống phát hiện dữ liệu không hợp lệ, giữ nguyên đơn giá CSDL
+### -----------------------------------------------------------------------------
+# @name ca13_tamper_order
+POST {{baseUrl}}/dat-hang.php HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Cookie: PHPSESSID={{phpsessid}}
+
+csrf={{csrfToken}}&dia_chi=Ktx+Truong+Su+Pham&so_dien_thoai=0905123456&ghi_chu=Giao+buoi+chieu
+
+### -----------------------------------------------------------------------------
+### CA 14 (Riêng): Phân quyền chéo trang cá nhân — Xóa lưu bút của thành viên khác
+### Mong đợi: HTTP 403 Forbidden, câu lệnh SQL AND mssv=? bảo vệ dữ liệu
+### -----------------------------------------------------------------------------
+# @name ca14_cross_member_delete
+POST {{baseUrl}}/thanhvien/3120224189_yoi/gioithieu.php HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Cookie: PHPSESSID={{phpsessid}}
+
+csrf={{csrfToken}}&xoa=1
