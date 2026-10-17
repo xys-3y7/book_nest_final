@@ -3,95 +3,113 @@
 **Học phần:** Thiết kế và Lập trình Web (Web Design and Programming)  
 **Nhóm thực hiện:** Nhóm 12 &ndash; Lớp học phần: 24CNTT3  
 **Khoa:** Toán &ndash; Tin, Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng  
-**Bài tập thực hành:** Bài tập nhóm số 6 (Chương 6 &ndash; PHP và cơ sở dữ liệu MySQL)
+**Bài tập thực hành:** Bài tập nhóm số 7 (Chương 7 &ndash; Bảo mật ứng dụng web)  
+**Link kho GitHub:** [https://github.com/xys-3y7/ltweb-doan-nhom12](https://github.com/xys-3y7/ltweb-doan-nhom12)
 
 ---
 
 ## 1. Giới thiệu tổng quan
-Dự án **BookNest** được nâng cấp toàn diện từ nền tảng tệp JSON sang hệ quản trị CSDL quan hệ **MySQL / MariaDB** thông qua tầng truy xuất dữ liệu PDO an toàn. Ứng dụng hỗ trợ đầy đủ các tính năng web động:
-- Thiết kế CSDL chuẩn hóa 3NF, ràng buộc toàn vẹn khóa ngoại, CHECK giá sách, chỉ mục tối ưu truy vấn.
-- Toàn bộ câu truy vấn chứa dữ liệu người dùng sử dụng Prepared Statements, loại bỏ 100% nguy cơ SQL Injection.
-- Tìm kiếm tức thời (Debounce + Fetch API), lọc nhiều tiêu chí, sắp xếp theo whitelist và phân trang bảo toàn tham số lọc qua `http_build_query`.
-- Đặt hàng an toàn trong giao dịch ACID (`beginTransaction`, `commit`, `rollBack`), kiểm tra tồn kho nguyên tử (`UPDATE ... WHERE ton_kho >= ?`) chống bán vượt tồn kho.
-- Xác thực và phân quyền máy chủ: mật khẩu băm BCRYPT qua `password_hash`, Session bảo mật chỉ lưu `uid`, phân quyền quản trị và phân quyền chủ sở hữu dữ liệu.
-- Bộ REST API trả JSON chuẩn HTTP Status (200, 400, 404, 405, 422, 500) và tệp kiểm thử `api.http`.
+Dự án **BookNest** được gia cố bảo mật toàn diện theo chuẩn **OWASP Top 10:2025** và yêu cầu của Chương 7:
+- **Chống tấn công CSRF:** Cơ chế sinh mã `csrfToken()` ngẫu nhiên an toàn mã hóa, tự động kiểm tra tập trung trong `inc/config.php` cho 100% biểu mẫu POST và lời gọi AJAX/fetch (header `X-CSRF-Token`). Thao tác đăng xuất chỉ nhận POST, GET trả 405 Method Not Allowed.
+- **Bảo vệ Cookie và Phiên làm việc:** Bật `session.use_strict_mode = 1`, cookie phiên có cờ `HttpOnly`, `SameSite=Lax`, `Secure` (khi chạy HTTPS). Phiên tự động hết hạn sau 30 phút không hoạt động. Tái tạo mã định danh phiên (`session_regenerate_id(true)`) ngay khi đăng nhập thành công chống cố định phiên.
+- **Header bảo mật và Content Security Policy (CSP):** Thiết lập `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, gỡ bỏ `X-Powered-By`. Toàn bộ mã script và style nội tuyến được chuẩn hóa chuyển sang tệp `.js` và `.css`.
+- **Cấu hình an toàn với tệp .env:** Sử dụng thư viện `vlucas/phpdotenv`. Tệp `.env` được bảo vệ tuyệt đối trong `.gitignore`, không bao giờ được đưa lên kho Git. Kho chỉ lưu tệp mẫu `.env.example`.
+- **Phân quyền truy cập máy chủ Apache (.htaccess):** Cấm duyệt thư mục (`Options -Indexes`), chặn truy cập trực tiếp các thư mục nội bộ (`inc/`, `src/`, `vendor/`, `database/`, `logs/`, `storage/`, `kiemtra/`) và tệp nhạy cảm (`.env`, `.git/`, `.sql`, `.log`, `composer.json`). Thư mục `uploads/.htaccess` cấm chạy mọi phần mở rộng mã thực thi.
+- **Tài khoản CSDL quyền tối thiểu:** Cung cấp tệp `database/tai-khoan.sql` tạo người dùng `nhom12_app` chỉ có 4 quyền DML (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) trên CSDL `ltweb_nhom12`, loại bỏ hoàn toàn các quyền nguy hiểm `DROP`, `CREATE`, `ALTER`.
+- **Chống dò quét vét cạn mật khẩu và Ghi nhật ký bảo mật:** Tạo bảng `dang_nhap_sai`, giới hạn tối đa 5 lần đăng nhập sai trong vòng 15 phút (vượt quá trả về HTTP 429 Too Many Requests). Hàm `ghiLogBaoMat()` ghi nhận chi tiết các sự kiện `csrf_sai`, `cam_truy_cap`, `dang_nhap_sai` vào `logs/bao-mat.log` mà không lưu dữ liệu nhạy cảm.
 
 ---
 
-## 2. Thành viên nhóm và phân công nhiệm vụ
-| TT | Họ và tên | Mã sinh viên | Tài khoản GitHub | Nhiệm vụ chính (Chương 6) |
-|:--:|:---|:---:|:---:|:---|
-| 1 | **Xaiyasith Yoi** *(Nhóm trưởng)* | 3120224189 | `xys-3y7` | Kiến trúc CSDL, inc/db.php, giao dịch đặt hàng, Bảng tv_luu_but |
-| 2 | **Phommaket Hatsady** | 3120224181 | `hatsady-pk` | Trang danh mục sách, bộ lọc GET, phân trang, Bảng tv_du_an |
-| 3 | **Vongsena Sauphasith** | 3120224186 | `sauphasith-vs` | Biểu mẫu liên hệ, upload ảnh, xử lý lỗi 403/404, Bảng tv_luot_xem |
-| 4 | **Nguyễn Thị Sinh** | 3120223169 | `sinh-nguyen` | Chi tiết sách JOIN danh mục, CRUD quản trị, Bảng tv_sach_yeu_thich |
+## 2. Bảng 7 Biện pháp bảo mật & Phân công nhiệm vụ (Bảng 1)
+| TT | Biện pháp gia cố bảo mật | Tệp chính liên quan | Slide bài giảng | Thành viên phụ trách |
+|:--:|:---|:---|:---:|:---|
+| 1 | **Mã CSRF cho mọi form POST và fetch** | `inc/csrf.php`, `inc/config.php`, `inc/header.php`, `js/gio-hang.js`, `dang-xuat.php` | Slide 23–24 | **Xaiyasith Yoi** *(Nhóm trưởng)* |
+| 2 | **Cookie phiên và phiên an toàn** | `inc/config.php`, `inc/xac-thuc.php` | Slide 25 | **Nguyễn Thị Sinh** |
+| 3 | **Header bảo mật và Content Security Policy** | `inc/config.php`, `css/*.css`, `js/*.js` | Slide 22, 26–27 | **Phommaket Hatsady** |
+| 4 | **Cấu hình và bí mật trong tệp .env** | `.env.example`, `.gitignore`, `composer.json`, `inc/config.php`, `inc/db.php` | Slide 29 | **Vongsena Sauphasith** |
+| 5 | **Chặn tệp nội bộ trên Apache (.htaccess)** | `.htaccess`, `uploads/.htaccess` | Slide 28, 30 | **Phommaket Hatsady** |
+| 6 | **Tài khoản CSDL quyền tối thiểu** | `database/tai-khoan.sql`, `.env` | Slide 20 | **Vongsena Sauphasith** |
+| 7 | **Chống đoán mật khẩu & Ghi log bảo mật** | `database/schema.sql`, `inc/xac-thuc.php`, `inc/ham.php`, `dang-nhap.php` | Slide 31–32 | **Xaiyasith Yoi** & **Nguyễn Thị Sinh** |
 
 ---
 
-## 3. Yêu cầu môi trường & Cài đặt
+## 3. Hướng dẫn cài đặt và chạy ứng dụng
 
-### Yêu cầu hệ thống:
+### Yêu cầu môi trường:
 - **PHP:** Phiên bản ≥ 8.1 (bật extension `pdo_mysql`, `mbstring`, `fileinfo`).
-- **CSDL:** MySQL ≥ 8.0 hoặc MariaDB ≥ 10.4 (có sẵn trong XAMPP hoặc Laragon).
-- **Composer:** Để nạp tự động PSR-4 (`App\\`: `src/`).
+- **MySQL / MariaDB:** Khởi động dịch vụ trong XAMPP hoặc Laragon.
+- **Composer:** Để cài đặt các gói phụ thuộc (`vlucas/phpdotenv`).
 
-### Các bước cài đặt và chạy:
-1. **Cài đặt thư viện:**
+### Các bước cài đặt:
+1. **Cài đặt thư viện phụ thuộc bằng Composer:**
    ```bash
    composer install
    ```
-2. **Khởi tạo CSDL `ltweb_nhom12` (Xóa và tạo lại từ đầu):**
-   - Mở `phpMyAdmin` &rarr; Import `database/schema.sql`, sau đó Import `database/seed.sql`.
-   - Hoặc gõ lệnh trong terminal (mysql XAMPP ở `C:\xampp\mysql\bin`):
+2. **Khởi tạo cơ sở dữ liệu `ltweb_nhom12`:**
+   - Sử dụng cửa sổ dòng lệnh (Terminal / Command Prompt / Git Bash):
      ```bash
      mysql -u root < database/schema.sql
      mysql -u root ltweb_nhom12 < database/seed.sql
      ```
-3. **Khởi động máy chủ phát triển:**
-   ```bash
-   php -S localhost:8000
-   ```
-   Sau đó mở trình duyệt truy cập: [http://localhost:8000](http://localhost:8000).
+   - Hoặc import lần lượt 2 tệp trên qua giao diện **phpMyAdmin**.
+3. **Cấu hình tệp môi trường `.env`:**
+   - Sao chép tệp mẫu cấu hình:
+     ```bash
+     # Trên Windows:
+     copy .env.example .env
+
+     # Trên Linux / macOS / Git Bash:
+     cp .env.example .env
+     ```
+   - Kiểm tra các biến trong tệp `.env`:
+     ```env
+     APP_DEBUG=true
+     DB_HOST=127.0.0.1
+     DB_DATABASE=ltweb_nhom12
+     DB_USERNAME=root
+     DB_PASSWORD=
+     ```
+4. **(Tùy chọn) Kích hoạt tài khoản CSDL quyền tối thiểu:**
+   - Chạy tệp SQL khởi tạo tài khoản bằng quyền `root`:
+     ```bash
+     mysql -u root < database/tai-khoan.sql
+     ```
+   - Chỉnh sửa thông tin kết nối trong tệp `.env`:
+     ```env
+     DB_USERNAME=nhom12_app
+     DB_PASSWORD=MatKhau_Nhom12_BaoMat2026!
+     ```
+5. **Khởi động website:**
+   - **Cách 1 (Máy chủ tích hợp PHP CLI):**
+     ```bash
+     php -S localhost:8000
+     ```
+     Truy cập tại: [http://localhost:8000](http://localhost:8000)
+   - **Cách 2 (Máy chủ web Apache của XAMPP để kiểm tra .htaccess):**
+     Đặt thư mục dự án vào `C:\xampp\htdocs\ltweb-doan-nhom12\` và truy cập qua đường dẫn: [http://localhost/ltweb-doan-nhom12/](http://localhost/ltweb-doan-nhom12/).
 
 ---
 
 ## 4. Tài khoản thử nghiệm (Mật khẩu chung: `matkhau123`)
 | Email | Họ và tên | Vai trò | Quyền hạn & Chức năng |
 |:---|:---|:---:|:---|
-| `admin@ued.vn` | Quản trị viên Hệ thống | `quan_tri` | Toàn quyền vào `quan-tri.php`, thêm/sửa/xóa sách, đổi trạng thái đơn |
-| `lan@ued.vn` | Nguyễn Thị Lan | `khach_hang` | Đặt mua sách, xem đơn hàng cá nhân trong `don-hang.php` |
-| `an@ued.vn` | Trần Văn An | `khach_hang` | Đặt mua sách, xem đơn hàng cá nhân trong `don-hang.php` |
-| `yoi@ued.vn` | Xaiyasith Yoi | `quan_tri` | Chủ trang cá nhân Yoi, quyền xóa lưu bút |
-| `hatsady@ued.vn` | Phommaket Hatsady | `khach_hang` | Chủ trang cá nhân Hatsady, thêm dự án mới |
-| `sinh@ued.vn` | Nguyễn Thị Sinh | `khach_hang` | Chủ trang cá nhân Sinh, thêm đánh giá sách |
+| `admin@ued.vn` | Quản trị viên Hệ thống | `quan_tri` | Truy cập `quan-tri.php`, CRUD sản phẩm, cập nhật đơn hàng |
+| `lan@ued.vn` | Nguyễn Thị Lan | `khach_hang` | Mua sách, thanh toán, xem lịch sử đơn hàng tại `don-hang.php` |
+| `an@ued.vn` | Trần Văn An | `khach_hang` | Đặt mua giáo trình, quản lý giỏ hàng |
+| `yoi@ued.vn` | Xaiyasith Yoi | `quan_tri` | Chủ trang cá nhân Yoi, có quyền xóa lưu bút |
+| `hatsady@ued.vn` | Phommaket Hatsady | `khach_hang` | Chủ trang cá nhân Hatsady, quyền thêm/xóa dự án |
+| `sauphasith@ued.vn`| Vongsena Sauphasith | `khach_hang`| Chủ trang cá nhân Sauphasith, quản lý lượt xem |
+| `sinh@ued.vn` | Nguyễn Thị Sinh | `khach_hang` | Chủ trang cá nhân Sinh, đánh giá sách yêu thích |
 
 ---
 
-## 5. Bảng chức năng & Đường dẫn URL hệ thống
-| Chức năng | Đường dẫn URL | Tệp xử lý | Người phụ trách |
-|:---|:---|:---|:---|
-| Trang chủ & Đã xem gần đây | `/index.php` | `index.php` | Xaiyasith Yoi |
-| Danh mục & Tìm kiếm phân trang | `/danh-sach.php` | `danh-sach.php` | Phommaket Hatsady |
-| Chi tiết sách & Sách cùng loại | `/chi-tiet.php?id=1` | `chi-tiet.php` | Nguyễn Thị Sinh |
-| Giỏ hàng mua sách | `/gio-hang.php` | `gio-hang.php` | Phommaket Hatsady |
-| Đặt hàng trong giao dịch ACID | `/dat-hang.php` | `dat-hang.php` | Xaiyasith Yoi |
-| Đơn hàng của tôi | `/don-hang.php` | `don-hang.php` | Xaiyasith Yoi |
-| Quản trị sách & Đơn hàng | `/quan-tri.php` | `quan-tri.php` | Nguyễn Thị Sinh |
-| Thêm sách mới | `/them-san-pham.php` | `them-san-pham.php` | Nguyễn Thị Sinh |
-| Chỉnh sửa sách | `/sua-san-pham.php?id=1` | `sua-san-pham.php` | Nguyễn Thị Sinh |
-| Xóa sách (Chỉ nhận POST) | `/xoa-san-pham.php` | `xoa-san-pham.php` | Nguyễn Thị Sinh |
-| Đăng ký tài khoản | `/dang-ky.php` | `dang-ky.php` | Xaiyasith Yoi |
-| Đăng nhập hệ thống | `/dang-nhap.php` | `dang-nhap.php` | Xaiyasith Yoi |
-| Đăng xuất an toàn | `/dang-xuat.php` | `dang-xuat.php` | Xaiyasith Yoi |
-| Liên hệ & Upload ảnh minh chứng | `/lien-he.php` | `lien-he.php` | Vongsena Sauphasith |
-
----
-
-## 6. Danh mục REST API Endpoints
-| Phương thức | Endpoint URL | Tham số | Mã HTTP | Mô tả phản hồi |
-|:---:|:---|:---|:---:|:---|
-| **GET** | `/api/san-pham.php` | `?q=tu_khoa` | 200 | Tìm kiếm nhanh sách theo từ khóa (JSON) |
-| **GET** | `/api/san-pham.php` | `?id=1` | 200, 400, 404 | Chi tiết 1 cuốn sách (chỉ chứa trường công khai) |
-| **GET** | `/api/gio-hang.php` | Không | 200 | Xem tổng quan số lượng và danh sách giỏ hàng |
-| **POST** | `/api/gio-hang.php` | Thân JSON: `{"id": 1, "sl": 2}` | 200, 400, 404, 422 | Thêm sách vào giỏ không tải lại trang |
-| Khác | `/api/...` | Phương thức không hỗ trợ | 405 | Header `Allow`, thông báo lỗi JSON |
+## 5. Kiểm thử bảo mật (Negative Testing)
+Hệ thống cung cấp sẵn 2 tệp kịch bản kiểm thử:
+- `tests/bao-mat.http`: Sử dụng extension **REST Client** trên Visual Studio Code để thực hiện 14 ca kiểm thử phủ định.
+- `tests/bao-mat.sh`: Kịch bản lệnh **cURL** tự động chạy kiểm thử trên terminal Git Bash.
+- Kiểm tra mã nguồn bằng công cụ:
+  ```bash
+  composer audit
+  git log --all --oneline -- .env
+  git ls-files .env
+  ```
