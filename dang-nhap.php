@@ -1,8 +1,7 @@
 <?php
 /**
- * dang-nhap.php - Đăng nhập tài khoản người dùng từ bảng nguoi_dung MySQL
- * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
- * Chức năng 4 (Bảng 1): password_verify, session_regenerate_id(true), session chỉ giữ uid, thông báo lỗi chung
+ * dang-nhap.php - Đăng nhập tài khoản với bảo vệ CSRF và chống dò mật khẩu (Rate limiting)
+ * Nhóm 12 - Lớp 24CNTT3 - Chương 7: Bảo mật ứng dụng web
  */
 
 require_once __DIR__ . '/inc/config.php';
@@ -17,45 +16,45 @@ $loi = '';
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $email = trim(chuoi($_POST['email'] ?? ''));
+    $password = chuoi($_POST['password'] ?? '');
 
-    $db = db();
-    $st = $db->prepare('SELECT id, email, ho_ten, mat_khau, vai_tro FROM nguoi_dung WHERE email = ?');
-    $st->execute([$email]);
-    $u = $st->fetch();
-
-    if ($u && password_verify($password, $u['mat_khau'])) {
-        // Cấp lại Session ID mới để ngăn chặn tấn công cố định phiên (Session Fixation)
-        session_regenerate_id(true);
-
-        // BẢO MẬT: Session chỉ lưu duy nhất uid
-        $_SESSION['uid'] = (int)$u['id'];
-
-        // Kiểm tra xem mật khẩu có cần băm lại bằng chi phí/thuật toán mới hơn không
-        if (password_needs_rehash($u['mat_khau'], PASSWORD_DEFAULT)) {
-            $moiHash = password_hash($password, PASSWORD_DEFAULT);
-            $stUp = $db->prepare('UPDATE nguoi_dung SET mat_khau = ? WHERE id = ?');
-            $stUp->execute([$moiHash, $u['id']]);
-        }
-
-        $dichDen = $_SESSION['redirect_sau_dang_nhap'] ?? ($u['vai_tro'] === 'quan_tri' ? 'quan-tri.php' : 'index.php');
-        unset($_SESSION['redirect_sau_dang_nhap']);
-
-        header('Location: ' . $dichDen);
-        exit;
+    // Biện pháp 7: Giới hạn đoán mật khẩu (5 lần sai trong 15 phút)
+    if (soLanSai($email) >= 5) {
+        http_response_code(429); // 429 Too Many Requests
+        $loi = 'Sai quá nhiều lần, hãy thử lại sau 15 phút';
     } else {
-        // Ghi nhật ký vào logs/php-error.log khi có nỗ lực đăng nhập thất bại
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-        error_log(sprintf(
-            "[%s] CẢNH BÁO: Đăng nhập thất bại với email '%s' từ IP %s\n",
-            date('Y-m-d H:i:s'),
-            $email,
-            $ip
-        ));
+        $db = db();
+        $st = $db->prepare('SELECT id, email, ho_ten, mat_khau, vai_tro FROM nguoi_dung WHERE email = ?');
+        $st->execute([$email]);
+        $u = $st->fetch();
 
-        // Thông báo lỗi chung bảo mật chống rò rỉ sự tồn tại của email
-        $loi = 'Email hoặc mật khẩu không chính xác.';
+        if ($u && password_verify($password, $u['mat_khau'])) {
+            // Đăng nhập thành công: xóa lịch sử đăng nhập sai của email này
+            $db->prepare('DELETE FROM dang_nhap_sai WHERE email = ?')->execute([$email]);
+
+            // Đổi Session ID và thiết lập phiên an toàn
+            dangNhap($u['id']);
+
+            // Kiểm tra và băm lại mật khẩu nếu cần
+            if (password_needs_rehash($u['mat_khau'], PASSWORD_DEFAULT)) {
+                $moiHash = password_hash($password, PASSWORD_DEFAULT);
+                $stUp = $db->prepare('UPDATE nguoi_dung SET mat_khau = ? WHERE id = ?');
+                $stUp->execute([$moiHash, $u['id']]);
+            }
+
+            $dichDen = $_SESSION['redirect_sau_dang_nhap'] ?? ($u['vai_tro'] === 'quan_tri' ? 'quan-tri.php' : 'index.php');
+            unset($_SESSION['redirect_sau_dang_nhap']);
+
+            header('Location: ' . $dichDen);
+            exit;
+        } else {
+            // Ghi nhận lần sai vào CSDL và nhật ký bảo mật logs/bao-mat.log
+            ghiLanSai($email);
+
+            // Thông báo lỗi chung không phân biệt sai email hay sai mật khẩu
+            $loi = 'Sai email hoặc mật khẩu';
+        }
     }
 }
 
@@ -73,7 +72,7 @@ require __DIR__ . '/inc/header.php';
   <div style="background: #ffffff; padding: 35px 30px; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
     <h1 style="text-align: center; margin-top: 0; color: #1e3b6d; font-size: 1.8rem;">Đăng nhập BookNest</h1>
     <p style="text-align: center; color: #64748b; font-size: 0.95rem; margin-bottom: 25px;">
-      Đăng nhập để xem lịch sử đơn hàng và trải nghiệm tính năng mua sách.
+      Đăng nhập để xem lịch sử đơn hàng và trải nghiệm mua sắm an toàn.
     </p>
 
     <?php if ($thongBao !== ''): ?>
@@ -95,6 +94,7 @@ require __DIR__ . '/inc/header.php';
     <?php endif; ?>
 
     <form method="POST" action="dang-nhap.php" novalidate>
+      <?= csrfField() ?>
       
       <!-- Email -->
       <div style="margin-bottom: 18px;">

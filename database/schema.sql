@@ -141,4 +141,13 @@ CREATE TABLE tv_sach_yeu_thich (
   CONSTRAINT fk_sachyeuthich_sanpham FOREIGN KEY (san_pham_id) REFERENCES san_pham(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 9. BẢNG GHI NHẬN ĐĂNG NHẬP SAI (dang_nhap_sai) - CHƯƠNG 7 BẢO MẬT
+CREATE TABLE dang_nhap_sai (
+  id        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  email     VARCHAR(255) NOT NULL,
+  ip        VARCHAR(45) NOT NULL,
+  thoi_gian DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_email_thoigian (email, thoi_gian)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

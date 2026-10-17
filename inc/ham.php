@@ -48,3 +48,30 @@ function traJson(mixed $duLieu, int $maTrangThai = 200, array $headers = []): vo
     echo json_encode($duLieu, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     exit;
 }
+
+/**
+ * Kiểm tra dữ liệu đầu vào chỉ nhận chuỗi an toàn (?q[]=ao -> chuỗi rỗng)
+ */
+function chuoi(mixed $v): string
+{
+    return is_string($v) ? $v : '';
+}
+
+/**
+ * Ghi nhật ký sự kiện bảo mật vào logs/bao-mat.log
+ * Tuyệt đối không ghi mật khẩu, mã phiên, mã CSRF
+ */
+function ghiLogBaoMat(string $suKien, array $chiTiet = []): void
+{
+    $chiTiet += [
+        'ip'  => $_SERVER['REMOTE_ADDR'] ?? '-',
+        'uid' => $_SESSION['uid'] ?? null
+    ];
+    $json = json_encode($chiTiet, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $dong = date('Y-m-d H:i:s') . " $suKien $json";
+    $logDir = __DIR__ . '/../logs';
+    if (!is_dir($logDir)) {
+        mkdir($logDir, 0777, true);
+    }
+    error_log($dong . PHP_EOL, 3, $logDir . '/bao-mat.log');
+}
