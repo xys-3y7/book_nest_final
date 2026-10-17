@@ -28,14 +28,19 @@ $loi = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $xoa = filter_var($_POST['xoa'] ?? '', FILTER_VALIDATE_INT);
 
-    if ($xoa && $laChuTrang) {
+    if ($xoa) {
+        if (!$laChuTrang) {
+            ghiLogBaoMat('cam_truy_cap', ['trang' => $_SERVER['REQUEST_URI']]);
+            http_response_code(403);
+            exit('403 Forbidden — Bạn không có quyền xóa lời nhắn này.');
+        }
         // Chỉ chủ trang mới được xóa, và chỉ xóa trên trang của mình (AND mssv = ?)
         $stXoa = $db->prepare('DELETE FROM tv_luu_but WHERE id = ? AND mssv = ?');
         $stXoa->execute([$xoa, MSSV]);
         $_SESSION['flash'] = 'Đã xóa lời nhắn thành công!';
-    } elseif (!$xoa) {
-        $tenKhach = trim($_POST['ten_khach'] ?? '');
-        $loiNhan  = trim($_POST['loi_nhan'] ?? '');
+    } else {
+        $tenKhach = trim(chuoi($_POST['ten_khach'] ?? ''));
+        $loiNhan  = trim(chuoi($_POST['loi_nhan'] ?? ''));
 
         if ($tenKhach === '' || mb_strlen($tenKhach) > 50) {
             $loi['ten_khach'] = 'Họ tên phải dài từ 1 đến 50 ký tự';
@@ -141,6 +146,7 @@ require __DIR__ . '/../../inc/header.php';
 
     <!-- Biểu mẫu gửi lưu bút -->
     <form method="POST" action="gioithieu.php" style="margin-bottom: 30px; background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0;">
+      <?= csrfField() ?>
       <div style="margin-bottom: 15px;">
         <label for="ten_khach" style="display: block; font-weight: bold; margin-bottom: 5px;">Họ và tên của bạn <span style="color:#dc2626;">*</span></label>
         <input type="text" id="ten_khach" name="ten_khach" placeholder="Ví dụ: Nguyễn Thị Sinh" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box;">
@@ -174,7 +180,8 @@ require __DIR__ . '/../../inc/header.php';
               <small style="color: #94a3b8;"><?= e($lb['thoi_gian']) ?></small>
             </div>
             <?php if ($laChuTrang): ?>
-              <form method="POST" action="gioithieu.php" onsubmit="return confirm('Bạn có chắc muốn xóa lời nhắn này?');" style="margin: 0;">
+              <form method="POST" action="gioithieu.php" class="form-xoa-luubut" style="margin: 0;">
+                <?= csrfField() ?>
                 <input type="hidden" name="xoa" value="<?= $lb['id'] ?>">
                 <button type="submit" class="nut nut--vien" style="color: #dc2626; border-color: #fca5a5; padding: 4px 10px; font-size: 0.8rem;">Xóa</button>
               </form>
