@@ -81,8 +81,52 @@ require __DIR__ . '/../../inc/header.php';
     <div>
       <h1 style="margin: 0; color: #1e3b6d; font-size: 1.8rem;">Vongsena Sauphasith</h1>
       <p style="margin: 5px 0; color: #64748b;">Mã sinh viên: <strong>3120224186</strong> | Lớp: <strong>24CNTT3</strong></p>
-      <p style="margin: 5px 0;">Phụ trách Phần A: <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Biểu mẫu Liên hệ &amp; Upload tệp finfo</span></p>
-      <p style="margin: 5px 0; color: #475569;">Trách nhiệm: Xử lý lưu trữ liên hệ vào bảng lien_he MySQL, kiểm tra an toàn MIME-type tệp tải lên và xử lý lỗi hệ thống 403/404.</p>
+      <p style="margin: 5px 0;">GitHub: <a href="https://github.com/happy2072005-prog" target="_blank" rel="noopener noreferrer" style="color: #0369a1; font-weight: bold;">@happy2072005-prog (https://github.com/happy2072005-prog)</a></p>
+      <p style="margin: 5px 0;">Vai trò: <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Thành viên Nhóm 12</span></p>
+      <p style="margin: 5px 0; color: #475569;">Trách nhiệm website: Biểu mẫu liên hệ lien-he.php, kiểm tra upload ảnh an toàn MIME finfo và xử lý lỗi hệ thống.</p>
+      <div style="margin-top: 10px;">
+        <a href="../../gioi-thieu.php" class="nut nut--vien" style="padding: 4px 12px; font-size: 0.85rem;">&larr; Quay lại trang Giới thiệu nhóm</a>
+      </div>
+      <?php if ($laChuTrang): ?>
+        <p style="margin: 8px 0 0 0; color: #16a34a; font-weight: bold;">✓ Bạn đang đăng nhập với tư cách Chủ trang (sauphasith@ued.vn)</p>
+      <?php endif; ?>
+    </div>
+  </section>
+
+  <!-- BẢNG NHIỆM VỤ CHI TIẾT TRONG VIỆC LÀM BÁO CÁO BÀI TẬP 7 (THEO YÊU CẦU) -->
+  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.04);">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+      <h2 style="margin: 0; color: #1e3b6d; font-size: 1.35rem;">📋 Nhiệm vụ &amp; Đóng góp trong Báo cáo Bài tập nhóm số 7 (Bảo mật Web)</h2>
+      <span style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;">Đóng góp: 100%</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 18px;">
+      <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #1e3b6d;">
+        <h4 style="margin: 0 0 8px 0; color: #1e3b6d;">1. Biện pháp bảo mật phụ trách</h4>
+        <ul style="margin: 0; padding-left: 18px; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+          <li><strong>Biện pháp 4:</strong> Biến môi trường <code>.env</code> với <code>vlucas/phpdotenv</code> v5.7, cam kết không lộ mật khẩu vào Git (<code>git ls-files .env</code> = 0).</li>
+          <li>Thực hiện kiểm tra an toàn thư viện bên thứ ba với <code>composer audit</code> (0 lỗ hổng).</li>
+          <li><strong>Biện pháp 6:</strong> Phân quyền CSDL đặc quyền tối thiểu (Least Privilege) với tài khoản <code>nhom12_app</code> (chỉ DML, cấm DDL báo lỗi 1142).</li>
+        </ul>
+      </div>
+
+      <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #ea580c;">
+        <h4 style="margin: 0 0 8px 0; color: #ea580c;">2. Nội dung biên soạn báo cáo</h4>
+        <ul style="margin: 0; padding-left: 18px; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+          <li><strong>Phần A:</strong> Báo cáo cấu hình <code>.env</code>, <code>.gitignore</code>, <code>.env.example</code> và tài khoản CSDL <code>database/tai-khoan.sql</code> trong Bảng 1.</li>
+          <li><strong>Phần B:</strong> Báo cáo bảo mật trang cá nhân <code>vongsena.php</code>, kiểm tra quyền chủ trang cập nhật lượt xem <code>tv_luot_xem</code>, 5 ca kiểm thử thực nghiệm.</li>
+          <li><strong>Phần C:</strong> Biên soạn phương án ứng cứu khẩn cấp 4 bước cho <strong>Câu C.4</strong> (Ứng phó khi rò rỉ .env lên GitHub).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+      <strong style="color: #1e3b6d;">3. Thực thi kiểm thử &amp; Minh chứng chất lượng:</strong>
+      <ul style="margin: 6px 0 0 0; padding-left: 18px;">
+        <li>Thực thi kiểm tra quyền MySQL bằng lệnh <code>DROP TABLE san_pham</code> trả về lỗi <code>Error 1142 (42000): DROP command denied</code>.</li>
+        <li>Chụp và chèn ảnh minh chứng <strong>Hình 8</strong> vào báo cáo đồ án.</li>
+        <li>Commit Git phụ trách: <code>0997cec</code> (Biện pháp 4), <code>988d5d8</code> (Biện pháp 6), <code>e9fc487</code> (Phần B cá nhân).</li>
+      </ul>
     </div>
   </section>
 

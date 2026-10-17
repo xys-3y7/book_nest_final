@@ -43,6 +43,7 @@ $u = nguoiDung();
         <li><a href="<?= $goc ?>danh-sach.php" <?= $trang === 'danh-sach' ? 'class="hien-tai" aria-current="page"' : '' ?>>Danh mục sách</a></li>
         <li><a href="<?= $goc ?>gioi-thieu.php" <?= $trang === 'gioi-thieu' ? 'class="hien-tai" aria-current="page"' : '' ?>>Giới thiệu nhóm</a></li>
         <li><a href="<?= $goc ?>lien-he.php" <?= $trang === 'lien-he' ? 'class="hien-tai" aria-current="page"' : '' ?>>Liên hệ</a></li>
+        <li><a href="<?= $goc ?>yeu-thich.php" <?= $trang === 'yeu-thich' ? 'class="hien-tai" aria-current="page"' : '' ?>>❤️ Yêu thích (<span class="so-luong-yeu-thich"><?= soLuongYeuThich() ?></span>)</a></li>
         <li><a href="<?= $goc ?>gio-hang.php" <?= $trang === 'gio-hang' ? 'class="hien-tai" aria-current="page"' : '' ?>>🛒 Giỏ hàng (<span class="so-luong-gio"><?= $gio->soMon() ?></span>)</a></li>
         <?php if ($u): ?>
           <li><a href="<?= $goc ?>don-hang.php" <?= $trang === 'don-hang' ? 'class="hien-tai" aria-current="page"' : '' ?>>📦 Đơn hàng</a></li>

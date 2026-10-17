@@ -85,26 +85,50 @@ require __DIR__ . '/inc/header.php';
         </p>
       </div>
 
-      <!-- Biểu mẫu Thêm vào giỏ hàng (Hỗ trợ cả POST thường khi tắt JS và fetch khi bật JS) -->
-      <?php if ($sp->tonKho > 0): ?>
-        <form method="POST" action="gio-hang.php" id="form-them-gio" class="form-them-gio" style="display: flex; gap: 15px; align-items: center; margin-bottom: 30px; flex-wrap: wrap;">
-          <?= csrfField() ?>
-          <input type="hidden" name="action" value="them">
-          <input type="hidden" name="id" value="<?= $sp->id ?>">
-          
-          <label for="so-luong-nhap" style="font-weight: bold;">Số lượng:</label>
-          <input type="number" id="so-luong-nhap" name="soLuong" value="1" min="1" max="<?= min(99, $sp->tonKho) ?>" style="width: 70px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center;">
+      <!-- Biểu mẫu Mua ngay và Thêm vào giỏ hàng -->
+      <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 25px; flex-wrap: wrap;">
+        <?php if ($sp->tonKho > 0): ?>
+          <!-- 1. Nút Thêm vào giỏ hàng (ปุ่มตะกร้า) -->
+          <form method="POST" action="gio-hang.php" id="form-them-gio" class="form-them-gio" style="display: flex; gap: 10px; align-items: center; margin: 0; flex-wrap: wrap;">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="them">
+            <input type="hidden" name="id" value="<?= $sp->id ?>">
+            
+            <label for="so-luong-nhap" style="font-weight: bold;">Số lượng:</label>
+            <input type="number" id="so-luong-nhap" name="soLuong" value="1" min="1" max="<?= min(99, $sp->tonKho) ?>" style="width: 70px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center;">
 
-          <button type="submit" id="btn-them-gio" class="nut nut--chinh" style="padding: 10px 24px; font-size: 1rem;">
-            🛒 Thêm vào giỏ hàng
+            <button type="submit" id="btn-them-gio" class="nut nut--chinh" style="padding: 10px 20px; font-size: 0.95rem;">
+              🛒 Thêm vào giỏ hàng
+            </button>
+            <span id="thong-bao-gio" style="color: #16a34a; font-weight: bold; margin-left: 5px;"></span>
+          </form>
+
+          <!-- 2. Nút Đặt mua ngay (ปุ่มกดสั่งชื้อ) -->
+          <form method="POST" action="gio-hang.php" style="margin: 0; display: inline;">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="mua_ngay">
+            <input type="hidden" name="id" value="<?= $sp->id ?>">
+            <input type="hidden" name="soLuong" value="1">
+            <button type="submit" class="nut nut--nhan" style="padding: 10px 22px; font-size: 0.95rem; font-weight: bold;">
+              ⚡ Đặt mua ngay
+            </button>
+          </form>
+        <?php else: ?>
+          <p style="color: #dc2626; font-style: italic; margin-bottom: 10px;">
+            * Sách này hiện đã hết hàng, vui lòng liên hệ để đặt trước hoặc quay lại sau.
+          </p>
+        <?php endif; ?>
+
+        <!-- 3. Nút Thêm vào yêu thích (ปุ่มรายการโปรด) -->
+        <form method="POST" action="yeu-thich.php" class="form-yeu-thich" style="margin: 0; display: inline;">
+          <?= csrfField() ?>
+          <input type="hidden" name="action" value="toggle">
+          <input type="hidden" name="id" value="<?= $sp->id ?>">
+          <button type="submit" class="nut nut--vien btn-yeu-thich <?= daYeuThich($sp->id) ? 'da-thich' : '' ?>" style="padding: 10px 18px; font-size: 0.95rem; <?= daYeuThich($sp->id) ? 'background:#fee2e2;color:#dc2626;border-color:#fca5a5;' : '' ?>">
+            <?= daYeuThich($sp->id) ? '❤️ Đã trong danh sách yêu thích' : '🤍 Thêm vào yêu thích' ?>
           </button>
-          <span id="thong-bao-gio" style="color: #16a34a; font-weight: bold; margin-left: 10px;"></span>
         </form>
-      <?php else: ?>
-        <p style="color: #dc2626; font-style: italic; margin-bottom: 25px;">
-          * Sách này hiện đã hết hàng, vui lòng liên hệ để đặt trước hoặc quay lại sau.
-        </p>
-      <?php endif; ?>
+      </div>
 
       <!-- Nội dung giới thiệu tóm tắt giáo trình -->
       <h2>Mô tả nội dung giáo trình</h2>
@@ -127,8 +151,43 @@ require __DIR__ . '/inc/header.php';
             <div class="the__than">
               <h3 class="the__tieu-de"><a href="chi-tiet.php?id=<?= $lq->id ?>"><?= e($lq->ten) ?></a></h3>
               <p class="the__gia"><?= vnd($lq->gia) ?></p>
-              <div class="the__chan">
-                <a href="chi-tiet.php?id=<?= $lq->id ?>" class="nut nut--vien">Xem chi tiết</a>
+              <div class="the__chan" style="margin-top:0.6rem;display:flex;gap:5px;flex-wrap:wrap;align-items:center;">
+                <!-- 1. Đặt mua ngay -->
+                <?php if ($lq->tonKho > 0): ?>
+                  <form method="POST" action="gio-hang.php" style="margin:0;display:inline;">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="mua_ngay">
+                    <input type="hidden" name="id" value="<?= $lq->id ?>">
+                    <input type="hidden" name="soLuong" value="1">
+                    <button type="submit" class="nut nut--nhan btn-mua-ngay" title="Đặt mua sách ngay" style="font-size:0.8rem;padding:6px 10px;">⚡ Đặt mua</button>
+                  </form>
+                <?php else: ?>
+                  <button type="button" disabled class="nut nut--vien" style="font-size:0.8rem;padding:6px 8px;opacity:0.6;cursor:not-allowed;">Hết hàng</button>
+                <?php endif; ?>
+
+                <!-- 2. Thêm vào giỏ -->
+                <?php if ($lq->tonKho > 0): ?>
+                  <form method="POST" action="gio-hang.php" class="form-them-nhanh" style="margin:0;display:inline;">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="them">
+                    <input type="hidden" name="id" value="<?= $lq->id ?>">
+                    <input type="hidden" name="soLuong" value="1">
+                    <button type="submit" class="nut nut--chinh btn-them-nhanh" title="Thêm vào giỏ hàng" style="font-size:0.8rem;padding:6px 10px;">🛒 Thêm giỏ</button>
+                  </form>
+                <?php endif; ?>
+
+                <!-- 3. Yêu thích -->
+                <form method="POST" action="yeu-thich.php" class="form-yeu-thich" style="margin:0;display:inline;">
+                  <?= csrfField() ?>
+                  <input type="hidden" name="action" value="toggle">
+                  <input type="hidden" name="id" value="<?= $lq->id ?>">
+                  <button type="submit" class="nut nut--vien btn-yeu-thich <?= daYeuThich($lq->id) ? 'da-thich' : '' ?>" title="<?= daYeuThich($lq->id) ? 'Đã yêu thích (Bấm để bỏ)' : 'Thêm vào yêu thích' ?>" style="font-size:0.8rem;padding:6px 10px;<?= daYeuThich($lq->id) ? 'background:#fee2e2;color:#dc2626;border-color:#fca5a5;' : '' ?>">
+                    <?= daYeuThich($lq->id) ? '❤️ Đã thích' : '🤍 Yêu thích' ?>
+                  </button>
+                </form>
+
+                <!-- 4. Chi tiết -->
+                <a href="chi-tiet.php?id=<?= $lq->id ?>" class="nut nut--vien" title="Xem chi tiết nội dung cuốn sách" style="font-size:0.8rem;padding:6px 10px;">🔍 Chi tiết</a>
               </div>
             </div>
           </article>

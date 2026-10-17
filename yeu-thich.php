@@ -1,0 +1,192 @@
+<?php
+/**
+ * yeu-thich.php - Trang Quản lý danh sách sách yêu thích (Wishlist) của người dùng
+ * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
+ * Lưu trữ danh sách yêu thích trong Session, bảo vệ CSRF và hỗ trợ các nút thao tác
+ */
+
+require_once __DIR__ . '/inc/config.php';
+
+use App\Data\KhoSanPham;
+use App\Services\GioHang;
+
+$kho = new KhoSanPham(db());
+$gio = new GioHang();
+
+if (!isset($_SESSION['yeu_thich']) || !is_array($_SESSION['yeu_thich'])) {
+    $_SESSION['yeu_thich'] = [];
+}
+
+// Xử lý POST (toggle hoặc xóa)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+    $id = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);
+    $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+              || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+
+    if ($id === false || $id <= 0) {
+        if ($isAjax) {
+            traJson(['thanh_cong' => false, 'loi' => 'Mã sách không hợp lệ'], 400);
+        }
+        $_SESSION['flash_loi'] = 'Mã sách không hợp lệ.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'yeu-thich.php'));
+        exit;
+    }
+
+    $sp = $kho->timTheoId($id);
+    if (!$sp) {
+        if ($isAjax) {
+            traJson(['thanh_cong' => false, 'loi' => 'Sách không tồn tại'], 404);
+        }
+        $_SESSION['flash_loi'] = 'Sách không tồn tại trong hệ thống.';
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'yeu-thich.php'));
+        exit;
+    }
+
+    if ($action === 'toggle') {
+        $idx = array_search($id, $_SESSION['yeu_thich'], true);
+        if ($idx !== false) {
+            unset($_SESSION['yeu_thich'][$idx]);
+            $_SESSION['yeu_thich'] = array_values($_SESSION['yeu_thich']);
+            $daThich = false;
+            $thongBao = 'Đã bỏ sách "' . $sp->ten . '" khỏi danh sách yêu thích.';
+        } else {
+            $_SESSION['yeu_thich'][] = $id;
+            $daThich = true;
+            $thongBao = 'Đã thêm sách "' . $sp->ten . '" vào danh sách yêu thích! ❤️';
+        }
+
+        if ($isAjax) {
+            traJson([
+                'thanh_cong' => true,
+                'da_thich'   => $daThich,
+                'so_luong'   => count($_SESSION['yeu_thich']),
+                'thong_bao'  => $thongBao
+            ]);
+        }
+        $_SESSION['flash'] = $thongBao;
+        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'yeu-thich.php'));
+        exit;
+    }
+
+    if ($action === 'xoa') {
+        $idx = array_search($id, $_SESSION['yeu_thich'], true);
+        if ($idx !== false) {
+            unset($_SESSION['yeu_thich'][$idx]);
+            $_SESSION['yeu_thich'] = array_values($_SESSION['yeu_thich']);
+        }
+        $_SESSION['flash'] = 'Đã xóa cuốn sách khỏi danh sách yêu thích.';
+        header('Location: yeu-thich.php');
+        exit;
+    }
+}
+
+// Lấy danh sách sản phẩm yêu thích từ CSDL
+$idsYeuThich = array_filter(array_map('intval', $_SESSION['yeu_thich'] ?? []));
+$dsYeuThich = !empty($idsYeuThich) ? $kho->layTheoDanhSachId($idsYeuThich) : [];
+
+$tieuDe = 'Danh sách sách yêu thích';
+$trang = 'yeu-thich';
+$moTaTrang = 'Danh sách các giáo trình và sách chuyên ngành sinh viên yêu thích tại BookNest.';
+
+require __DIR__ . '/inc/header.php';
+?>
+
+<main class="noi-dung-chinh khung-chua" style="max-width: 1000px; margin: 30px auto;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px;">
+    <div>
+      <h1 style="margin: 0; color: #1e3b6d; font-size: 1.8rem;">❤️ Danh sách sách yêu thích (Wishlist)</h1>
+      <p style="margin: 5px 0 0 0; color: #64748b;">Lưu giữ những cuốn sách bạn quan tâm để dễ dàng theo dõi, đặt mua hoặc thêm vào giỏ hàng.</p>
+    </div>
+    <a href="danh-sach.php" class="nut nut--vien">&larr; Tiếp tục khám phá sách</a>
+  </div>
+
+  <?php if (!empty($_SESSION['flash'])): ?>
+    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px 18px; border-radius: 6px; margin-bottom: 25px;">
+      ✓ <?= e($_SESSION['flash']) ?>
+    </div>
+    <?php unset($_SESSION['flash']); ?>
+  <?php endif; ?>
+
+  <?php if (!empty($_SESSION['flash_loi'])): ?>
+    <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 12px 18px; border-radius: 6px; margin-bottom: 25px;">
+      ⚠ <?= e($_SESSION['flash_loi']) ?>
+    </div>
+    <?php unset($_SESSION['flash_loi']); ?>
+  <?php endif; ?>
+
+  <?php if (empty($dsYeuThich)): ?>
+    <div style="text-align: center; padding: 60px 20px; background: #ffffff; border-radius: 8px; border: 1px dashed #cbd5e1;">
+      <p style="font-size: 3.5rem; margin: 0 0 10px 0;">🤍</p>
+      <h2>Danh sách yêu thích của bạn đang trống</h2>
+      <p style="color: #64748b; max-width: 480px; margin: 10px auto 25px auto;">
+        Bạn chưa thêm cuốn sách nào vào mục yêu thích. Hãy bấm vào biểu tượng "❤️ Yêu thích" ở mỗi cuốn sách để lưu lại tại đây nhé!
+      </p>
+      <a href="danh-sach.php" class="nut nut--chinh" style="padding: 10px 24px;">Xem danh mục sách BookNest</a>
+    </div>
+  <?php else: ?>
+    <p style="color: #475569; margin-bottom: 20px;">
+      Bạn đang lưu <strong><?= count($dsYeuThich) ?></strong> cuốn sách trong danh sách yêu thích:
+    </p>
+
+    <div class="luoi-the">
+      <?php foreach ($dsYeuThich as $sp): ?>
+        <article class="the">
+          <figure class="the__hinh-anh">
+            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Bìa sách <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+          </figure>
+          <div class="the__than">
+            <span class="the__the-loai" style="font-size:0.8rem;color:#1e40af;font-weight:bold;"><?= e($sp->tenDanhMuc ?? 'Chuyên ngành') ?></span>
+            <h3 class="the__tieu-de" style="font-size:1.05rem;margin:0.25rem 0;"><?= e($sp->ten) ?></h3>
+            <p class="the__gia" style="margin:0.4rem 0;"><strong><?= vnd($sp->gia) ?></strong></p>
+            <p class="the__ton-kho" style="font-size:0.85rem;color:<?= $sp->tonKho > 0 ? '#16a34a' : '#dc2626' ?>;">
+              <?= $sp->tonKho > 0 ? 'Còn hàng (' . $sp->tonKho . ' cuốn)' : 'Hết hàng tạm thời' ?>
+            </p>
+
+            <!-- 4 NÚT THAO TÁC THEO YÊU CẦU: ĐẶT MUA, THÊM GIỎ, BỎ THÍCH, CHI TIẾT -->
+            <div class="the__chan" style="margin-top:0.75rem;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              <!-- 1. Nút Đặt mua ngay (ปุ่มกดสั่งชื้อ) -->
+              <?php if ($sp->tonKho > 0): ?>
+                <form method="POST" action="gio-hang.php" style="margin:0;display:inline;">
+                  <?= csrfField() ?>
+                  <input type="hidden" name="action" value="mua_ngay">
+                  <input type="hidden" name="id" value="<?= $sp->id ?>">
+                  <input type="hidden" name="soLuong" value="1">
+                  <button type="submit" class="nut nut--nhan" style="font-size:0.8rem;padding:6px 10px;">⚡ Đặt mua</button>
+                </form>
+              <?php else: ?>
+                <button type="button" disabled class="nut nut--vien" style="font-size:0.8rem;padding:6px 10px;opacity:0.6;cursor:not-allowed;">Hết hàng</button>
+              <?php endif; ?>
+
+              <!-- 2. Nút Thêm vào giỏ hàng (ปุ่มตะกร้า) -->
+              <?php if ($sp->tonKho > 0): ?>
+                <form method="POST" action="gio-hang.php" class="form-them-nhanh" style="margin:0;display:inline;">
+                  <?= csrfField() ?>
+                  <input type="hidden" name="action" value="them">
+                  <input type="hidden" name="id" value="<?= $sp->id ?>">
+                  <input type="hidden" name="soLuong" value="1">
+                  <button type="submit" class="nut nut--chinh btn-them-nhanh" style="font-size:0.8rem;padding:6px 10px;">🛒 Thêm giỏ</button>
+                </form>
+              <?php endif; ?>
+
+              <!-- 3. Nút Xem chi tiết (ปุ่มดูรายละเอียด) -->
+              <a href="chi-tiet.php?id=<?= $sp->id ?>" class="nut nut--vien" style="font-size:0.8rem;padding:6px 10px;">🔍 Chi tiết</a>
+
+              <!-- 4. Nút Xóa khỏi danh sách yêu thích -->
+              <form method="POST" action="yeu-thich.php" style="margin:0;display:inline;">
+                <?= csrfField() ?>
+                <input type="hidden" name="action" value="xoa">
+                <input type="hidden" name="id" value="<?= $sp->id ?>">
+                <button type="submit" class="nut nut--vien" style="font-size:0.8rem;padding:6px 10px;color:#dc2626;border-color:#fca5a5;" title="Xóa khỏi yêu thích">❌ Bỏ thích</button>
+              </form>
+            </div>
+          </div>
+        </article>
+      <?php endforeach; ?>
+    </div>
+  <?php endif; ?>
+</main>
+
+<script src="js/gio-hang.js"></script>
+
+<?php require __DIR__ . '/inc/footer.php'; ?>

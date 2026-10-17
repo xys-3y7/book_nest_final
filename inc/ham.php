@@ -75,3 +75,19 @@ function ghiLogBaoMat(string $suKien, array $chiTiet = []): void
     }
     error_log($dong . PHP_EOL, 3, $logDir . '/bao-mat.log');
 }
+
+/**
+ * Kiểm tra xem cuốn sách có nằm trong danh sách yêu thích của người dùng không
+ */
+function daYeuThich(int $id): bool
+{
+    return in_array($id, $_SESSION['yeu_thich'] ?? [], true);
+}
+
+/**
+ * Đếm số lượng sản phẩm trong danh sách yêu thích
+ */
+function soLuongYeuThich(): int
+{
+    return count($_SESSION['yeu_thich'] ?? []);
+}

@@ -97,11 +97,51 @@ require __DIR__ . '/../../inc/header.php';
     <div>
       <h1 style="margin: 0; color: #1e3b6d; font-size: 1.8rem;">Nguyễn Thị Sinh</h1>
       <p style="margin: 5px 0; color: #64748b;">Mã sinh viên: <strong>3120223169</strong> | Lớp: <strong>24CNTT3</strong></p>
-      <p style="margin: 5px 0;">Phụ trách Phần A: <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Trang Chi tiết sách &amp; Quản trị Sản phẩm</span></p>
-      <p style="margin: 5px 0; color: #475569;">Trách nhiệm: Xử lý hiển thị sách chi tiết JOIN danh mục, sách liên quan, khối cookie đã xem và form thêm/sửa sách quản trị.</p>
+      <p style="margin: 5px 0;">GitHub: <a href="https://github.com/chingg2005" target="_blank" rel="noopener noreferrer" style="color: #0369a1; font-weight: bold;">@chingg2005 (https://github.com/chingg2005)</a></p>
+      <p style="margin: 5px 0;">Vai trò: <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Thành viên Nhóm 12</span></p>
+      <p style="margin: 5px 0; color: #475569;">Trách nhiệm website: Trang chi tiết chi-tiet.php, cookie da_xem, đăng ký/đăng nhập và phân quyền quản trị sản phẩm.</p>
+      <div style="margin-top: 10px;">
+        <a href="../../gioi-thieu.php" class="nut nut--vien" style="padding: 4px 12px; font-size: 0.85rem;">&larr; Quay lại trang Giới thiệu nhóm</a>
+      </div>
       <?php if ($laChuTrang): ?>
         <p style="margin: 8px 0 0 0; color: #16a34a; font-weight: bold;">✓ Bạn đang đăng nhập với tư cách Chủ trang (sinh@ued.vn)</p>
       <?php endif; ?>
+    </div>
+  </section>
+
+  <!-- BẢNG NHIỆM VỤ CHI TIẾT TRONG VIỆC LÀM BÁO CÁO BÀI TẬP 7 (THEO YÊU CẦU) -->
+  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.04);">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+      <h2 style="margin: 0; color: #1e3b6d; font-size: 1.35rem;">📋 Nhiệm vụ &amp; Đóng góp trong Báo cáo Bài tập nhóm số 7 (Bảo mật Web)</h2>
+      <span style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;">Đóng góp: 100%</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 18px;">
+      <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #1e3b6d;">
+        <h4 style="margin: 0 0 8px 0; color: #1e3b6d;">1. Biện pháp bảo mật phụ trách</h4>
+        <ul style="margin: 0; padding-left: 18px; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+          <li><strong>Biện pháp 2:</strong> Bảo vệ phiên làm việc (Session Security): HttpOnly, SameSite=Lax, hủy phiên 30 phút, tái tạo session ID chống Fixation.</li>
+          <li><strong>Biện pháp 3:</strong> Bộ tiêu đề bảo mật HTTP (CSP script-src 'self', frame-ancestors 'none', nosniff, gỡ bỏ X-Powered-By).</li>
+        </ul>
+      </div>
+
+      <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #ea580c;">
+        <h4 style="margin: 0 0 8px 0; color: #ea580c;">2. Nội dung biên soạn báo cáo</h4>
+        <ul style="margin: 0; padding-left: 18px; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+          <li><strong>Phần A:</strong> Phân tích cơ chế bảo mật Session và giải trình bảng tiêu đề HTTP trong Bảng 1.</li>
+          <li><strong>Phần B:</strong> Báo cáo bảo mật trang cá nhân <code>nguyenthisinh.php</code>, kiểm tra quyền chủ trang khi xóa đánh giá <code>tv_sach_yeu_thich</code>, 5 ca kiểm thử thực nghiệm.</li>
+          <li><strong>Phần C:</strong> Biên soạn giải đáp chuyên sâu <strong>Câu C.2</strong> (HttpOnly vs XSS, và mô hình 3 lớp phòng vệ: e(), HttpOnly, CSP).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+      <strong style="color: #1e3b6d;">3. Thực thi kiểm thử &amp; Minh chứng chất lượng:</strong>
+      <ul style="margin: 6px 0 0 0; padding-left: 18px;">
+        <li>Thực hiện kiểm tra tiêu đề Response Headers qua Network tab và kiểm tra thuộc tính HttpOnly/SameSite của PHPSESSID qua Application tab.</li>
+        <li>Chụp và chèn ảnh minh chứng <strong>Hình 2</strong> (Headers) và <strong>Hình 3</strong> (Cookies) vào báo cáo đồ án.</li>
+        <li>Commit Git phụ trách: <code>395aa4c</code> (Biện pháp 2 &amp; 3) và <code>5d868b4</code> (Phần B cá nhân).</li>
+      </ul>
     </div>
   </section>
 

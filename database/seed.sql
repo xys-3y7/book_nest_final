@@ -115,9 +115,9 @@ INSERT INTO tv_luu_but (id, mssv, ten_khach, loi_nhan, thoi_gian) VALUES
 
 -- 7.2. Danh sách dự án của Phommaket Hatsady (3120224181)
 INSERT INTO tv_du_an (id, mssv, ten_du_an, cong_nghe, mo_ta, link_github) VALUES
-  (1, '3120224181', 'Hệ thống Quản lý Thư viện Sinh viên', 'PHP 8, MariaDB, Bootstrap 5', 'Ứng dụng quản lý mượn trả sách, tra cứu tài liệu học tập trực tuyến.', 'https://github.com/hatsady-pk/lib-manager'),
-  (2, '3120224181', 'Cổng Đăng ký Học phần UED', 'JavaScript ES6, REST API, HTML5', 'Giao diện mô phỏng đăng ký tín chỉ thời gian thực chống nghẽn mạng.', 'https://github.com/hatsady-pk/course-reg'),
-  (3, '3120224181', 'Ứng dụng Điểm danh Sinh viên bằng QR', 'Python, OpenCV, SQLite', 'Hệ thống nhận diện mã QR sinh viên tự động điểm danh vào phòng thi.', 'https://github.com/hatsady-pk/qr-attendance');
+  (1, '3120224181', 'Hệ thống Quản lý Thư viện Sinh viên', 'PHP 8, MariaDB, Bootstrap 5', 'Ứng dụng quản lý mượn trả sách, tra cứu tài liệu học tập trực tuyến.', 'https://github.com/daimobile33076-eng/lib-manager'),
+  (2, '3120224181', 'Cổng Đăng ký Học phần UED', 'JavaScript ES6, REST API, HTML5', 'Giao diện mô phỏng đăng ký tín chỉ thời gian thực chống nghẽn mạng.', 'https://github.com/daimobile33076-eng/course-reg'),
+  (3, '3120224181', 'Ứng dụng Điểm danh Sinh viên bằng QR', 'Python, OpenCV, SQLite', 'Hệ thống nhận diện mã QR sinh viên tự động điểm danh vào phòng thi.', 'https://github.com/daimobile33076-eng/qr-attendance');
 
 -- 7.3. Thống kê lượt xem của Vongsena Sauphasith (3120224186)
 INSERT INTO tv_luot_xem (mssv, ngay, so_luot) VALUES

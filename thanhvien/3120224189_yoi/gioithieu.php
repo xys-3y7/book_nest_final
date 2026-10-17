@@ -103,13 +103,54 @@ require __DIR__ . '/../../inc/header.php';
     <div>
       <h1 style="margin: 0; color: #1e3b6d; font-size: 1.8rem;">Xaiyasith Yoi</h1>
       <p style="margin: 5px 0; color: #64748b;">Mã sinh viên: <strong>3120224189</strong> | Lớp: <strong>24CNTT3</strong></p>
+      <p style="margin: 5px 0;">GitHub: <a href="https://github.com/xys-3y7" target="_blank" rel="noopener noreferrer" style="color: #0369a1; font-weight: bold;">@xys-3y7 (https://github.com/xys-3y7)</a></p>
       <p style="margin: 5px 0;">Vai trò: <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Nhóm trưởng Nhóm 12</span></p>
-      <p style="margin: 5px 0; color: #475569;">Trách nhiệm: Quản trị CSDL MySQL, kiến trúc PDO, bảo mật phiên, xác thực và chức năng giao dịch đơn hàng.</p>
+      <p style="margin: 5px 0; color: #475569;">Trách nhiệm website: Quản trị CSDL MySQL, kiến trúc PDO, giỏ hàng Session, Wishlist và điều phối chung.</p>
+      <div style="margin-top: 10px;">
+        <a href="../../gioi-thieu.php" class="nut nut--vien" style="padding: 4px 12px; font-size: 0.85rem;">&larr; Quay lại trang Giới thiệu nhóm</a>
+      </div>
       <?php if ($laChuTrang): ?>
         <p style="margin: 8px 0 0 0; color: #16a34a; font-weight: bold;">✓ Bạn đang đăng nhập với tư cách Chủ trang (yoi@ued.vn)</p>
       <?php else: ?>
         <p style="margin: 8px 0 0 0; font-size: 0.85rem; color: #64748b;">(Đăng nhập tài khoản <code>yoi@ued.vn</code> / <code>matkhau123</code> để kích hoạt quyền xóa lưu bút)</p>
       <?php endif; ?>
+    </div>
+  </section>
+
+  <!-- BẢNG NHIỆM VỤ CHI TIẾT TRONG VIỆC LÀM BÁO CÁO BÀI TẬP 7 (THEO YÊU CẦU) -->
+  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.04);">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+      <h2 style="margin: 0; color: #1e3b6d; font-size: 1.35rem;">📋 Nhiệm vụ &amp; Đóng góp trong Báo cáo Bài tập nhóm số 7 (Bảo mật Web)</h2>
+      <span style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;">Đóng góp: 100%</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 18px;">
+      <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #1e3b6d;">
+        <h4 style="margin: 0 0 8px 0; color: #1e3b6d;">1. Vai trò chủ trì &amp; Xuất bản</h4>
+        <ul style="margin: 0; padding-left: 18px; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+          <li>Khởi tạo cấu trúc và phân công nhiệm vụ 4 thành viên.</li>
+          <li>Tổng hợp và định dạng báo cáo bản Word (<code>Nhom12_Baitap7.docx</code>) và PDF (<code>Nhom12_Baitap7.pdf</code>).</li>
+          <li>Đóng gói mã nguồn nộp bài đạt chuẩn (<code>LTW_BTN7_Nhom12_code.zip</code>).</li>
+        </ul>
+      </div>
+
+      <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #ea580c;">
+        <h4 style="margin: 0 0 8px 0; color: #ea580c;">2. Biện pháp bảo mật phụ trách</h4>
+        <ul style="margin: 0; padding-left: 18px; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+          <li><strong>Biện pháp 1:</strong> CSRF Token trên 100% 19 form POST và fetch AJAX, chuyển đăng xuất sang POST 405.</li>
+          <li><strong>Biện pháp 7:</strong> Giới hạn tần suất đăng nhập (5 lần sai/15 phút -> 429) và ghi nhật ký <code>logs/bao-mat.log</code>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+      <strong style="color: #1e3b6d;">3. Nội dung báo cáo biên soạn &amp; Thực thi kiểm thử:</strong>
+      <ul style="margin: 6px 0 0 0; padding-left: 18px;">
+        <li><strong>Phần A:</strong> Thiết kế Hình 1 (Kiến trúc phòng thủ theo chiều sâu), Bảng 1 (Ma trận bảo mật), Bảng 2 (Nhật ký commit Git), Bảng 4 (Static Audit) và Git Diff Stat.</li>
+        <li><strong>Phần B:</strong> Báo cáo an toàn trang cá nhân <code>xaiyasith.php</code>, làm sạch <code>chuoi()</code>, bảo vệ quyền xóa lưu bút (403 Forbidden) và thực hiện 5 ca kiểm thử thực nghiệm.</li>
+        <li><strong>Phần C:</strong> Biên soạn lời giải chuyên sâu <strong>Câu C.1</strong> (Phân tích so sánh <code>SameSite=Lax</code> vs CSRF Token và ranh giới với Authorization).</li>
+        <li><strong>Kiểm thử tự động:</strong> Lập trình bộ kịch bản 14 ca phủ định tự động trong <code>tests/bao-mat.http</code> và <code>tests/bao-mat.sh</code>.</li>
+      </ul>
     </div>
   </section>
 

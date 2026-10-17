@@ -17,7 +17,7 @@ $gio = new GioHang();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'them') {
+    if ($action === 'them' || $action === 'mua_ngay') {
         $id = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);
         $soLuong = filter_var($_POST['soLuong'] ?? 1, FILTER_VALIDATE_INT, [
             'options' => ['min_range' => 1, 'max_range' => 99]
@@ -25,12 +25,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($id === false || $soLuong === false || $kho->timTheoId($id) === null) {
             $_SESSION['flash_loi'] = 'Thao tác không hợp lệ: Mã sách không tồn tại hoặc số lượng không nằm trong khoảng 1 - 99.';
+            header('Location: gio-hang.php');
+            exit;
         } else {
             $gio->them($id, $soLuong, $kho);
+            if ($action === 'mua_ngay') {
+                $_SESSION['flash'] = 'Đã thêm sách vào đơn hàng. Vui lòng xác nhận thông tin nhận sách!';
+                header('Location: dat-hang.php');
+                exit;
+            }
             $_SESSION['flash'] = 'Đã thêm sách vào giỏ hàng thành công!';
+            header('Location: gio-hang.php');
+            exit;
         }
-        header('Location: gio-hang.php');
-        exit;
     }
 
     if ($action === 'capnhat') {

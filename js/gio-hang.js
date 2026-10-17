@@ -72,6 +72,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // 3. Xử lý các nút yêu thích (Wishlist) qua Fetch API không tải lại trang
+  document.querySelectorAll('.form-yeu-thich').forEach((form) => {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const btn = form.querySelector('.btn-yeu-thich');
+      const formData = new FormData(form);
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+      if (btn) btn.disabled = true;
+
+      fetch('yeu-thich.php', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-Token': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: formData
+      })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.thanh_cong) {
+          document.querySelectorAll('.so-luong-yeu-thich').forEach((span) => {
+            span.textContent = data.so_luong;
+          });
+          if (btn) {
+            if (data.da_thich) {
+              btn.classList.add('da-thich');
+              btn.textContent = '❤️ Đã thích';
+              btn.style.background = '#fee2e2';
+              btn.style.color = '#dc2626';
+              btn.style.borderColor = '#fca5a5';
+            } else {
+              btn.classList.remove('da-thich');
+              btn.textContent = '🤍 Yêu thích';
+              btn.style.background = '';
+              btn.style.color = '';
+              btn.style.borderColor = '';
+            }
+          }
+        }
+      })
+      .catch(() => {
+        form.submit();
+      })
+      .finally(() => {
+        if (btn) btn.disabled = false;
+      });
+    });
+  });
+
   /**
    * Gửi HTTP POST request với thân JSON lên endpoint api/gio-hang.php
    */

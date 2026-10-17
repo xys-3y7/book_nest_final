@@ -20,16 +20,19 @@ Dự án **BookNest** được gia cố bảo mật toàn diện theo chuẩn **
 
 ---
 
-## 2. Bảng 7 Biện pháp bảo mật & Phân công nhiệm vụ (Bảng 1)
-| TT | Biện pháp gia cố bảo mật | Tệp chính liên quan | Slide bài giảng | Thành viên phụ trách |
-|:--:|:---|:---|:---:|:---|
-| 1 | **Mã CSRF cho mọi form POST và fetch** | `inc/csrf.php`, `inc/config.php`, `inc/header.php`, `js/gio-hang.js`, `dang-xuat.php` | Slide 23–24 | **Xaiyasith Yoi** *(Nhóm trưởng)* |
-| 2 | **Cookie phiên và phiên an toàn** | `inc/config.php`, `inc/xac-thuc.php` | Slide 25 | **Nguyễn Thị Sinh** |
-| 3 | **Header bảo mật và Content Security Policy** | `inc/config.php`, `css/*.css`, `js/*.js` | Slide 22, 26–27 | **Phommaket Hatsady** |
-| 4 | **Cấu hình và bí mật trong tệp .env** | `.env.example`, `.gitignore`, `composer.json`, `inc/config.php`, `inc/db.php` | Slide 29 | **Vongsena Sauphasith** |
-| 5 | **Chặn tệp nội bộ trên Apache (.htaccess)** | `.htaccess`, `uploads/.htaccess` | Slide 28, 30 | **Phommaket Hatsady** |
-| 6 | **Tài khoản CSDL quyền tối thiểu** | `database/tai-khoan.sql`, `.env` | Slide 20 | **Vongsena Sauphasith** |
-| 7 | **Chống đoán mật khẩu & Ghi log bảo mật** | `database/schema.sql`, `inc/xac-thuc.php`, `inc/ham.php`, `dang-nhap.php` | Slide 31–32 | **Xaiyasith Yoi** & **Nguyễn Thị Sinh** |
+## 2. Thành viên nhóm & Bảng phân công nhiệm vụ (Bảng 1)
+| STT | Họ và tên sinh viên | Mã sinh viên | Tài khoản GitHub | Vai trò & Biện pháp bảo mật phụ trách |
+|:---:|:---|:---:|:---|:---|
+| 1 | **Xaiyasith Yoi** *(Nhóm trưởng)* | 3120224189 | [@xys-3y7](https://github.com/xys-3y7) | Biện pháp 1 (Mã CSRF 19 form), Biện pháp 7 (Rate limit 429 & Nhật ký bảo mật), Bộ kiểm thử 14 ca tự động, chủ trì báo cáo. |
+| 2 | **Phommaket Hatsady** | 3120224181 | [@daimobile33076-eng](https://github.com/daimobile33076-eng) | Biện pháp 5 (Cấu hình Apache .htaccess & uploads/.htaccess), Trang cá nhân danh mục dự án, Thảo luận C.3. |
+| 3 | **Vongsena Sauphasith** | 3120224186 | [@happy2072005-prog](https://github.com/happy2072005-prog) | Biện pháp 4 (Bí mật .env với phpdotenv), Biện pháp 6 (Tài khoản CSDL quyền tối thiểu), Thảo luận C.4. |
+| 4 | **Nguyễn Thị Sinh** | 3120223169 | [@chingg2005](https://github.com/chingg2005) | Biện pháp 2 (Bảo vệ Session HttpOnly/SameSite), Biện pháp 3 (Security Headers & CSP), Thảo luận C.2. |
+
+### Các nút tương tác sản phẩm chính trên website:
+1. ⚡ **Nút Đặt mua ngay (ปุ่มกดสั่งชื้อ):** Thêm sách vào đơn và chuyển hướng tức thời sang trang thanh toán/xác nhận đặt hàng (`dat-hang.php`).
+2. 🛒 **Nút Thêm vào giỏ hàng (ปุ่มตะกร้า):** Thêm sách vào giỏ hàng PHP Session qua Fetch API không tải lại trang hoặc form POST truyền thống (`gio-hang.php`).
+3. ❤️ **Nút Danh sách yêu thích (ปุ่มรายการโปรด):** Lưu trữ và quản lý các đầu sách sinh viên quan tâm vào danh mục yêu thích (`yeu-thich.php`).
+4. 🔍 **Nút Xem chi tiết (ปุ่มดูรายละเอียด):** Truy cập trang thông tin chi tiết đầy đủ của cuốn sách (`chi-tiet.php?id=...`).
 
 ---
 
