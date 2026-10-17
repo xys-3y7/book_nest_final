@@ -151,43 +151,46 @@ require __DIR__ . '/inc/header.php';
             <div class="the__than">
               <h3 class="the__tieu-de"><a href="chi-tiet.php?id=<?= $lq->id ?>"><?= e($lq->ten) ?></a></h3>
               <p class="the__gia"><?= vnd($lq->gia) ?></p>
-              <div class="the__chan" style="margin-top:0.6rem;display:flex;gap:5px;flex-wrap:wrap;align-items:center;">
+              <!-- 4 NÚT THAO TÁC: ĐẶT MUA, THÊM GIỎ, YÊU THÍCH, CHI TIẾT (2x2 GRID ĐỐI XỨNG) -->
+              <div class="the__chan">
                 <!-- 1. Đặt mua ngay -->
                 <?php if ($lq->tonKho > 0): ?>
-                  <form method="POST" action="gio-hang.php" style="margin:0;display:inline;">
+                  <form method="POST" action="gio-hang.php">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="mua_ngay">
                     <input type="hidden" name="id" value="<?= $lq->id ?>">
                     <input type="hidden" name="soLuong" value="1">
-                    <button type="submit" class="nut nut--nhan btn-mua-ngay" title="Đặt mua sách ngay" style="font-size:0.8rem;padding:6px 10px;">⚡ Đặt mua</button>
+                    <button type="submit" class="nut nut--nhan btn-mua-ngay" title="Đặt mua sách ngay">⚡ Mua ngay</button>
                   </form>
                 <?php else: ?>
-                  <button type="button" disabled class="nut nut--vien" style="font-size:0.8rem;padding:6px 8px;opacity:0.6;cursor:not-allowed;">Hết hàng</button>
+                  <button type="button" disabled class="nut nut--vien" style="opacity:0.6;cursor:not-allowed;" title="Sách tạm thời hết hàng">⚡ Hết hàng</button>
                 <?php endif; ?>
 
                 <!-- 2. Thêm vào giỏ -->
                 <?php if ($lq->tonKho > 0): ?>
-                  <form method="POST" action="gio-hang.php" class="form-them-nhanh" style="margin:0;display:inline;">
+                  <form method="POST" action="gio-hang.php" class="form-them-nhanh">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="them">
                     <input type="hidden" name="id" value="<?= $lq->id ?>">
                     <input type="hidden" name="soLuong" value="1">
-                    <button type="submit" class="nut nut--chinh btn-them-nhanh" title="Thêm vào giỏ hàng" style="font-size:0.8rem;padding:6px 10px;">🛒 Thêm giỏ</button>
+                    <button type="submit" class="nut nut--chinh btn-them-nhanh" title="Thêm vào giỏ hàng">🛒 Thêm giỏ</button>
                   </form>
+                <?php else: ?>
+                  <button type="button" disabled class="nut nut--vien" style="opacity:0.6;cursor:not-allowed;" title="Sách tạm thời hết hàng">🛒 Hết hàng</button>
                 <?php endif; ?>
 
                 <!-- 3. Yêu thích -->
-                <form method="POST" action="yeu-thich.php" class="form-yeu-thich" style="margin:0;display:inline;">
+                <form method="POST" action="yeu-thich.php" class="form-yeu-thich">
                   <?= csrfField() ?>
                   <input type="hidden" name="action" value="toggle">
                   <input type="hidden" name="id" value="<?= $lq->id ?>">
-                  <button type="submit" class="nut nut--vien btn-yeu-thich <?= daYeuThich($lq->id) ? 'da-thich' : '' ?>" title="<?= daYeuThich($lq->id) ? 'Đã yêu thích (Bấm để bỏ)' : 'Thêm vào yêu thích' ?>" style="font-size:0.8rem;padding:6px 10px;<?= daYeuThich($lq->id) ? 'background:#fee2e2;color:#dc2626;border-color:#fca5a5;' : '' ?>">
+                  <button type="submit" class="nut nut--vien btn-yeu-thich <?= daYeuThich($lq->id) ? 'da-thich' : '' ?>" title="<?= daYeuThich($lq->id) ? 'Đã yêu thích (Bấm để bỏ)' : 'Thêm vào yêu thích' ?>">
                     <?= daYeuThich($lq->id) ? '❤️ Đã thích' : '🤍 Yêu thích' ?>
                   </button>
                 </form>
 
                 <!-- 4. Chi tiết -->
-                <a href="chi-tiet.php?id=<?= $lq->id ?>" class="nut nut--vien" title="Xem chi tiết nội dung cuốn sách" style="font-size:0.8rem;padding:6px 10px;">🔍 Chi tiết</a>
+                <a href="chi-tiet.php?id=<?= $lq->id ?>" class="nut nut--vien" title="Xem chi tiết nội dung cuốn sách">🔍 Chi tiết</a>
               </div>
             </div>
           </article>

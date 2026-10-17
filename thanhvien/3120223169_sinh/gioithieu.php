@@ -92,19 +92,30 @@ require __DIR__ . '/../../inc/header.php';
 ?>
 
 <main class="noi-dung-chinh khung-chua" style="max-width: 900px; margin: 30px auto;">
-  <section style="display: flex; gap: 30px; align-items: center; background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px; flex-wrap: wrap;">
-    <img src="<?= $goc ?>images/sinh-avatar.png" alt="Ảnh Nguyễn Thị Sinh" width="130" height="130" style="border-radius: 50%; object-fit: cover; border: 3px solid #1e3b6d;">
-    <div>
-      <h1 style="margin: 0; color: #1e3b6d; font-size: 1.8rem;">Nguyễn Thị Sinh</h1>
-      <p style="margin: 5px 0; color: #64748b;">Mã sinh viên: <strong>3120223169</strong> | Lớp: <strong>24CNTT3</strong></p>
-      <p style="margin: 5px 0;">GitHub: <a href="https://github.com/chingg2005" target="_blank" rel="noopener noreferrer" style="color: #0369a1; font-weight: bold;">@chingg2005 (https://github.com/chingg2005)</a></p>
-      <p style="margin: 5px 0;">Vai trò: <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Thành viên Nhóm 12</span></p>
-      <p style="margin: 5px 0; color: #475569;">Trách nhiệm website: Trang chi tiết chi-tiet.php, cookie da_xem, đăng ký/đăng nhập và phân quyền quản trị sản phẩm.</p>
-      <div style="margin-top: 10px;">
-        <a href="../../gioi-thieu.php" class="nut nut--vien" style="padding: 4px 12px; font-size: 0.85rem;">&larr; Quay lại trang Giới thiệu nhóm</a>
+  <!-- Thông tin cá nhân -->
+  <section style="display: flex; gap: 30px; align-items: center; background: #ffffff; padding: 28px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 30px; flex-wrap: wrap; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05); position: relative; overflow: hidden;">
+    <div style="position: absolute; top: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, #ec4899 0%, #a855f7 100%);"></div>
+    <img src="<?= $goc ?>images/sinh-avatar.png" alt="Ảnh Nguyễn Thị Sinh" width="130" height="130" style="border-radius: 50%; object-fit: cover; border: 4px solid #ffffff; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.15);">
+    <div style="flex: 1; min-width: 280px;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
+        <h1 style="margin: 0; color: #0f2b5c; font-size: 1.85rem; font-weight: 800;">Nguyễn Thị Sinh</h1>
+        <span class="huy-hieu huy-hieu--thong-tin" style="font-size: 0.75rem; padding: 4px 10px;">Thành viên</span>
       </div>
+      <p style="margin: 4px 0; color: #64748b; font-size: 0.95rem;">Mã sinh viên: <strong>3120223169</strong> &bull; Lớp: <strong>24CNTT3</strong></p>
+      <div style="margin: 8px 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <a href="https://github.com/chingg2005" target="_blank" rel="noopener noreferrer" class="github-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          <span>chingg2005</span>
+        </a>
+        <a href="../../gioi-thieu.php" class="nut nut--vien" style="padding: 4px 12px; font-size: 0.85rem; border-radius: 9999px;">&larr; Trang giới thiệu nhóm</a>
+      </div>
+      <p style="margin: 4px 0; color: #475569; font-size: 0.9rem;">
+        <strong>Trách nhiệm:</strong> Trang chi tiết chi-tiet.php, cookie da_xem, đăng ký/đăng nhập và phân quyền quản trị sản phẩm.
+      </p>
       <?php if ($laChuTrang): ?>
-        <p style="margin: 8px 0 0 0; color: #16a34a; font-weight: bold;">✓ Bạn đang đăng nhập với tư cách Chủ trang (sinh@ued.vn)</p>
+        <p style="margin: 8px 0 0 0; color: #16a34a; font-weight: bold; font-size: 0.9rem;">✓ Bạn đang đăng nhập với tư cách Chủ trang (sinh@ued.vn)</p>
+      <?php else: ?>
+        <p style="margin: 8px 0 0 0; font-size: 0.85rem; color: #64748b;">(Đăng nhập tài khoản <code>sinh@ued.vn</code> / <code>matkhau123</code> để kích hoạt quyền xóa lưu bút)</p>
       <?php endif; ?>
     </div>
   </section>

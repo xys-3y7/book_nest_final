@@ -143,42 +143,44 @@ require __DIR__ . '/inc/header.php';
               <?= $sp->tonKho > 0 ? 'Còn hàng (' . $sp->tonKho . ' cuốn)' : 'Hết hàng tạm thời' ?>
             </p>
 
-            <!-- 4 NÚT THAO TÁC THEO YÊU CẦU: ĐẶT MUA, THÊM GIỎ, BỎ THÍCH, CHI TIẾT -->
-            <div class="the__chan" style="margin-top:0.75rem;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <!-- 4 NÚT THAO TÁC THEO YÊU CẦU: ĐẶT MUA, THÊM GIỎ, BỎ THÍCH, CHI TIẾT (2x2 GRID) -->
+            <div class="the__chan">
               <!-- 1. Nút Đặt mua ngay (ปุ่มกดสั่งชื้อ) -->
               <?php if ($sp->tonKho > 0): ?>
-                <form method="POST" action="gio-hang.php" style="margin:0;display:inline;">
+                <form method="POST" action="gio-hang.php">
                   <?= csrfField() ?>
                   <input type="hidden" name="action" value="mua_ngay">
                   <input type="hidden" name="id" value="<?= $sp->id ?>">
                   <input type="hidden" name="soLuong" value="1">
-                  <button type="submit" class="nut nut--nhan" style="font-size:0.8rem;padding:6px 10px;">⚡ Đặt mua</button>
+                  <button type="submit" class="nut nut--nhan btn-mua-ngay" title="Đặt mua sách ngay">⚡ Mua ngay</button>
                 </form>
               <?php else: ?>
-                <button type="button" disabled class="nut nut--vien" style="font-size:0.8rem;padding:6px 10px;opacity:0.6;cursor:not-allowed;">Hết hàng</button>
+                <button type="button" disabled class="nut nut--vien" style="opacity:0.6;cursor:not-allowed;" title="Sách tạm thời hết hàng">⚡ Hết hàng</button>
               <?php endif; ?>
 
               <!-- 2. Nút Thêm vào giỏ hàng (ปุ่มตะกร้า) -->
               <?php if ($sp->tonKho > 0): ?>
-                <form method="POST" action="gio-hang.php" class="form-them-nhanh" style="margin:0;display:inline;">
+                <form method="POST" action="gio-hang.php" class="form-them-nhanh">
                   <?= csrfField() ?>
                   <input type="hidden" name="action" value="them">
                   <input type="hidden" name="id" value="<?= $sp->id ?>">
                   <input type="hidden" name="soLuong" value="1">
-                  <button type="submit" class="nut nut--chinh btn-them-nhanh" style="font-size:0.8rem;padding:6px 10px;">🛒 Thêm giỏ</button>
+                  <button type="submit" class="nut nut--chinh btn-them-nhanh" title="Thêm vào giỏ hàng">🛒 Thêm giỏ</button>
                 </form>
+              <?php else: ?>
+                <button type="button" disabled class="nut nut--vien" style="opacity:0.6;cursor:not-allowed;" title="Sách tạm thời hết hàng">🛒 Hết hàng</button>
               <?php endif; ?>
 
-              <!-- 3. Nút Xem chi tiết (ปุ่มดูรายละเอียด) -->
-              <a href="chi-tiet.php?id=<?= $sp->id ?>" class="nut nut--vien" style="font-size:0.8rem;padding:6px 10px;">🔍 Chi tiết</a>
-
-              <!-- 4. Nút Xóa khỏi danh sách yêu thích -->
-              <form method="POST" action="yeu-thich.php" style="margin:0;display:inline;">
+              <!-- 3. Nút Xóa khỏi danh sách yêu thích -->
+              <form method="POST" action="yeu-thich.php">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="xoa">
                 <input type="hidden" name="id" value="<?= $sp->id ?>">
-                <button type="submit" class="nut nut--vien" style="font-size:0.8rem;padding:6px 10px;color:#dc2626;border-color:#fca5a5;" title="Xóa khỏi yêu thích">❌ Bỏ thích</button>
+                <button type="submit" class="nut nut--vien btn-yeu-thich da-thich" title="Bỏ khỏi yêu thích">❌ Bỏ thích</button>
               </form>
+
+              <!-- 4. Nút Xem chi tiết (ปุ่มดูรายละเอียด) -->
+              <a href="chi-tiet.php?id=<?= $sp->id ?>" class="nut nut--vien" title="Xem chi tiết nội dung cuốn sách">🔍 Chi tiết</a>
             </div>
           </div>
         </article>
