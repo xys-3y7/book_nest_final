@@ -29,6 +29,7 @@ $moi = array_unique([$sp->id, ...array_filter($cu)]);
 setcookie('da_xem', implode(',', array_slice($moi, 0, 4)), [
     'expires'  => time() + 30 * 24 * 3600, // 30 ngày
     'path'     => '/',
+    'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
     'httponly' => true,
     'samesite' => 'Lax',
 ]);
@@ -87,6 +88,7 @@ require __DIR__ . '/inc/header.php';
       <!-- Biểu mẫu Thêm vào giỏ hàng (Hỗ trợ cả POST thường khi tắt JS và fetch khi bật JS) -->
       <?php if ($sp->tonKho > 0): ?>
         <form method="POST" action="gio-hang.php" id="form-them-gio" class="form-them-gio" style="display: flex; gap: 15px; align-items: center; margin-bottom: 30px; flex-wrap: wrap;">
+          <?= csrfField() ?>
           <input type="hidden" name="action" value="them">
           <input type="hidden" name="id" value="<?= $sp->id ?>">
           

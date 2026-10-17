@@ -87,6 +87,7 @@ require __DIR__ . '/inc/header.php';
 
   <div style="background: #ffffff; padding: 30px; border-radius: 8px; border: 1px solid #e2e8f0;">
     <form method="POST" action="sua-san-pham.php?id=<?= $id ?>" enctype="multipart/form-data" novalidate>
+      <?= csrfField() ?>
       
       <!-- Tên sách -->
       <div style="margin-bottom: 20px;">

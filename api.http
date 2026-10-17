@@ -1,11 +1,15 @@
 # =============================================================================
 # HỌC PHẦN: THIẾT KẾ VÀ LẬP TRÌNH WEB (WEB DESIGN AND PROGRAMMING)
-# BÀI TẬP THỰC HÀNH NHÓM SỐ 6 - CHƯƠNG 6: PHP VÀ CƠ SỞ DỮ LIỆU MYSQL
+# BÀI TẬP THỰC HÀNH NHÓM SỐ 7 - CHƯƠNG 7: BẢO MẬT ỨNG DỤNG WEB
 # ĐỒ ÁN: BOOKNEST - NHÀ SÁCH TRỰC TUYẾN SINH VIÊN UED (NHÓM 12)
-# TẬP TIN: api.http - BỘ REQUEST KIỂM THỬ REST API (REST CLIENT CHO VS CODE)
+# TẬP TIN: api.http - BỘ REQUEST KIỂM THỬ REST API CÓ BẢO VỆ MÃ CSRF
 # =============================================================================
 
 @goc = http://localhost:8000
+
+# Điền cookie phiên và mã CSRF nhận được từ trang có form để gửi kèm POST
+@phpsessid = 
+@csrfToken = 
 
 ### 1. Tìm kiếm sách tức thời thành công -> 200 OK
 GET {{goc}}/api/san-pham.php?q=php
@@ -22,15 +26,20 @@ GET {{goc}}/api/san-pham.php?id=abc
 ### 5. Phương thức không được phép trên API sản phẩm -> 405 Method Not Allowed
 POST {{goc}}/api/san-pham.php
 Content-Type: application/json
+Cookie: PHPSESSID={{phpsessid}}
+X-CSRF-Token: {{csrfToken}}
 
 {"q": "php"}
 
 ### 6. Xem giỏ hàng hiện tại qua API -> 200 OK
 GET {{goc}}/api/gio-hang.php
+Cookie: PHPSESSID={{phpsessid}}
 
-### 7. Thêm sách vào giỏ hàng thành công (Thân JSON) -> 200 OK
+### 7. Thêm sách vào giỏ hàng thành công (Thân JSON + Header X-CSRF-Token) -> 200 OK
 POST {{goc}}/api/gio-hang.php
 Content-Type: application/json
+Cookie: PHPSESSID={{phpsessid}}
+X-CSRF-Token: {{csrfToken}}
 
 {
   "id": 1,
@@ -40,12 +49,16 @@ Content-Type: application/json
 ### 8. Thêm sách với thân không phải định dạng JSON chuẩn -> 400 Bad Request
 POST {{goc}}/api/gio-hang.php
 Content-Type: application/json
+Cookie: PHPSESSID={{phpsessid}}
+X-CSRF-Token: {{csrfToken}}
 
 {id: 1, sl: 2}
 
 ### 9. Thêm sách với số lượng âm -> 422 Unprocessable Content
 POST {{goc}}/api/gio-hang.php
 Content-Type: application/json
+Cookie: PHPSESSID={{phpsessid}}
+X-CSRF-Token: {{csrfToken}}
 
 {
   "id": 1,
@@ -55,20 +68,21 @@ Content-Type: application/json
 ### 10. Thêm sách với số lượng vượt quá tồn kho thực tế -> 422 Unprocessable Content
 POST {{goc}}/api/gio-hang.php
 Content-Type: application/json
+Cookie: PHPSESSID={{phpsessid}}
+X-CSRF-Token: {{csrfToken}}
 
 {
   "id": 12,
-  "sl": 999
+  "sl": 999999
 }
 
 ### 11. Thêm sách với ID sản phẩm không tồn tại -> 404 Not Found
 POST {{goc}}/api/gio-hang.php
 Content-Type: application/json
+Cookie: PHPSESSID={{phpsessid}}
+X-CSRF-Token: {{csrfToken}}
 
 {
-  "id": 888888,
+  "id": 88888,
   "sl": 1
 }
-
-### 12. Sai phương thức HTTP trên API giỏ hàng -> 405 Method Not Allowed (Header Allow: GET, POST)
-DELETE {{goc}}/api/gio-hang.php

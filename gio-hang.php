@@ -103,6 +103,7 @@ require __DIR__ . '/inc/header.php';
 
   <?php if ($soMon > 0): ?>
     <form method="POST" action="gio-hang.php">
+      <?= csrfField() ?>
       <input type="hidden" name="action" value="capnhat">
 
       <div style="overflow-x: auto; margin-bottom: 25px;">
@@ -181,12 +182,14 @@ require __DIR__ . '/inc/header.php';
     <!-- Các form xóa riêng lẻ ngoài bảng (để tránh lồng form HTML) -->
     <?php foreach ($chiTietGio as $item): ?>
       <form id="form-xoa-<?= $item['sanPham']->id ?>" method="POST" action="gio-hang.php" style="display: none;">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="xoa">
         <input type="hidden" name="id" value="<?= $item['sanPham']->id ?>">
       </form>
     <?php endforeach; ?>
 
     <form id="form-xoa-het" method="POST" action="gio-hang.php" style="display: none;">
+      <?= csrfField() ?>
       <input type="hidden" name="action" value="xoahet">
     </form>
 

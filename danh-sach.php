@@ -12,9 +12,9 @@ use App\Data\KhoSanPham;
 $kho = new KhoSanPham(db());
 $duong = ['options' => ['min_range' => 1]];
 
-// Lọc dữ liệu an toàn từ $_GET
+// Lọc dữ liệu an toàn từ $_GET (sử dụng chuoi() chống lỗi TypeError khi nhận mảng ?q[]=ao)
 $loc = [
-    'q'        => trim($_GET['q'] ?? ''),
+    'q'        => trim(chuoi($_GET['q'] ?? '')),
     'dm'       => filter_var($_GET['dm'] ?? '', FILTER_VALIDATE_INT, $duong),
     'giaToiDa' => filter_var($_GET['gia'] ?? '', FILTER_VALIDATE_INT, $duong),
 ];
@@ -26,7 +26,7 @@ $kieuSx = [
     'ten'      => 'Tên A–Z'
 ];
 
-$sx = $_GET['sx'] ?? 'moi';
+$sx = chuoi($_GET['sx'] ?? 'moi');
 if (!array_key_exists($sx, $kieuSx)) {
     $sx = 'moi';
 }
@@ -53,7 +53,8 @@ $dsDanhMuc = db()->query('SELECT id, ten FROM danh_muc ORDER BY ten')->fetchAll(
  */
 function lienKetTrang(int $so): string
 {
-    return '?' . http_build_query(array_merge($_GET, ['trang' => $so]));
+    $params = array_filter($_GET, fn($v) => is_scalar($v));
+    return '?' . http_build_query(array_merge($params, ['trang' => $so]));
 }
 
 $tieuDe = 'Danh mục sách';
@@ -154,6 +155,7 @@ require __DIR__ . '/inc/header.php';
               <a href="chi-tiet.php?id=<?= $sp->id ?>" class="nut nut--vien" style="font-size:0.85rem;padding:6px 10px;">Chi tiết</a>
               <?php if ($sp->tonKho > 0): ?>
                 <form method="POST" action="gio-hang.php" class="form-them-nhanh" style="margin:0;display:inline;">
+                  <?= csrfField() ?>
                   <input type="hidden" name="action" value="them">
                   <input type="hidden" name="id" value="<?= $sp->id ?>">
                   <input type="hidden" name="soLuong" value="1">

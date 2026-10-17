@@ -36,9 +36,9 @@ $du = [
 $loi = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $du['dia_chi']       = trim($_POST['dia_chi'] ?? '');
-    $du['so_dien_thoai'] = trim($_POST['so_dien_thoai'] ?? '');
-    $du['ghi_chu']       = trim($_POST['ghi_chu'] ?? '');
+    $du['dia_chi']       = trim(chuoi($_POST['dia_chi'] ?? ''));
+    $du['so_dien_thoai'] = trim(chuoi($_POST['so_dien_thoai'] ?? ''));
+    $du['ghi_chu']       = trim(chuoi($_POST['ghi_chu'] ?? ''));
 
     if ($du['dia_chi'] === '' || mb_strlen($du['dia_chi']) < 5) {
         $loi['dia_chi'] = 'Vui lòng cung cấp địa chỉ nhận sách chi tiết (tối thiểu 5 ký tự).';
@@ -99,6 +99,7 @@ require __DIR__ . '/inc/header.php';
       <h2 style="margin-top: 0; color: #1e3b6d; font-size: 1.3rem;">Thông tin giao nhận sách</h2>
 
       <form method="POST" action="dat-hang.php" novalidate>
+        <?= csrfField() ?>
         
         <div style="margin-bottom: 16px;">
           <label style="display: block; font-weight: bold; margin-bottom: 5px;">Họ tên người nhận:</label>

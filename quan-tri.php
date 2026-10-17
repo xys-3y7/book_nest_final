@@ -137,7 +137,8 @@ require __DIR__ . '/inc/header.php';
               <td style="padding: 10px 12px; text-align: center;">
                 <div style="display: flex; gap: 6px; justify-content: center;">
                   <a href="sua-san-pham.php?id=<?= $sp->id ?>" class="nut nut--vien" style="padding: 4px 10px; font-size: 0.8rem;">Sửa</a>
-                  <form method="POST" action="xoa-san-pham.php" onsubmit="return confirm('Bạn có chắc chắn muốn xóa cuốn sách #<?= $sp->id ?> (<?= e(addslashes($sp->ten)) ?>)?');" style="margin: 0;">
+                  <form method="POST" action="xoa-san-pham.php" class="form-xoa-sp" style="margin: 0;">
+                    <?= csrfField() ?>
                     <input type="hidden" name="id" value="<?= $sp->id ?>">
                     <button type="submit" class="nut nut--vien" style="padding: 4px 10px; font-size: 0.8rem; color: #dc2626; border-color: #fca5a5;">Xóa</button>
                   </form>
@@ -190,6 +191,7 @@ require __DIR__ . '/inc/header.php';
               <td style="padding: 10px 12px; font-weight: bold; color: #dc2626;"><?= vnd($dh['tong_tien']) ?></td>
               <td style="padding: 10px 12px;">
                 <form method="POST" action="quan-tri.php" style="display: flex; gap: 6px; align-items: center; margin: 0;">
+                  <?= csrfField() ?>
                   <input type="hidden" name="cap_nhat_don" value="1">
                   <input type="hidden" name="don_id" value="<?= $dh['id'] ?>">
                   <select name="trang_thai" style="padding: 4px 8px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px;">

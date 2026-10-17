@@ -76,10 +76,12 @@ document.addEventListener('DOMContentLoaded', () => {
    * Gửi HTTP POST request với thân JSON lên endpoint api/gio-hang.php
    */
   async function guiYeuCauThemGio(id, sl) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const res = await fetch('api/gio-hang.php', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json; charset=utf-8'
+        'Content-Type': 'application/json; charset=utf-8',
+        'X-CSRF-Token': csrfToken
       },
       body: JSON.stringify({ id: id, sl: sl })
     });

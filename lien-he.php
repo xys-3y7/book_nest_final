@@ -19,11 +19,11 @@ $loi = [];
 $tenAnhLuu = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // 1. Thu nhận và làm sạch dữ liệu đầu vào
-    $du['hoten']   = trim($_POST['hoten'] ?? '');
-    $du['email']   = trim($_POST['email'] ?? '');
-    $du['sdt']     = trim($_POST['sdt'] ?? '');
-    $du['noidung'] = trim($_POST['noidung'] ?? '');
+    // 1. Thu nhận và làm sạch dữ liệu đầu vào (chuoi() chống lỗi khi truyền mảng)
+    $du['hoten']   = trim(chuoi($_POST['hoten'] ?? ''));
+    $du['email']   = trim(chuoi($_POST['email'] ?? ''));
+    $du['sdt']     = trim(chuoi($_POST['sdt'] ?? ''));
+    $du['noidung'] = trim(chuoi($_POST['noidung'] ?? ''));
 
     // 2. Kiểm tra tính hợp lệ của từng trường dữ liệu phía máy chủ (Server-side validation)
     if ($du['hoten'] === '') {
@@ -127,6 +127,7 @@ require __DIR__ . '/inc/header.php';
     <!-- Biểu mẫu liên hệ -->
     <div style="flex: 3; min-width: 320px; background: #ffffff; padding: 30px; border-radius: 8px; border: 1px solid #e2e8f0;">
       <form method="POST" action="lien-he.php" enctype="multipart/form-data" novalidate>
+        <?= csrfField() ?>
         
         <!-- Ô Họ và tên -->
         <div style="margin-bottom: 20px;">

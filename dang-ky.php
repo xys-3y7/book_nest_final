@@ -21,9 +21,9 @@ $du = [
 $loi = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $du['email']    = trim($_POST['email'] ?? '');
-    $du['ho_ten']   = trim($_POST['ho_ten'] ?? '');
-    $du['mat_khau'] = $_POST['mat_khau'] ?? '';
+    $du['email']    = trim(chuoi($_POST['email'] ?? ''));
+    $du['ho_ten']   = trim(chuoi($_POST['ho_ten'] ?? ''));
+    $du['mat_khau'] = chuoi($_POST['mat_khau'] ?? '');
 
     // Kiểm tra tính hợp lệ dữ liệu đăng ký
     if ($du['ho_ten'] === '' || mb_strlen($du['ho_ten']) < 2 || mb_strlen($du['ho_ten']) > 100) {
@@ -88,6 +88,7 @@ require __DIR__ . '/inc/header.php';
     </p>
 
     <form method="POST" action="dang-ky.php" novalidate>
+      <?= csrfField() ?>
       
       <!-- Họ và tên -->
       <div style="margin-bottom: 18px;">
