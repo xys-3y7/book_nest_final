@@ -1,0 +1,14 @@
+# .htaccess — Thư mục gốc dự án BookNest (Nhóm 12)
+# Không liệt kê nội dung thư mục
+Options -Indexes
+
+# Tệp, thư mục ẩn (.env, .git...) — chừa .well-known
+RedirectMatch 404 /\.(?!well-known/)
+
+# Chặn truy cập trực tiếp các thư mục nội bộ
+RedirectMatch 404 /(inc|src|vendor|database|logs|storage|kiemtra)(/|$)
+
+# Chặn tệp SQL, nhật ký, bản sao lưu, tệp khóa và tệp cấu hình Composer
+<FilesMatch "\.(sql|log|bak|ini|lock)$|^composer\.json$">
+    Require all denied
+</FilesMatch>
