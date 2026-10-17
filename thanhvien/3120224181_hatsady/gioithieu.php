@@ -23,12 +23,27 @@ $laChuTrang = ($u['id'] ?? 0) === ($tv['nguoi_dung_id'] ?? -1);
 
 $loi = [];
 
-// Xử lý thêm dự án mới (chỉ chủ trang)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $laChuTrang) {
-    $tenDuAn = trim($_POST['ten_du_an'] ?? '');
-    $congNghe = trim($_POST['cong_nghe'] ?? '');
-    $moTa = trim($_POST['mo_ta'] ?? '');
-    $link = trim($_POST['link_github'] ?? '');
+// Xử lý thêm hoặc xóa dự án (chỉ chủ trang có quyền)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!$laChuTrang) {
+        ghiLogBaoMat('cam_truy_cap', ['trang' => $_SERVER['REQUEST_URI']]);
+        http_response_code(403);
+        exit('403 Forbidden — Bạn không có quyền thao tác trên trang này.');
+    }
+
+    $xoaId = filter_var($_POST['xoa_id'] ?? '', FILTER_VALIDATE_INT);
+    if ($xoaId) {
+        $stDel = $db->prepare('DELETE FROM tv_du_an WHERE id = ? AND mssv = ?');
+        $stDel->execute([$xoaId, MSSV]);
+        $_SESSION['flash'] = 'Đã xóa dự án thành công!';
+        header('Location: gioithieu.php');
+        exit;
+    }
+
+    $tenDuAn = trim(chuoi($_POST['ten_du_an'] ?? ''));
+    $congNghe = trim(chuoi($_POST['cong_nghe'] ?? ''));
+    $moTa = trim(chuoi($_POST['mo_ta'] ?? ''));
+    $link = trim(chuoi($_POST['link_github'] ?? ''));
 
     if ($tenDuAn === '' || mb_strlen($tenDuAn) > 100) {
         $loi['ten_du_an'] = 'Tên dự án dài từ 1 đến 100 ký tự';
@@ -49,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $laChuTrang) {
     }
 }
 
-// Tìm kiếm và lọc dự án
-$q = trim($_GET['q'] ?? '');
+// Tìm kiếm và lọc dự án an toàn với chuoi()
+$q = trim(chuoi($_GET['q'] ?? ''));
 $sql = 'SELECT * FROM tv_du_an WHERE mssv = ?';
 $params = [MSSV];
 
@@ -99,6 +114,7 @@ require __DIR__ . '/../../inc/header.php';
     <section style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
       <h2 style="margin-top: 0; color: #1e3b6d; font-size: 1.25rem;">+ Thêm dự án công nghệ mới (Bảng tv_du_an)</h2>
       <form method="POST" action="gioithieu.php">
+        <?= csrfField() ?>
         <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 12px;">
           <div style="flex: 1; min-width: 220px;">
             <label style="display:block;font-weight:bold;margin-bottom:4px;">Tên dự án *</label>
