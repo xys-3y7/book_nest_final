@@ -23,11 +23,26 @@ $laChuTrang = ($u['id'] ?? 0) === ($tv['nguoi_dung_id'] ?? -1);
 
 $loi = [];
 
-// Xử lý thêm sách yêu thích mới (chỉ chủ trang)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $laChuTrang) {
+// Xử lý thêm hoặc xóa sách yêu thích (chỉ chủ trang có quyền)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!$laChuTrang) {
+        ghiLogBaoMat('cam_truy_cap', ['trang' => $_SERVER['REQUEST_URI']]);
+        http_response_code(403);
+        exit('403 Forbidden — Bạn không có quyền thao tác trên trang này.');
+    }
+
+    $xoaSpId = filter_var($_POST['xoa_sp_id'] ?? '', FILTER_VALIDATE_INT);
+    if ($xoaSpId) {
+        $stDel = $db->prepare('DELETE FROM tv_sach_yeu_thich WHERE san_pham_id = ? AND mssv = ?');
+        $stDel->execute([$xoaSpId, MSSV]);
+        $_SESSION['flash'] = 'Đã xóa sách khỏi danh sách yêu thích!';
+        header('Location: gioithieu.php');
+        exit;
+    }
+
     $spId = filter_var($_POST['san_pham_id'] ?? '', FILTER_VALIDATE_INT);
     $danhGia = filter_var($_POST['danh_gia'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 5]]);
-    $camNhan = trim($_POST['cam_nhan'] ?? '');
+    $camNhan = trim(chuoi($_POST['cam_nhan'] ?? ''));
 
     if (!$spId) {
         $loi['san_pham_id'] = 'Vui lòng chọn một cuốn sách';
@@ -101,6 +116,7 @@ require __DIR__ . '/../../inc/header.php';
     <section style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
       <h2 style="margin-top: 0; color: #1e3b6d; font-size: 1.25rem;">+ Thêm sách yêu thích &amp; Đánh giá sao (Bảng tv_sach_yeu_thich)</h2>
       <form method="POST" action="gioithieu.php">
+        <?= csrfField() ?>
         <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 12px;">
           <div style="flex: 2; min-width: 240px;">
             <label style="display:block;font-weight:bold;margin-bottom:4px;">Chọn sách *</label>
