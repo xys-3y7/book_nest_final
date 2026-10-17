@@ -14,13 +14,40 @@ const MSSV = '3120224186';
 $goc = '../../';
 $db = db();
 
+// Kiểm tra quyền chủ trang từ bảng thanh_vien
+$st = $db->prepare('SELECT ho_ten, nguoi_dung_id FROM thanh_vien WHERE mssv = ?');
+$st->execute([MSSV]);
+$tv = $st->fetch();
+
+$u = nguoiDung();
+$laChuTrang = ($u['id'] ?? 0) === ($tv['nguoi_dung_id'] ?? -1);
+
+// Xử lý cập nhật / đặt lại lượt truy cập hôm nay (chỉ chủ trang)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!$laChuTrang) {
+        ghiLogBaoMat('cam_truy_cap', ['trang' => $_SERVER['REQUEST_URI']]);
+        http_response_code(403);
+        exit('403 Forbidden — Bạn không có quyền thao tác trên trang này.');
+    }
+    $soMoi = filter_var($_POST['so_moi'] ?? '', FILTER_VALIDATE_INT);
+    if ($soMoi !== false && $soMoi >= 1) {
+        $stUp = $db->prepare('UPDATE tv_luot_xem SET so_luot = ? WHERE mssv = ? AND ngay = CURDATE()');
+        $stUp->execute([$soMoi, MSSV]);
+        $_SESSION['flash'] = 'Đã cập nhật số lượt truy cập hôm nay thành công!';
+        header('Location: gioithieu.php');
+        exit;
+    }
+}
+
 // Chức năng 1: Ghi nhận hoặc tăng số lượt xem trong ngày hôm nay bằng INSERT ... ON DUPLICATE KEY UPDATE
-$stDem = $db->prepare(
-    'INSERT INTO tv_luot_xem (mssv, ngay, so_luot) 
-     VALUES (?, CURDATE(), 1) 
-     ON DUPLICATE KEY UPDATE so_luot = so_luot + 1'
-);
-$stDem->execute([MSSV]);
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $stDem = $db->prepare(
+        'INSERT INTO tv_luot_xem (mssv, ngay, so_luot) 
+         VALUES (?, CURDATE(), 1) 
+         ON DUPLICATE KEY UPDATE so_luot = so_luot + 1'
+    );
+    $stDem->execute([MSSV]);
+}
 
 // Lấy số lượt xem hôm nay
 $stHomNay = $db->prepare('SELECT so_luot FROM tv_luot_xem WHERE mssv = ? AND ngay = CURDATE()');
@@ -39,6 +66,9 @@ $st7Ngay->execute([MSSV]);
 $dsLuotXem = $st7Ngay->fetchAll();
 $tong7Ngay = array_sum(array_column($dsLuotXem, 'so_luot'));
 
+$thongBao = $_SESSION['flash'] ?? '';
+unset($_SESSION['flash']);
+
 $tieuDe = 'Trang cá nhân - Vongsena Sauphasith';
 $trang = 'gioi-thieu';
 
@@ -55,6 +85,24 @@ require __DIR__ . '/../../inc/header.php';
       <p style="margin: 5px 0; color: #475569;">Trách nhiệm: Xử lý lưu trữ liên hệ vào bảng lien_he MySQL, kiểm tra an toàn MIME-type tệp tải lên và xử lý lỗi hệ thống 403/404.</p>
     </div>
   </section>
+
+  <?php if ($thongBao !== ''): ?>
+    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px 16px; border-radius: 6px; margin-bottom: 25px;">
+      <?= e($thongBao) ?>
+    </div>
+  <?php endif; ?>
+
+  <?php if ($laChuTrang): ?>
+    <section style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+      <h2 style="margin-top: 0; color: #1e3b6d; font-size: 1.25rem;">⚙️ Quản lý lượt truy cập (Dành cho chủ trang)</h2>
+      <form method="POST" action="gioithieu.php" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <?= csrfField() ?>
+        <label for="so_moi" style="font-weight: bold;">Cập nhật lượt xem hôm nay:</label>
+        <input type="number" id="so_moi" name="so_moi" value="<?= $luotHomNay ?>" min="1" max="99999" style="width: 100px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+        <button type="submit" class="nut nut--chinh">Lưu số lượt</button>
+      </form>
+    </section>
+  <?php endif; ?>
 
   <!-- Khối hiển thị số lượt xem -->
   <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
