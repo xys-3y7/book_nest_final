@@ -2,28 +2,27 @@
 /**
  * index.php - Trang chủ website Nhà sách trực tuyến BookNest
  * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
- * Chức năng: Hiển thị sách nổi bật, khối sách đã xem gần đây từ Cookie, thời tiết động
+ * Chức năng 1 (Bảng 1): Đọc dữ liệu từ MySQL (mục mới nhất, khối đã xem gần đây gom vào 1 câu WHERE IN)
  */
 
 require_once __DIR__ . '/inc/config.php';
 
 use App\Data\KhoSanPham;
 
-$kho = new KhoSanPham(__DIR__ . '/data/san-pham.json');
+$kho = new KhoSanPham(db());
 
-// Lấy 3 sản phẩm nổi bật làm sách tiêu biểu trang chủ
-$sachNoiBat = array_slice($kho->tatCa(), 0, 3);
+// Lấy 6 cuốn sách mới nhất từ MySQL qua KhoSanPham
+$sachMoi = $kho->sanPhamMoi(6);
 
-// Đọc và kiểm tra cookie "da_xem" (Đã xem gần đây)
-// Bảo mật: Không tin tưởng giá trị cookie, lọc từng ID bằng FILTER_VALIDATE_INT
+// Đọc cookie "da_xem" (ID các sách đã xem gần nhất, cách nhau bởi dấu phẩy)
+// Tối ưu hóa: gom toàn bộ ID vào 1 câu SQL WHERE id IN (...) duy nhất, tránh N + 1 queries
 $daXem = [];
 if (!empty($_COOKIE['da_xem'])) {
-    foreach (explode(',', $_COOKIE['da_xem']) as $x) {
-        $id = filter_var($x, FILTER_VALIDATE_INT);
-        $sp = $id ? $kho->timTheoId($id) : null;
-        if ($sp !== null && !in_array($sp, $daXem, true)) {
-            $daXem[] = $sp;
-        }
+    $rawIds = explode(',', $_COOKIE['da_xem']);
+    $ids = array_filter(array_map('intval', $rawIds));
+    if (!empty($ids)) {
+        // Chỉ lấy tối đa 4 cuốn đã xem gần nhất
+        $daXem = $kho->layTheoDanhSachId(array_slice($ids, 0, 4));
     }
 }
 
@@ -37,7 +36,7 @@ require __DIR__ . '/inc/header.php';
 <main class="noi-dung-chinh khung-chua">
   <h1>Chào mừng bạn đến với Nhà sách trực tuyến BookNest</h1>
 
-  <!-- Khối thời tiết động từ Open-Meteo REST API (Kế thừa từ BT4) -->
+  <!-- Khối thời tiết động từ Open-Meteo REST API -->
   <section id="khoi-thoi-tiet-dong" class="khoi-thoi-tiet-container" aria-live="polite"></section>
 
   <!-- 1. Khu vực nổi bật Hero Banner -->
@@ -55,7 +54,7 @@ require __DIR__ . '/inc/header.php';
   <section>
     <h2>Về dự án BookNest</h2>
     <p>BookNest là dự án học phần <em>Thiết kế và Lập trình web</em> được phát triển bởi <strong>Nhóm 12 (Lớp 24CNTT3)</strong>, Khoa Toán - Tin, Trường Đại học Sư phạm - Đại học Đà Nẵng.</p>
-    <p>Hệ thống hướng đến mục tiêu giải quyết khó khăn của sinh viên trong việc tìm kiếm giáo trình chuẩn, tài liệu học tập chuyên ngành đáng tin cậy với mức giá hợp lý và phương thức nhận sách tiện lợi ngay tại trường.</p>
+    <p>Toàn bộ dữ liệu của website đã được đưa vào hệ quản trị CSDL <strong>MySQL / MariaDB</strong> thông qua tầng truy xuất dữ liệu PDO an toàn, hỗ trợ tìm kiếm phân trang tức thời, giao dịch ACID và REST API hiện đại.</p>
     
     <h3>Ba cam kết cốt lõi của BookNest</h3>
     <div class="hang-ba-the">
@@ -74,23 +73,26 @@ require __DIR__ . '/inc/header.php';
     </div>
   </section>
 
-  <!-- 3. Danh mục sách và giáo trình nổi bật (Sinh động từ PHP và KhoSanPham) -->
+  <!-- 3. Danh mục sách mới nhất (Truy vấn từ MySQL qua KhoSanPham) -->
   <section>
-    <h2>Danh mục sách và giáo trình nổi bật trong tuần</h2>
-    <p>Dưới đây là các đầu sách chuyên ngành được các bạn sinh viên ngành Công nghệ thông tin và Sư phạm Tin học quan tâm nhiều nhất:</p>
+    <h2>Sách mới cập nhật trên kệ BookNest</h2>
+    <p>Dưới đây là các đầu sách chuyên ngành mới nhất vừa được bổ sung vào hệ thống CSDL BookNest:</p>
     
     <div class="luoi-the">
-      <?php foreach ($sachNoiBat as $sp): ?>
+      <?php foreach ($sachMoi as $sp): ?>
         <article class="the">
           <figure class="the__hinh-anh">
-            <img src="<?= e($sp->hinhAnh) ?>" alt="Bìa sách <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Bìa sách <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
           </figure>
           <div class="the__than">
-            <h3 class="the__tieu-de"><?= e($sp->ten) ?></h3>
-            <p class="the__mo-ta">Tác giả: <?= e($sp->tacGia) ?> | <?= e($sp->nhaXuatBan) ?></p>
-            <p class="the__gia"><?= vnd($sp->gia) ?> <span class="the__gia-goc"><?= vnd($sp->giaGoc) ?></span></p>
-            <div class="the__chan">
-              <a href="chi-tiet.php?id=<?= $sp->id ?>" class="nut nut--chinh">Xem chi tiết &rarr;</a>
+            <span class="the__the-loai" style="font-size:0.8rem;color:#1e40af;font-weight:bold;"><?= e($sp->tenDanhMuc ?? 'Sách chuyên ngành') ?></span>
+            <h3 class="the__tieu-de" style="font-size:1.05rem;margin:0.25rem 0;"><?= e($sp->ten) ?></h3>
+            <p class="the__gia" style="margin:0.4rem 0;"><strong><?= vnd($sp->gia) ?></strong></p>
+            <p class="the__ton-kho" style="font-size:0.85rem;color:<?= $sp->tonKho > 0 ? '#16a34a' : '#dc2626' ?>;">
+              <?= $sp->tonKho > 0 ? 'Còn hàng (' . $sp->tonKho . ' cuốn)' : 'Hết hàng tạm thời' ?>
+            </p>
+            <div class="the__chan" style="margin-top:0.5rem;">
+              <a href="chi-tiet.php?id=<?= $sp->id ?>" class="nut nut--chinh">Chi tiết &rarr;</a>
             </div>
           </div>
         </article>
@@ -98,42 +100,29 @@ require __DIR__ . '/inc/header.php';
     </div>
   </section>
 
-  <!-- 4. Khối sách đã xem gần đây (Lưu và đọc từ Cookie da_xem) -->
+  <!-- 4. Khối sách đã xem gần đây (Lấy bằng 1 câu WHERE IN) -->
   <?php if (!empty($daXem)): ?>
-  <section class="khu-vuc-da-xem" style="margin-top: 40px; background: #f8fafc; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0;">
-    <h2>Sách bạn vừa xem gần đây (Cookie máy khách)</h2>
-    <p>Ghi nhớ tối đa 4 cuốn sách bạn đã quan tâm truy cập:</p>
-    <div class="luoi-the">
-      <?php foreach ($daXem as $sp): ?>
-        <article class="the">
-          <figure class="the__hinh-anh">
-            <img src="<?= e($sp->hinhAnh) ?>" alt="Bìa sách <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
-          </figure>
-          <div class="the__than">
-            <h3 class="the__tieu-de"><a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->ten) ?></a></h3>
-            <p class="the__gia"><?= vnd($sp->gia) ?></p>
-            <div class="the__chan">
-              <a href="chi-tiet.php?id=<?= $sp->id ?>" class="nut nut--vien">Xem lại</a>
+    <section style="margin-top: 40px; padding-top: 20px; border-top: 2px dashed #cbd5e1;">
+      <h2>Sách bạn đã xem gần đây (Cookie Session)</h2>
+      <div class="luoi-the">
+        <?php foreach ($daXem as $sp): ?>
+          <article class="the">
+            <figure class="the__hinh-anh">
+              <img src="<?= e(anhSach($sp->anh)) ?>" alt="Bìa sách <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+            </figure>
+            <div class="the__than">
+              <h3 class="the__tieu-de"><?= e($sp->ten) ?></h3>
+              <p class="the__gia"><?= vnd($sp->gia) ?></p>
+              <div class="the__chan">
+                <a href="chi-tiet.php?id=<?= $sp->id ?>" class="nut nut--vien">Xem lại</a>
+              </div>
             </div>
-          </div>
-        </article>
-      <?php endforeach; ?>
-    </div>
-  </section>
+          </article>
+        <?php endforeach; ?>
+      </div>
+    </section>
   <?php endif; ?>
 
-  <!-- 5. Dịch vụ hỗ trợ người học -->
-  <section>
-    <h2>Dịch vụ hỗ trợ người học</h2>
-    <ul>
-      <li>Hỗ trợ tìm và đặt in giáo trình hiếm phục vụ nghiên cứu khoa học.</li>
-      <li>Tư vấn lộ trình chọn sách học theo đề cương môn học từng học kỳ.</li>
-      <li>Thu đổi và ký gửi giáo trình đã qua sử dụng giúp tiết kiệm chi phí học tập.</li>
-    </ul>
-    <p>Quý thầy cô và các bạn sinh viên có thể liên hệ đặt sách số lượng lớn hoặc gửi yêu cầu hỗ trợ qua <a href="lien-he.php" class="nut nut--vien">Trang liên hệ trực tuyến</a>.</p>
-  </section>
 </main>
-
-<script type="module" src="js/trang-chu.js"></script>
 
 <?php require __DIR__ . '/inc/footer.php'; ?>

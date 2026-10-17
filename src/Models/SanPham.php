@@ -6,43 +6,55 @@
 
 namespace App\Models;
 
-class SanPham
+use JsonSerializable;
+
+class SanPham implements JsonSerializable
 {
     public function __construct(
         public readonly int $id,
+        public readonly int $danhMucId,
         public readonly string $ten,
         public readonly int $gia,
-        public readonly int $giaGoc,
-        public readonly string $theLoai,
-        public readonly string $tacGia,
-        public readonly string $nhaXuatBan,
-        public readonly int $namXuatBan,
-        public readonly int $soTrang,
-        public readonly int $soLuong,
-        public readonly string $hinhAnh,
-        public readonly string $moTa,
-        public readonly float $danhGia
+        public readonly int $tonKho,
+        public readonly ?string $anh = null,
+        public readonly ?string $moTa = null,
+        public readonly string $ngayTao = '',
+        public readonly ?string $tenDanhMuc = null
     ) {}
 
     /**
-     * Khởi tạo đối tượng SanPham từ một mục của mảng tệp JSON
+     * Khởi tạo đối tượng SanPham từ một dòng dữ liệu CSDL MySQL qua PDO
      */
     public static function tuMang(array $d): self
     {
         return new self(
             id: (int)($d['id'] ?? 0),
+            danhMucId: (int)($d['danh_muc_id'] ?? 0),
             ten: (string)($d['ten'] ?? ''),
             gia: (int)($d['gia'] ?? 0),
-            giaGoc: (int)($d['giaGoc'] ?? 0),
-            theLoai: (string)($d['theLoai'] ?? ''),
-            tacGia: (string)($d['tacGia'] ?? ''),
-            nhaXuatBan: (string)($d['nhaXuatBan'] ?? ''),
-            namXuatBan: (int)($d['namXuatBan'] ?? 0),
-            soTrang: (int)($d['soTrang'] ?? 0),
-            soLuong: (int)($d['soLuong'] ?? 0),
-            hinhAnh: (string)($d['hinhAnh'] ?? ''),
-            moTa: (string)($d['moTa'] ?? ''),
-            danhGia: (float)($d['danhGia'] ?? 0.0)
+            tonKho: (int)($d['ton_kho'] ?? 0),
+            anh: !empty($d['anh']) ? (string)$d['anh'] : null,
+            moTa: !empty($d['mo_ta']) ? (string)$d['mo_ta'] : null,
+            ngayTao: (string)($d['ngay_tao'] ?? ''),
+            tenDanhMuc: isset($d['ten_danh_muc']) ? (string)$d['ten_danh_muc'] : null
         );
+    }
+
+    /**
+     * Triển khai JsonSerializable: chỉ trả về các trường công khai cần thiết cho REST API
+     * Tuyệt đối không để lộ các thông tin nội bộ máy chủ
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id'           => $this->id,
+            'danh_muc_id'  => $this->danhMucId,
+            'ten'          => $this->ten,
+            'gia'          => $this->gia,
+            'ton_kho'      => $this->tonKho,
+            'anh'          => $this->anh,
+            'mo_ta'        => $this->moTa,
+            'ten_danh_muc' => $this->tenDanhMuc,
+        ];
     }
 }

@@ -1,157 +1,116 @@
 <?php
 /**
- * thanhvien/3120224186_sauphasith/gioithieu.php - Trang giới thiệu cá nhân Vongsena Sauphasith
- * Tệp này hiển thị lý lịch, thời khóa biểu và tích hợp 2 chức năng máy chủ:
- * 1. Bộ đếm lượt xem trang cá nhân (Session + tệp storage/3120224186_luotxem.txt, mỗi phiên tăng 1 lần)
- * 2. Danh sách kỹ năng chuyên môn từ mảng PHP, lọc theo nhóm qua tham số GET (?nhom=...)
- * Cách thử: Mở trình duyệt tại http://localhost:8000/thanhvien/3120224186_sauphasith/gioithieu.php
+ * thanhvien/3120224186_sauphasith/gioithieu.php - Trang cá nhân của Vongsena Sauphasith
+ * Mã sinh viên: 3120224186 - Lớp: 24CNTT3
+ * Chức năng Phần B:
+ *   1. Bộ đếm lượt xem truy cập hàng ngày dùng INSERT ... ON DUPLICATE KEY UPDATE vào bảng tv_luot_xem.
+ *   2. Bảng thống kê chi tiết lượt truy cập trong 7 ngày gần nhất từ CSDL MySQL.
+ * Cách thử: Mỗi lần tải lại trang, số lượt xem hôm nay tự động tăng thêm 1 trong bảng tv_luot_xem.
  */
 
-$goc = '../../';
 require_once __DIR__ . '/../../inc/config.php';
 
-// Chức năng 1: Bộ đếm lượt xem trang cá nhân (mỗi phiên session chỉ tăng 1 lần)
-$tepLuotXem = __DIR__ . '/../../storage/3120224186_luotxem.txt';
-if (!is_dir(dirname($tepLuotXem))) {
-    mkdir(dirname($tepLuotXem), 0777, true);
-}
+const MSSV = '3120224186';
+$goc = '../../';
+$db = db();
 
-$luotXemHienTai = is_file($tepLuotXem) ? (int)file_get_contents($tepLuotXem) : 100;
+// Chức năng 1: Ghi nhận hoặc tăng số lượt xem trong ngày hôm nay bằng INSERT ... ON DUPLICATE KEY UPDATE
+$stDem = $db->prepare(
+    'INSERT INTO tv_luot_xem (mssv, ngay, so_luot) 
+     VALUES (?, CURDATE(), 1) 
+     ON DUPLICATE KEY UPDATE so_luot = so_luot + 1'
+);
+$stDem->execute([MSSV]);
 
-if (!isset($_SESSION['da_xem_sauphasith'])) {
-    $_SESSION['da_xem_sauphasith'] = true;
-    $luotXemHienTai++;
-    file_put_contents($tepLuotXem, (string)$luotXemHienTai, LOCK_EX);
-}
+// Lấy số lượt xem hôm nay
+$stHomNay = $db->prepare('SELECT so_luot FROM tv_luot_xem WHERE mssv = ? AND ngay = CURDATE()');
+$stHomNay->execute([MSSV]);
+$luotHomNay = (int)$stHomNay->fetchColumn();
 
-// Chức năng 2: Danh sách kỹ năng từ mảng PHP lọc bằng tham số GET
-$tatCaKyNang = [
-    ['ten' => 'HTML5 Ngữ nghĩa & Biểu mẫu bảo mật', 'nhom' => 'frontend', 'tiLe' => 95, 'kinhNghiem' => '2 năm'],
-    ['ten' => 'CSS3 Responsive & Kiến trúc BEM', 'nhom' => 'frontend', 'tiLe' => 90, 'kinhNghiem' => '2 năm'],
-    ['ten' => 'JavaScript ES6 Modules & Fetch API', 'nhom' => 'frontend', 'tiLe' => 85, 'kinhNghiem' => '1.5 năm'],
-    ['ten' => 'Lập trình PHP 8 & Kiểm thử Form', 'nhom' => 'backend', 'tiLe' => 88, 'kinhNghiem' => '1 năm'],
-    ['ten' => 'Xử lý Upload tệp an toàn (finfo)', 'nhom' => 'backend', 'tiLe' => 92, 'kinhNghiem' => '1 năm'],
-    ['ten' => 'Quản lý kho mã nguồn Git / GitHub', 'nhom' => 'devops', 'tiLe' => 85, 'kinhNghiem' => '2 năm'],
-    ['ten' => 'Kiểm chuẩn W3C & Đo lường Lighthouse A11y', 'nhom' => 'devops', 'tiLe' => 90, 'kinhNghiem' => '1.5 năm']
-];
+// Chức năng 2: Đọc dữ liệu thống kê lượt xem trong 7 ngày gần nhất
+$st7Ngay = $db->prepare(
+    'SELECT ngay, so_luot 
+     FROM tv_luot_xem 
+     WHERE mssv = ? 
+     ORDER BY ngay DESC 
+     LIMIT 7'
+);
+$st7Ngay->execute([MSSV]);
+$dsLuotXem = $st7Ngay->fetchAll();
+$tong7Ngay = array_sum(array_column($dsLuotXem, 'so_luot'));
 
-$nhomChon = $_GET['nhom'] ?? 'tat-ca';
-$danhSachKyNang = $tatCaKyNang;
-
-if ($nhomChon !== 'tat-ca') {
-    $danhSachKyNang = array_filter($tatCaKyNang, fn($kn) => $kn['nhom'] === $nhomChon);
-}
-
-$tieuDe = 'Hồ sơ sinh viên: Vongsena Sauphasith';
+$tieuDe = 'Trang cá nhân - Vongsena Sauphasith';
 $trang = 'gioi-thieu';
-$moTaTrang = 'Hồ sơ lý lịch, bộ đếm lượt xem và kỹ năng chuyên môn của Vongsena Sauphasith.';
 
 require __DIR__ . '/../../inc/header.php';
 ?>
 
-<link rel="stylesheet" href="css/style.css">
-
-<main class="noi-dung-chinh khung-chua">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
-    <h1>Hồ sơ sinh viên: Vongsena Sauphasith</h1>
-    
-    <!-- Chức năng 1: Khối huy hiệu đếm lượt xem trang -->
-    <div style="background: #e0f2fe; border: 1px solid #7dd3fc; color: #0369a1; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.95rem;">
-      👁️ Lượt xem hồ sơ: <span style="font-size: 1.15rem; color: #0284c7;"><?= number_format($luotXemHienTai) ?></span>
-    </div>
-  </div>
-
-  <!-- Khối lý lịch -->
-  <section class="ho-so-ca-nhan" style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
-    <figure>
-      <img src="../../images/sauphasith-avatar.png" alt="Ảnh chân dung sinh viên Vongsena Sauphasith" width="140" height="140" style="border-radius: 50%; border: 3px solid #0284c7;">
-      <figcaption><strong>Vongsena Sauphasith</strong><br>Sinh viên Khoa Toán &ndash; Tin</figcaption>
-    </figure>
-
+<main class="noi-dung-chinh khung-chua" style="max-width: 900px; margin: 30px auto;">
+  <section style="display: flex; gap: 30px; align-items: center; background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px; flex-wrap: wrap;">
+    <img src="<?= $goc ?>images/sauphasith-avatar.png" alt="Ảnh Vongsena Sauphasith" width="130" height="130" style="border-radius: 50%; object-fit: cover; border: 3px solid #1e3b6d;">
     <div>
-      <h2>Thông tin chi tiết</h2>
-      <ul>
-        <li><strong>Họ và tên:</strong> Vongsena Sauphasith</li>
-        <li><strong>Mã sinh viên:</strong> 3120224186</li>
-        <li><strong>Lớp sinh hoạt:</strong> 24CNTT3</li>
-        <li><strong>Chuyên ngành:</strong> Công nghệ thông tin</li>
-        <li><strong>Đơn vị đào tạo:</strong> Khoa Toán &ndash; Tin, Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng</li>
-        <li><strong>Vai trò trong nhóm:</strong> Thành viên (Phụ trách trang biểu mẫu <code>lien-he.php</code>, kiểm tra dữ liệu máy chủ, upload ảnh qua finfo, lớp <code>KhoLienHe</code> và các ca kiểm thử Bảng 3)</li>
-        <li><strong>Email học tập:</strong> <a href="mailto:3120224186@ued.udn.vn">3120224186@ued.udn.vn</a></li>
-      </ul>
+      <h1 style="margin: 0; color: #1e3b6d; font-size: 1.8rem;">Vongsena Sauphasith</h1>
+      <p style="margin: 5px 0; color: #64748b;">Mã sinh viên: <strong>3120224186</strong> | Lớp: <strong>24CNTT3</strong></p>
+      <p style="margin: 5px 0;">Phụ trách Phần A: <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Biểu mẫu Liên hệ &amp; Upload tệp finfo</span></p>
+      <p style="margin: 5px 0; color: #475569;">Trách nhiệm: Xử lý lưu trữ liên hệ vào bảng lien_he MySQL, kiểm tra an toàn MIME-type tệp tải lên và xử lý lỗi hệ thống 403/404.</p>
     </div>
   </section>
 
-  <!-- HAI CHỨC NĂNG XỬ LÝ PHÍA MÁY CHỦ (PHẦN C) -->
-  
-  <!-- Chức năng 2: Danh sách kỹ năng từ mảng PHP lọc bằng tham số GET -->
-  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 35px;">
-    <h2>Chức năng máy chủ: Lọc danh mục kỹ năng chuyên môn (Tham số GET)</h2>
-    <p>Dữ liệu kỹ năng được định nghĩa trong mảng PHP máy chủ và lọc động theo URL <code>?nhom=...</code>:</p>
-
-    <!-- Nút lọc GET -->
-    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-      <a href="gioithieu.php?nhom=tat-ca" class="nut <?= $nhomChon === 'tat-ca' ? 'nut--chinh' : 'nut--vien' ?>" style="text-decoration: none;">Tất cả kỹ năng (<?= count($tatCaKyNang) ?>)</a>
-      <a href="gioithieu.php?nhom=frontend" class="nut <?= $nhomChon === 'frontend' ? 'nut--chinh' : 'nut--vien' ?>" style="text-decoration: none;">Front-end Web</a>
-      <a href="gioithieu.php?nhom=backend" class="nut <?= $nhomChon === 'backend' ? 'nut--chinh' : 'nut--vien' ?>" style="text-decoration: none;">Back-end PHP</a>
-      <a href="gioithieu.php?nhom=devops" class="nut <?= $nhomChon === 'devops' ? 'nut--chinh' : 'nut--vien' ?>" style="text-decoration: none;">DevOps &amp; Testing</a>
+  <!-- Khối hiển thị số lượt xem -->
+  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+      <h2 style="margin: 0; color: #1e3b6d; font-size: 1.3rem;">📈 Thống kê lưu lượng truy cập trang (Bảng tv_luot_xem)</h2>
+      <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 6px 14px; border-radius: 6px; color: #065f46; font-weight: bold;">
+        Lượt xem hôm nay: <?= $luotHomNay ?> lượt
+      </div>
     </div>
 
-    <div style="display: flex; flex-direction: column; gap: 16px;">
-      <?php foreach ($danhSachKyNang as $kn): ?>
-        <div style="background: #f8fafc; padding: 15px 20px; border-radius: 6px; border: 1px solid #e2e8f0;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-weight: bold;">
-            <span><?= e($kn['ten']) ?></span>
-            <span style="color: #0284c7;"><?= $kn['tiLe'] ?>% (<?= e($kn['kinhNghiem']) ?>)</span>
-          </div>
-          <!-- Thanh tiến độ kỹ năng -->
-          <div style="background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden;">
-            <div style="background: #0284c7; height: 100%; width: <?= $kn['tiLe'] ?>%;"></div>
-          </div>
-        </div>
-      <?php endforeach; ?>
-    </div>
-  </section>
+    <p style="color: #64748b; font-size: 0.95rem;">
+      Bộ đếm sử dụng câu lệnh SQL <code>INSERT ... ON DUPLICATE KEY UPDATE</code> để tự động khởi tạo hoặc tăng số lượt xem theo khóa duy nhất <code>(mssv, ngay)</code>:
+    </p>
 
-  <!-- Thời khóa biểu -->
-  <section style="margin-bottom: 30px;">
-    <h2>Thời khóa biểu học tập</h2>
-    <div class="khung-cuon-tkb">
-      <table>
-        <caption>Thời khóa biểu học phần của sinh viên Vongsena Sauphasith</caption>
+    <!-- Bảng chi tiết 7 ngày -->
+    <div style="overflow-x: auto; margin-top: 15px;">
+      <table style="width: 100%; border-collapse: collapse; text-align: left;">
         <thead>
-          <tr>
-            <th scope="col">Buổi</th>
-            <th scope="col">Thứ Hai</th>
-            <th scope="col">Thứ Ba</th>
-            <th scope="col">Thứ Tư</th>
-            <th scope="col">Thứ Năm</th>
-            <th scope="col">Thứ Sáu</th>
+          <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.9rem;">
+            <th style="padding: 10px 14px;">Ngày thống kê</th>
+            <th style="padding: 10px 14px; width: 150px; text-align: right;">Số lượt truy cập</th>
+            <th style="padding: 10px 14px; width: 45%;">Tỷ lệ tương đối</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <th scope="row">Sáng</th>
-            <td>Thiết kế Web (A3.201)</td>
-            <td>Tự học thư viện</td>
-            <td>Mạng máy tính (A2.102)</td>
-            <td>Toán rời rạc</td>
-            <td>Thực hành Web (PM02)</td>
-          </tr>
-          <tr>
-            <th scope="row">Chiều</th>
-            <td>Cơ sở dữ liệu</td>
-            <td>Thực hành CSDL</td>
-            <td>Tiếng Anh CNTT</td>
-            <td>Nghỉ tự học</td>
-            <td>Giáo dục thể chất</td>
-          </tr>
+          <?php foreach ($dsLuotXem as $row): 
+            $phanTram = $tong7Ngay > 0 ? round(($row['so_luot'] / $tong7Ngay) * 100) : 0;
+          ?>
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+              <td style="padding: 10px 14px; font-weight: 500;">
+                <?= e(date('d/m/Y', strtotime($row['ngay']))) ?>
+                <?php if ($row['ngay'] === date('Y-m-d')): ?>
+                  <span style="background: #e0f2fe; color: #0369a1; font-size: 0.75rem; padding: 1px 6px; border-radius: 3px; margin-left: 6px;">Hôm nay</span>
+                <?php endif; ?>
+              </td>
+              <td style="padding: 10px 14px; text-align: right; font-weight: bold; color: #1e40af;">
+                <?= $row['so_luot'] ?> lượt
+              </td>
+              <td style="padding: 10px 14px;">
+                <div style="background: #e2e8f0; border-radius: 4px; height: 16px; overflow: hidden;">
+                  <div style="background: #0284c7; height: 100%; width: <?= $phanTram ?>%;"></div>
+                </div>
+              </td>
+            </tr>
+          <?php endforeach; ?>
         </tbody>
+        <tfoot>
+          <tr style="background: #f8fafc; font-weight: bold; border-top: 2px solid #cbd5e1;">
+            <td style="padding: 12px 14px;">Tổng cộng 7 ngày:</td>
+            <td style="padding: 12px 14px; text-align: right; color: #dc2626;"><?= $tong7Ngay ?> lượt</td>
+            <td style="padding: 12px 14px;"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </section>
 </main>
-
-<script type="module" src="js/canhan.js"></script>
 
 <?php require __DIR__ . '/../../inc/footer.php'; ?>

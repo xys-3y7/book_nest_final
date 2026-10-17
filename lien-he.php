@@ -2,8 +2,7 @@
 /**
  * lien-he.php - Biểu mẫu liên hệ, tư vấn giáo trình và đính kèm tệp ảnh minh chứng
  * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
- * Phụ trách: Vongsena Sauphasith (MSV: 3120224186)
- * Kỹ thuật: Kiểm tra máy chủ nghiêm ngặt, upload ảnh finfo chống giả mạo đuôi, PRG + Flash message
+ * Chức năng 1 (Bảng 1): Liên hệ kèm ảnh lưu vào bảng lien_he MySQL qua KhoLienHe
  */
 
 require_once __DIR__ . '/inc/config.php';
@@ -73,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!array_key_exists($mime, $duoiHopLe)) {
                 $loi['anh'] = 'Tệp đính kèm không phải là ảnh hợp lệ! Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.';
             } else {
-                // Tạo tên tệp ngẫu nhiên an toàn bằng chuỗi ngẫu nhiên cryptographically secure
                 $ext = $duoiHopLe[$mime];
                 $tenNgauNhien = 'lh_' . bin2hex(random_bytes(8)) . '.' . $ext;
                 $duongDanDich = __DIR__ . '/uploads/' . $tenNgauNhien;
@@ -91,20 +89,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // 4. Nếu toàn bộ dữ liệu hợp lệ -> Lưu vào tệp storage/lien-he.jsonl và chuyển hướng PRG
+    // 4. Nếu toàn bộ dữ liệu hợp lệ -> Lưu vào bảng lien_he MySQL và chuyển hướng PRG
     if (empty($loi)) {
-        $khoLh = new KhoLienHe(__DIR__ . '/storage/lien-he.jsonl');
-        $khoLh->them([
-            'thoiGian' => date('Y-m-d H:i:s'),
-            'hoTen'    => $du['hoten'],
-            'email'    => $du['email'],
-            'sdt'      => $du['sdt'],
-            'noiDung'  => $du['noidung'],
-            'anh'      => $tenAnhLuu,
-            'ip'       => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
-        ]);
+        $khoLh = new KhoLienHe(db());
+        $chuDe = 'Liên hệ / Đặt sách [SĐT: ' . $du['sdt'] . ']';
+        $khoLh->luu($du['hoten'], $du['email'], $chuDe, $du['noidung'], $tenAnhLuu);
 
-        $_SESSION['flash'] = 'Cảm ơn bạn! Thông tin liên hệ và đặt giáo trình đã được gửi thành công đến BookNest.';
+        $_SESSION['flash'] = 'Cảm ơn bạn! Thông tin liên hệ đã được lưu vào hệ thống CSDL BookNest thành công.';
         header('Location: lien-he.php'); // Mẫu thiết kế PRG chống gửi trùng khi bấm F5
         exit;
     }
@@ -128,105 +119,96 @@ require __DIR__ . '/inc/header.php';
   <!-- Thông báo trạng thái gửi thành công (Flash message) -->
   <?php if ($thongBao !== ''): ?>
     <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 15px 20px; border-radius: 6px; margin-bottom: 25px;" aria-live="polite">
-      <h3 style="margin-top: 0; color: #047857;">✓ Gửi thành công!</h3>
-      <p style="margin-bottom: 0;"><?= e($thongBao) ?></p>
+      <strong>✓ Hoàn tất:</strong> <?= e($thongBao) ?>
     </div>
   <?php endif; ?>
 
   <div style="display: flex; gap: 40px; flex-wrap: wrap;">
-    <!-- Form liên hệ (phía máy chủ PHP) -->
-    <section style="flex: 2; min-width: 320px; background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0;">
-      <h2 style="margin-top: 0;">Gửi biểu mẫu trực tuyến</h2>
-      <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 20px;">
-        Các trường có dấu sao đỏ (<span style="color: #dc2626;">*</span>) là bắt buộc nhập.
-      </p>
-
+    <!-- Biểu mẫu liên hệ -->
+    <div style="flex: 3; min-width: 320px; background: #ffffff; padding: 30px; border-radius: 8px; border: 1px solid #e2e8f0;">
       <form method="POST" action="lien-he.php" enctype="multipart/form-data" novalidate>
-        <!-- Họ và tên -->
-        <div style="margin-bottom: 18px;">
+        
+        <!-- Ô Họ và tên -->
+        <div style="margin-bottom: 20px;">
           <label for="hoten" style="display: block; font-weight: bold; margin-bottom: 6px;">
-            Họ và tên sinh viên / giảng viên <span style="color: #dc2626;">*</span>:
+            Họ và tên của bạn <span style="color: #dc2626;">*</span>
           </label>
-          <input type="text" id="hoten" name="hoten" value="<?= e($du['hoten']) ?>" placeholder="Ví dụ: Nguyễn Văn An" style="width: 100%; padding: 10px; border: 1px solid <?= isset($loi['hoten']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px;">
+          <input type="text" id="hoten" name="hoten" value="<?= e($du['hoten']) ?>" 
+                 style="width: 100%; padding: 10px 12px; border: 1px solid <?= isset($loi['hoten']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px; box-sizing: border-box;"
+                 placeholder="Ví dụ: Nguyễn Văn An">
           <?php if (isset($loi['hoten'])): ?>
-            <div style="color: #dc2626; font-size: 0.85rem; margin-top: 5px;" role="alert">
-              <?= e($loi['hoten']) ?>
-            </div>
+            <p style="color: #dc2626; font-size: 0.85rem; margin: 4px 0 0 0;"><?= e($loi['hoten']) ?></p>
           <?php endif; ?>
         </div>
 
-        <!-- Email -->
-        <div style="margin-bottom: 18px;">
-          <label for="email" style="display: block; font-weight: bold; margin-bottom: 6px;">
-            Địa chỉ email <span style="color: #dc2626;">*</span>:
-          </label>
-          <input type="email" id="email" name="email" value="<?= e($du['email']) ?>" placeholder="name@ued.udn.vn" style="width: 100%; padding: 10px; border: 1px solid <?= isset($loi['email']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px;">
-          <?php if (isset($loi['email'])): ?>
-            <div style="color: #dc2626; font-size: 0.85rem; margin-top: 5px;" role="alert">
-              <?= e($loi['email']) ?>
-            </div>
-          <?php endif; ?>
-        </div>
-
-        <!-- Số điện thoại -->
-        <div style="margin-bottom: 18px;">
-          <label for="sdt" style="display: block; font-weight: bold; margin-bottom: 6px;">
-            Số điện thoại liên lạc <span style="color: #dc2626;">*</span>:
-          </label>
-          <input type="tel" id="sdt" name="sdt" value="<?= e($du['sdt']) ?>" placeholder="Ví dụ: 0912345678" style="width: 100%; padding: 10px; border: 1px solid <?= isset($loi['sdt']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px;">
-          <?php if (isset($loi['sdt'])): ?>
-            <div style="color: #dc2626; font-size: 0.85rem; margin-top: 5px;" role="alert">
-              <?= e($loi['sdt']) ?>
-            </div>
-          <?php endif; ?>
-        </div>
-
-        <!-- Nội dung -->
-        <div style="margin-bottom: 18px;">
-          <label for="noidung" style="display: block; font-weight: bold; margin-bottom: 6px;">
-            Nội dung chi tiết / Yêu cầu đặt sách <span style="color: #dc2626;">*</span>:
-          </label>
-          <textarea id="noidung" name="noidung" rows="5" placeholder="Ghi rõ tên giáo trình, số lượng hoặc câu hỏi của bạn..." style="width: 100%; padding: 10px; border: 1px solid <?= isset($loi['noidung']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px;"><?= e($du['noidung']) ?></textarea>
-          <?php if (isset($loi['noidung'])): ?>
-            <div style="color: #dc2626; font-size: 0.85rem; margin-top: 5px;" role="alert">
-              <?= e($loi['noidung']) ?>
-            </div>
-          <?php endif; ?>
-        </div>
-
-        <!-- Tệp đính kèm -->
-        <div style="margin-bottom: 25px;">
-          <label for="anh" style="display: block; font-weight: bold; margin-bottom: 6px;">
-            Hình ảnh minh chứng hoặc bìa sách cần tìm (Tùy chọn, tối đa 2 MB):
-          </label>
-          <input type="file" id="anh" name="anh" accept="image/jpeg,image/png,image/webp" style="display: block; width: 100%; padding: 8px 0;">
-          <div style="color: #64748b; font-size: 0.85rem; margin-top: 3px;">
-            Hệ thống chỉ chấp nhận định dạng ảnh JPG, PNG hoặc WebP.
+        <!-- Ô Email và Số điện thoại -->
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
+          <div style="flex: 1; min-width: 200px;">
+            <label for="email" style="display: block; font-weight: bold; margin-bottom: 6px;">
+              Địa chỉ Email <span style="color: #dc2626;">*</span>
+            </label>
+            <input type="email" id="email" name="email" value="<?= e($du['email']) ?>" 
+                   style="width: 100%; padding: 10px 12px; border: 1px solid <?= isset($loi['email']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px; box-sizing: border-box;"
+                   placeholder="sinhvien@ued.udn.vn">
+            <?php if (isset($loi['email'])): ?>
+              <p style="color: #dc2626; font-size: 0.85rem; margin: 4px 0 0 0;"><?= e($loi['email']) ?></p>
+            <?php endif; ?>
           </div>
-          <?php if (isset($loi['anh'])): ?>
-            <div style="color: #dc2626; font-size: 0.85rem; margin-top: 5px;" role="alert">
-              <?= e($loi['anh']) ?>
-            </div>
+
+          <div style="flex: 1; min-width: 200px;">
+            <label for="sdt" style="display: block; font-weight: bold; margin-bottom: 6px;">
+              Số điện thoại <span style="color: #dc2626;">*</span>
+            </label>
+            <input type="tel" id="sdt" name="sdt" value="<?= e($du['sdt']) ?>" 
+                   style="width: 100%; padding: 10px 12px; border: 1px solid <?= isset($loi['sdt']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px; box-sizing: border-box;"
+                   placeholder="0905123456">
+            <?php if (isset($loi['sdt'])): ?>
+              <p style="color: #dc2626; font-size: 0.85rem; margin: 4px 0 0 0;"><?= e($loi['sdt']) ?></p>
+            <?php endif; ?>
+          </div>
+        </div>
+
+        <!-- Ô Nội dung -->
+        <div style="margin-bottom: 20px;">
+          <label for="noidung" style="display: block; font-weight: bold; margin-bottom: 6px;">
+            Nội dung yêu cầu / Góp ý <span style="color: #dc2626;">*</span>
+          </label>
+          <textarea id="noidung" name="noidung" rows="5" 
+                    style="width: 100%; padding: 10px 12px; border: 1px solid <?= isset($loi['noidung']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px; box-sizing: border-box;"
+                    placeholder="Mô tả cụ thể tên giáo trình, số lượng cần đặt hoặc góp ý cho nhà sách..."><?= e($du['noidung']) ?></textarea>
+          <?php if (isset($loi['noidung'])): ?>
+            <p style="color: #dc2626; font-size: 0.85rem; margin: 4px 0 0 0;"><?= e($loi['noidung']) ?></p>
           <?php endif; ?>
         </div>
 
-        <button type="submit" class="nut nut--chinh" style="padding: 12px 28px; font-size: 1rem;">
-          📤 Gửi thông tin liên hệ
+        <!-- Ô Tải lên ảnh đính kèm (finfo validation) -->
+        <div style="margin-bottom: 25px; background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px dashed #cbd5e1;">
+          <label for="anh" style="display: block; font-weight: bold; margin-bottom: 6px;">
+            Ảnh đính kèm (Tùy chọn, tối đa 2 MB, định dạng JPG/PNG/WebP):
+          </label>
+          <input type="file" id="anh" name="anh" accept="image/jpeg,image/png,image/webp" style="margin-top: 5px;">
+          <?php if (isset($loi['anh'])): ?>
+            <p style="color: #dc2626; font-size: 0.85rem; margin: 4px 0 0 0;"><?= e($loi['anh']) ?></p>
+          <?php endif; ?>
+        </div>
+
+        <!-- Nút gửi biểu mẫu -->
+        <button type="submit" class="nut nut--chinh" style="padding: 12px 28px; font-size: 1.05rem;">
+          ✉️ Gửi liên hệ ngay
         </button>
       </form>
-    </section>
+    </div>
 
-    <!-- Thông tin văn phòng hỗ trợ -->
-    <aside style="flex: 1; min-width: 260px;">
+    <!-- Thông tin liên hệ trực tiếp -->
+    <div style="flex: 2; min-width: 250px;">
       <div style="background: #f8fafc; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0;">
-        <h2 style="margin-top: 0; font-size: 1.25rem;">Văn phòng Nhà sách BookNest</h2>
-        <p><strong>Địa chỉ:</strong> Sảnh Tầng 1, Nhà A1, Khoa Toán &ndash; Tin, Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.</p>
-        <p><strong>Số 459:</strong> Đường Tôn Đức Thắng, Phường Hòa Khánh Nam, Quận Liên Chiểu, TP. Đà Nẵng.</p>
-        <p><strong>Điện thoại:</strong> (0236) 3841323 &ndash; Máy lẻ 102</p>
-        <p><strong>Email:</strong> <a href="mailto:booknest.ued@gmail.com">booknest.ued@gmail.com</a></p>
-        <p><strong>Giờ làm việc:</strong> Thứ Hai &ndash; Thứ Bảy (7h30 &ndash; 17h00)</p>
+        <h3 style="margin-top: 0; color: #0f172a;">Thông tin văn phòng BookNest</h3>
+        <p><strong>Địa chỉ:</strong> Khu A3, Trường ĐH Sư phạm - ĐH Đà Nẵng, 459 Tôn Đức Thắng, Hòa Khánh Nam, Liên Chiểu, Đà Nẵng.</p>
+        <p><strong>Email hỗ trợ:</strong> booknest.ued@gmail.com</p>
+        <p><strong>Hotline:</strong> 0236.3841.323</p>
+        <p><strong>Thời gian làm việc:</strong> Thứ Hai - Thứ Bảy (07:30 - 17:00)</p>
       </div>
-    </aside>
+    </div>
   </div>
 </main>
 

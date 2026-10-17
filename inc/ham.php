@@ -20,3 +20,31 @@ function vnd(int|float $so): string
 {
     return number_format($so, 0, ',', '.') . ' VNĐ';
 }
+
+/**
+ * Lấy đường dẫn ảnh sách an toàn có ảnh mặc định thay thế
+ */
+function anhSach(?string $anh): string
+{
+    if (!empty($anh) && file_exists(__DIR__ . '/../uploads/' . $anh)) {
+        return 'uploads/' . $anh;
+    }
+    if (!empty($anh) && file_exists(__DIR__ . '/../images/' . $anh)) {
+        return 'images/' . $anh;
+    }
+    return 'images/sach-laptrinh-web.png';
+}
+
+/**
+ * Phản hồi dữ liệu JSON chuẩn REST API kèm mã HTTP Status
+ */
+function traJson(mixed $duLieu, int $maTrangThai = 200, array $headers = []): void
+{
+    http_response_code($maTrangThai);
+    header('Content-Type: application/json; charset=utf-8');
+    foreach ($headers as $k => $v) {
+        header("$k: $v");
+    }
+    echo json_encode($duLieu, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    exit;
+}

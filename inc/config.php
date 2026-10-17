@@ -69,5 +69,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Nạp tự động các lớp (Composer PSR-4)
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// Nạp các hàm tiện ích
+// Nạp các hàm tiện ích và kết nối CSDL
 require_once __DIR__ . '/ham.php';
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/xac-thuc.php';

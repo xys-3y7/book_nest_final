@@ -10,6 +10,7 @@ $tieuDe ??= 'Trang chủ';
 $moTaTrang ??= 'BookNest - Nhà sách trực tuyến chuyên cung cấp giáo trình đại học, sách chuyên ngành CNTT, Toán học cho sinh viên Trường ĐH Sư phạm - ĐH Đà Nẵng.';
 
 $gio = new \App\Services\GioHang();
+$u = nguoiDung();
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -40,13 +41,18 @@ $gio = new \App\Services\GioHang();
         <li><a href="<?= $goc ?>index.php" <?= $trang === 'index' ? 'class="hien-tai" aria-current="page"' : '' ?>>Trang chủ</a></li>
         <li><a href="<?= $goc ?>danh-sach.php" <?= $trang === 'danh-sach' ? 'class="hien-tai" aria-current="page"' : '' ?>>Danh mục sách</a></li>
         <li><a href="<?= $goc ?>gioi-thieu.php" <?= $trang === 'gioi-thieu' ? 'class="hien-tai" aria-current="page"' : '' ?>>Giới thiệu nhóm</a></li>
-        <li><a href="<?= $goc ?>lien-he.php" <?= $trang === 'lien-he' ? 'class="hien-tai" aria-current="page"' : '' ?>>Liên hệ đặt sách</a></li>
+        <li><a href="<?= $goc ?>lien-he.php" <?= $trang === 'lien-he' ? 'class="hien-tai" aria-current="page"' : '' ?>>Liên hệ</a></li>
         <li><a href="<?= $goc ?>gio-hang.php" <?= $trang === 'gio-hang' ? 'class="hien-tai" aria-current="page"' : '' ?>>🛒 Giỏ hàng (<span class="so-luong-gio"><?= $gio->soMon() ?></span>)</a></li>
-        <?php if (isset($_SESSION['user'])): ?>
-          <li><a href="<?= $goc ?>quan-tri.php" <?= $trang === 'quan-tri' ? 'class="hien-tai" aria-current="page"' : '' ?>>👤 Quản trị (<?= e($_SESSION['user']) ?>)</a></li>
+        <?php if ($u): ?>
+          <li><a href="<?= $goc ?>don-hang.php" <?= $trang === 'don-hang' ? 'class="hien-tai" aria-current="page"' : '' ?>>📦 Đơn hàng</a></li>
+          <?php if ($u['vai_tro'] === 'quan_tri'): ?>
+            <li><a href="<?= $goc ?>quan-tri.php" <?= $trang === 'quan-tri' ? 'class="hien-tai" aria-current="page"' : '' ?>>⚙️ Quản trị</a></li>
+          <?php endif; ?>
+          <li><span style="color:#f8fafc;padding:0.75rem 0.5rem;font-size:0.9rem;">Chào, <strong><?= e($u['ho_ten']) ?></strong></span></li>
           <li><a href="<?= $goc ?>dang-xuat.php">Đăng xuất</a></li>
         <?php else: ?>
           <li><a href="<?= $goc ?>dang-nhap.php" <?= $trang === 'dang-nhap' ? 'class="hien-tai" aria-current="page"' : '' ?>>Đăng nhập</a></li>
+          <li><a href="<?= $goc ?>dang-ky.php" <?= $trang === 'dang-ky' ? 'class="hien-tai" aria-current="page"' : '' ?>>Đăng ký</a></li>
         <?php endif; ?>
       </ul>
     </div>

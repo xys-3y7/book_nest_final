@@ -1,0 +1,74 @@
+# =============================================================================
+# HỌC PHẦN: THIẾT KẾ VÀ LẬP TRÌNH WEB (WEB DESIGN AND PROGRAMMING)
+# BÀI TẬP THỰC HÀNH NHÓM SỐ 6 - CHƯƠNG 6: PHP VÀ CƠ SỞ DỮ LIỆU MYSQL
+# ĐỒ ÁN: BOOKNEST - NHÀ SÁCH TRỰC TUYẾN SINH VIÊN UED (NHÓM 12)
+# TẬP TIN: api.http - BỘ REQUEST KIỂM THỬ REST API (REST CLIENT CHO VS CODE)
+# =============================================================================
+
+@goc = http://localhost:8000
+
+### 1. Tìm kiếm sách tức thời thành công -> 200 OK
+GET {{goc}}/api/san-pham.php?q=php
+
+### 2. Xem chi tiết sách hợp lệ theo ID -> 200 OK
+GET {{goc}}/api/san-pham.php?id=1
+
+### 3. Xem sách với ID không tồn tại -> 404 Not Found
+GET {{goc}}/api/san-pham.php?id=999999
+
+### 4. Xem sách với tham số ID không phải số nguyên -> 400 Bad Request
+GET {{goc}}/api/san-pham.php?id=abc
+
+### 5. Phương thức không được phép trên API sản phẩm -> 405 Method Not Allowed
+POST {{goc}}/api/san-pham.php
+Content-Type: application/json
+
+{"q": "php"}
+
+### 6. Xem giỏ hàng hiện tại qua API -> 200 OK
+GET {{goc}}/api/gio-hang.php
+
+### 7. Thêm sách vào giỏ hàng thành công (Thân JSON) -> 200 OK
+POST {{goc}}/api/gio-hang.php
+Content-Type: application/json
+
+{
+  "id": 1,
+  "sl": 2
+}
+
+### 8. Thêm sách với thân không phải định dạng JSON chuẩn -> 400 Bad Request
+POST {{goc}}/api/gio-hang.php
+Content-Type: application/json
+
+{id: 1, sl: 2}
+
+### 9. Thêm sách với số lượng âm -> 422 Unprocessable Content
+POST {{goc}}/api/gio-hang.php
+Content-Type: application/json
+
+{
+  "id": 1,
+  "sl": -3
+}
+
+### 10. Thêm sách với số lượng vượt quá tồn kho thực tế -> 422 Unprocessable Content
+POST {{goc}}/api/gio-hang.php
+Content-Type: application/json
+
+{
+  "id": 12,
+  "sl": 999
+}
+
+### 11. Thêm sách với ID sản phẩm không tồn tại -> 404 Not Found
+POST {{goc}}/api/gio-hang.php
+Content-Type: application/json
+
+{
+  "id": 888888,
+  "sl": 1
+}
+
+### 12. Sai phương thức HTTP trên API giỏ hàng -> 405 Method Not Allowed (Header Allow: GET, POST)
+DELETE {{goc}}/api/gio-hang.php

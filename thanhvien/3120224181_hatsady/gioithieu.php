@@ -1,250 +1,159 @@
 <?php
 /**
- * thanhvien/3120224181_hatsady/gioithieu.php - Trang giới thiệu cá nhân Phommaket Hatsady
- * Tệp này hiển thị lý lịch, thời khóa biểu và tích hợp 2 chức năng xử lý máy chủ:
- * 1. Máy tính điểm học phần: 0.2*A1 + 0.3*A2 + 0.5*A3, kiểm tra 0 - 10, xếp loại học lực
- * 2. Danh sách dự án cá nhân từ mảng PHP, lọc theo thể loại qua tham số GET (?theloai=...)
- * Cách thử: Mở trình duyệt tại http://localhost:8000/thanhvien/3120224181_hatsady/gioithieu.php
+ * thanhvien/3120224181_hatsady/gioithieu.php - Trang cá nhân của Phommaket Hatsady
+ * Mã sinh viên: 3120224181 - Lớp: 24CNTT3
+ * Chức năng Phần B:
+ *   1. Danh sách dự án CNTT cá nhân từ bảng tv_du_an: tìm kiếm từ khóa, lọc theo công nghệ qua prepared statements.
+ *   2. Biểu mẫu thêm dự án mới vào CSDL MySQL (chỉ chủ trang đăng nhập mới được thực hiện).
+ * Cách thử: Gõ từ khóa tìm kiếm dự án; đăng nhập hatsady@ued.vn / matkhau123 để thêm dự án mới.
  */
 
-$goc = '../../';
 require_once __DIR__ . '/../../inc/config.php';
 
-// Chức năng 1: Máy tính điểm học phần (A1, A2, A3)
-$diemA1 = $_GET['a1'] ?? '';
-$diemA2 = $_GET['a2'] ?? '';
-$diemA3 = $_GET['a3'] ?? '';
-$loiDiem = [];
-$ketQuaDiem = null;
+const MSSV = '3120224181';
+$goc = '../../';
+$db = db();
 
-if (isset($_GET['tinh_diem'])) {
-    $v1 = filter_var($diemA1, FILTER_VALIDATE_FLOAT);
-    $v2 = filter_var($diemA2, FILTER_VALIDATE_FLOAT);
-    $v3 = filter_var($diemA3, FILTER_VALIDATE_FLOAT);
+$st = $db->prepare('SELECT ho_ten, nguoi_dung_id FROM thanh_vien WHERE mssv = ?');
+$st->execute([MSSV]);
+$tv = $st->fetch();
 
-    if ($v1 === false || $v1 < 0.0 || $v1 > 10.0) {
-        $loiDiem['a1'] = 'Điểm A1 phải là số thực từ 0.0 đến 10.0';
+$u = nguoiDung();
+$laChuTrang = ($u['id'] ?? 0) === ($tv['nguoi_dung_id'] ?? -1);
+
+$loi = [];
+
+// Xử lý thêm dự án mới (chỉ chủ trang)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $laChuTrang) {
+    $tenDuAn = trim($_POST['ten_du_an'] ?? '');
+    $congNghe = trim($_POST['cong_nghe'] ?? '');
+    $moTa = trim($_POST['mo_ta'] ?? '');
+    $link = trim($_POST['link_github'] ?? '');
+
+    if ($tenDuAn === '' || mb_strlen($tenDuAn) > 100) {
+        $loi['ten_du_an'] = 'Tên dự án dài từ 1 đến 100 ký tự';
     }
-    if ($v2 === false || $v2 < 0.0 || $v2 > 10.0) {
-        $loiDiem['a2'] = 'Điểm A2 phải là số thực từ 0.0 đến 10.0';
+    if ($congNghe === '' || mb_strlen($congNghe) > 100) {
+        $loi['cong_nghe'] = 'Công nghệ sử dụng dài từ 1 đến 100 ký tự';
     }
-    if ($v3 === false || $v3 < 0.0 || $v3 > 10.0) {
-        $loiDiem['a3'] = 'Điểm A3 phải là số thực từ 0.0 đến 10.0';
+    if ($moTa === '') {
+        $loi['mo_ta'] = 'Vui lòng nhập mô tả tóm tắt dự án';
     }
 
-    if (empty($loiDiem)) {
-        $tongKet = round(0.2 * $v1 + 0.3 * $v2 + 0.5 * $v3, 2);
-        
-        // Xác định điểm chữ và xếp loại theo thang điểm Đại học Đà Nẵng
-        $xepLoai = match (true) {
-            $tongKet >= 9.0 => ['chu' => 'A+', 'loai' => 'Xuất sắc', 'mau' => '#16a34a'],
-            $tongKet >= 8.5 => ['chu' => 'A',  'loai' => 'Giỏi',     'mau' => '#16a34a'],
-            $tongKet >= 8.0 => ['chu' => 'B+', 'loai' => 'Khá giỏi', 'mau' => '#0284c7'],
-            $tongKet >= 7.0 => ['chu' => 'B',  'loai' => 'Khá',      'mau' => '#0284c7'],
-            $tongKet >= 6.5 => ['chu' => 'C+', 'loai' => 'Trung bình khá', 'mau' => '#d97706'],
-            $tongKet >= 5.5 => ['chu' => 'C',  'loai' => 'Trung bình',     'mau' => '#d97706'],
-            $tongKet >= 5.0 => ['chu' => 'D+', 'loai' => 'Trung bình yếu', 'mau' => '#ea580c'],
-            $tongKet >= 4.0 => ['chu' => 'D',  'loai' => 'Đạt (Yếu)',      'mau' => '#ea580c'],
-            default         => ['chu' => 'F',  'loai' => 'Không đạt (Kém)', 'mau' => '#dc2626'],
-        };
-
-        $ketQuaDiem = [
-            'tongKet' => $tongKet,
-            'chu'     => $xepLoai['chu'],
-            'loai'    => $xepLoai['loai'],
-            'mau'     => $xepLoai['mau']
-        ];
+    if (empty($loi)) {
+        $stAdd = $db->prepare('INSERT INTO tv_du_an (mssv, ten_du_an, cong_nghe, mo_ta, link_github) VALUES (?, ?, ?, ?, ?)');
+        $stAdd->execute([MSSV, $tenDuAn, $congNghe, $moTa, $link ?: null]);
+        $_SESSION['flash'] = 'Thêm dự án mới thành công!';
+        header('Location: gioithieu.php');
+        exit;
     }
 }
 
-// Chức năng 2: Danh sách dự án từ mảng PHP lọc bằng tham số GET
-$tatCaDuAn = [
-    [
-        'ten' => 'BookNest - Nhà sách trực tuyến UED',
-        'theLoai' => 'web',
-        'congNghe' => 'HTML5, CSS3, JavaScript ES6, PHP 8, Composer',
-        'vaiTro' => 'Phát triển trang Danh mục, tìm kiếm và dịch vụ Giỏ hàng',
-        'nam' => 2026
-    ],
-    [
-        'ten' => 'Thời tiết Sinh viên UED (Open-Meteo)',
-        'theLoai' => 'web',
-        'congNghe' => 'JavaScript Fetch API, RESTful JSON API, CSS Grid',
-        'vaiTro' => 'Tích hợp widget dự báo thời tiết Đà Nẵng theo tọa độ',
-        'nam' => 2026
-    ],
-    [
-        'ten' => 'App Nhắc nhở Lịch học & Deadline',
-        'theLoai' => 'di-dong',
-        'congNghe' => 'Flutter, Dart, SQLite nội bộ',
-        'vaiTro' => 'Thiết kế giao diện người dùng và quản lý cơ sở dữ liệu',
-        'nam' => 2025
-    ],
-    [
-        'ten' => 'Hệ thống Quản lý Ký túc xá Sư phạm',
-        'theLoai' => 'csdl',
-        'congNghe' => 'MySQL, PHP PDO, Bootstrap 5',
-        'vaiTro' => 'Thiết kế mô hình thực thể ERD và viết truy vấn SQL',
-        'nam' => 2025
-    ]
-];
+// Tìm kiếm và lọc dự án
+$q = trim($_GET['q'] ?? '');
+$sql = 'SELECT * FROM tv_du_an WHERE mssv = ?';
+$params = [MSSV];
 
-$theLoaiChon = $_GET['theloai'] ?? 'tat-ca';
-$danhSachDuAn = $tatCaDuAn;
-
-if ($theLoaiChon !== 'tat-ca') {
-    $danhSachDuAn = array_filter($tatCaDuAn, fn($item) => $item['theLoai'] === $theLoaiChon);
+if ($q !== '') {
+    $sql .= ' AND (ten_du_an LIKE ? OR cong_nghe LIKE ?)';
+    $params[] = '%' . addcslashes($q, '%_\\') . '%';
+    $params[] = '%' . addcslashes($q, '%_\\') . '%';
 }
+$sql .= ' ORDER BY id DESC';
 
-$tieuDe = 'Hồ sơ sinh viên: Phommaket Hatsady';
+$stDs = $db->prepare($sql);
+$stDs->execute($params);
+$dsDuAn = $stDs->fetchAll();
+
+$thongBao = $_SESSION['flash'] ?? '';
+unset($_SESSION['flash']);
+
+$tieuDe = 'Trang cá nhân - Phommaket Hatsady';
 $trang = 'gioi-thieu';
-$moTaTrang = 'Hồ sơ lý lịch, máy tính điểm học phần và danh sách dự án của Phommaket Hatsady.';
 
 require __DIR__ . '/../../inc/header.php';
 ?>
 
-<link rel="stylesheet" href="css/style.css">
-
-<main class="noi-dung-chinh khung-chua">
-  <h1>Hồ sơ sinh viên: Phommaket Hatsady</h1>
-
-  <!-- Khối lý lịch -->
-  <section class="ho-so-ca-nhan" style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
-    <figure>
-      <img src="../../images/hatsady-avatar.png" alt="Ảnh chân dung sinh viên Phommaket Hatsady" width="140" height="140" style="border-radius: 50%; border: 3px solid #0284c7;">
-      <figcaption><strong>Phommaket Hatsady</strong><br>Sinh viên Khoa Toán &ndash; Tin</figcaption>
-    </figure>
-
+<main class="noi-dung-chinh khung-chua" style="max-width: 900px; margin: 30px auto;">
+  <section style="display: flex; gap: 30px; align-items: center; background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px; flex-wrap: wrap;">
+    <img src="<?= $goc ?>images/hatsady-avatar.png" alt="Ảnh Phommaket Hatsady" width="130" height="130" style="border-radius: 50%; object-fit: cover; border: 3px solid #1e3b6d;">
     <div>
-      <h2>Thông tin chi tiết</h2>
-      <ul>
-        <li><strong>Họ và tên:</strong> Phommaket Hatsady</li>
-        <li><strong>Mã sinh viên:</strong> 3120224181</li>
-        <li><strong>Lớp sinh hoạt:</strong> 24CNTT3</li>
-        <li><strong>Chuyên ngành:</strong> Công nghệ thông tin</li>
-        <li><strong>Đơn vị đào tạo:</strong> Khoa Toán &ndash; Tin, Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng</li>
-        <li><strong>Vai trò trong nhóm:</strong> Thành viên (Phụ trách trang danh mục <code>danh-sach.php</code>, bộ lọc tìm kiếm, dịch vụ <code>GioHang.php</code>)</li>
-        <li><strong>Email học tập:</strong> <a href="mailto:3120224181@ued.udn.vn">3120224181@ued.udn.vn</a></li>
-      </ul>
+      <h1 style="margin: 0; color: #1e3b6d; font-size: 1.8rem;">Phommaket Hatsady</h1>
+      <p style="margin: 5px 0; color: #64748b;">Mã sinh viên: <strong>3120224181</strong> | Lớp: <strong>24CNTT3</strong></p>
+      <p style="margin: 5px 0;">Phụ trách Phần A: <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Danh mục sách &amp; Dịch vụ Giỏ hàng</span></p>
+      <p style="margin: 5px 0; color: #475569;">Trách nhiệm: Lập trình chức năng lọc GET, phân trang danh mục, quản lý mảng giỏ hàng Session và REST Client.</p>
+      <?php if ($laChuTrang): ?>
+        <p style="margin: 8px 0 0 0; color: #16a34a; font-weight: bold;">✓ Bạn đang đăng nhập với tư cách Chủ trang (hatsady@ued.vn)</p>
+      <?php endif; ?>
     </div>
   </section>
 
-  <!-- HAI CHỨC NĂNG XỬ LÝ PHÍA MÁY CHỦ (PHẦN C) -->
-  
-  <!-- Chức năng 1: Máy tính điểm học phần -->
-  <section style="background: #f8fafc; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 35px;">
-    <h2>Chức năng máy chủ 1: Máy tính điểm học phần tín chỉ UED</h2>
-    <p>Công thức tính điểm tổng kết: <code>Điểm HP = 0.2 × A1 (Chuyên cần) + 0.3 × A2 (Giữa kỳ) + 0.5 × A3 (Cuối kỳ)</code></p>
+  <?php if ($thongBao !== ''): ?>
+    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px 16px; border-radius: 6px; margin-bottom: 25px;">
+      <?= e($thongBao) ?>
+    </div>
+  <?php endif; ?>
 
-    <form method="GET" action="gioithieu.php" style="max-width: 600px; margin-bottom: 20px;">
-      <input type="hidden" name="tinh_diem" value="1">
-      <input type="hidden" name="theloai" value="<?= e($theLoaiChon) ?>">
-
-      <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
-        <div style="flex: 1; min-width: 140px;">
-          <label for="a1" style="display: block; font-weight: bold; margin-bottom: 5px;">Điểm A1 (20%):</label>
-          <input type="text" id="a1" name="a1" value="<?= e($diemA1) ?>" placeholder="0.0 - 10.0" style="width: 100%; padding: 8px; border: 1px solid <?= isset($loiDiem['a1']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px;">
-          <?php if (isset($loiDiem['a1'])): ?>
-            <div style="color: #dc2626; font-size: 0.8rem; margin-top: 4px;"><?= e($loiDiem['a1']) ?></div>
-          <?php endif; ?>
+  <!-- Chức năng CSDL 2: Thêm dự án mới (chỉ chủ trang) -->
+  <?php if ($laChuTrang): ?>
+    <section style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+      <h2 style="margin-top: 0; color: #1e3b6d; font-size: 1.25rem;">+ Thêm dự án công nghệ mới (Bảng tv_du_an)</h2>
+      <form method="POST" action="gioithieu.php">
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 12px;">
+          <div style="flex: 1; min-width: 220px;">
+            <label style="display:block;font-weight:bold;margin-bottom:4px;">Tên dự án *</label>
+            <input type="text" name="ten_du_an" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:4px;box-sizing:border-box;">
+          </div>
+          <div style="flex: 1; min-width: 220px;">
+            <label style="display:block;font-weight:bold;margin-bottom:4px;">Công nghệ *</label>
+            <input type="text" name="cong_nghe" placeholder="Ví dụ: PHP 8, MariaDB, Docker" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:4px;box-sizing:border-box;">
+          </div>
         </div>
-
-        <div style="flex: 1; min-width: 140px;">
-          <label for="a2" style="display: block; font-weight: bold; margin-bottom: 5px;">Điểm A2 (30%):</label>
-          <input type="text" id="a2" name="a2" value="<?= e($diemA2) ?>" placeholder="0.0 - 10.0" style="width: 100%; padding: 8px; border: 1px solid <?= isset($loiDiem['a2']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px;">
-          <?php if (isset($loiDiem['a2'])): ?>
-            <div style="color: #dc2626; font-size: 0.8rem; margin-top: 4px;"><?= e($loiDiem['a2']) ?></div>
-          <?php endif; ?>
+        <div style="margin-bottom: 12px;">
+          <label style="display:block;font-weight:bold;margin-bottom:4px;">Mô tả dự án *</label>
+          <textarea name="mo_ta" rows="2" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:4px;box-sizing:border-box;"></textarea>
         </div>
-
-        <div style="flex: 1; min-width: 140px;">
-          <label for="a3" style="display: block; font-weight: bold; margin-bottom: 5px;">Điểm A3 (50%):</label>
-          <input type="text" id="a3" name="a3" value="<?= e($diemA3) ?>" placeholder="0.0 - 10.0" style="width: 100%; padding: 8px; border: 1px solid <?= isset($loiDiem['a3']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px;">
-          <?php if (isset($loiDiem['a3'])): ?>
-            <div style="color: #dc2626; font-size: 0.8rem; margin-top: 4px;"><?= e($loiDiem['a3']) ?></div>
-          <?php endif; ?>
+        <div style="margin-bottom: 15px;">
+          <label style="display:block;font-weight:bold;margin-bottom:4px;">Link GitHub</label>
+          <input type="url" name="link_github" placeholder="https://github.com/..." style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:4px;box-sizing:border-box;">
         </div>
-      </div>
+        <button type="submit" class="nut nut--chinh">Lưu dự án vào CSDL</button>
+      </form>
+    </section>
+  <?php endif; ?>
 
-      <button type="submit" class="nut nut--chinh">🧮 Tính toán kết quả</button>
-      <a href="gioithieu.php" class="nut nut--vien" style="text-decoration: none; margin-left: 10px;">Làm lại</a>
-    </form>
-
-    <?php if ($ketQuaDiem !== null): ?>
-      <div style="background: #ffffff; padding: 20px; border-radius: 6px; border: 2px solid <?= e($ketQuaDiem['mau']) ?>; max-width: 600px;">
-        <h3 style="margin-top: 0; color: <?= e($ketQuaDiem['mau']) ?>;">
-          Kết quả học phần: <?= $ketQuaDiem['tongKet'] ?> / 10.0
-        </h3>
-        <p style="margin: 5px 0;"><strong>Điểm chữ:</strong> <span style="font-size: 1.2rem; font-weight: bold; color: <?= e($ketQuaDiem['mau']) ?>;"><?= e($ketQuaDiem['chu']) ?></span></p>
-        <p style="margin: 5px 0;"><strong>Xếp loại học lực:</strong> <strong><?= e($ketQuaDiem['loai']) ?></strong></p>
-        <p style="margin: 5px 0;"><strong>Trạng thái:</strong> <?= ($ketQuaDiem['chu'] !== 'F') ? '<span style="color: #16a34a; font-weight: bold;">ĐÃ QUA MÔN ✓</span>' : '<span style="color: #dc2626; font-weight: bold;">HỌC LẠI ✗</span>' ?></p>
-      </div>
-    <?php endif; ?>
-  </section>
-
-  <!-- Chức năng 2: Danh sách đề án & Lọc theo thể loại -->
-  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 35px;">
-    <h2>Chức năng máy chủ 2: Danh mục đề án cá nhân (Lọc tham số GET)</h2>
-    <p>Dữ liệu được khai báo trong mảng PHP máy chủ và lọc động theo URL <code>?theloai=...</code>:</p>
-
-    <!-- Bộ nút lọc GET -->
-    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-      <a href="gioithieu.php?theloai=tat-ca" class="nut <?= $theLoaiChon === 'tat-ca' ? 'nut--chinh' : 'nut--vien' ?>" style="text-decoration: none;">Tất cả (<?= count($tatCaDuAn) ?>)</a>
-      <a href="gioithieu.php?theloai=web" class="nut <?= $theLoaiChon === 'web' ? 'nut--chinh' : 'nut--vien' ?>" style="text-decoration: none;">Ứng dụng Web</a>
-      <a href="gioithieu.php?theloai=di-dong" class="nut <?= $theLoaiChon === 'di-dong' ? 'nut--chinh' : 'nut--vien' ?>" style="text-decoration: none;">Ứng dụng Di động</a>
-      <a href="gioithieu.php?theloai=csdl" class="nut <?= $theLoaiChon === 'csdl' ? 'nut--chinh' : 'nut--vien' ?>" style="text-decoration: none;">Cơ sở dữ liệu</a>
+  <!-- Chức năng CSDL 1: Danh sách dự án kèm tìm kiếm -->
+  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+      <h2 style="margin: 0; color: #1e3b6d;">💻 Dự án cá nhân &amp; Đóng góp phần mềm</h2>
+      <form method="GET" action="gioithieu.php" style="display: flex; gap: 6px;">
+        <input type="text" name="q" value="<?= e($q) ?>" placeholder="Tìm tên hoặc công nghệ..." style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
+        <button type="submit" class="nut nut--chinh" style="padding: 6px 12px;">Tìm</button>
+        <?php if ($q !== ''): ?>
+          <a href="gioithieu.php" class="nut nut--vien" style="padding: 6px 10px;">Đặt lại</a>
+        <?php endif; ?>
+      </form>
     </div>
 
-    <div style="display: flex; flex-direction: column; gap: 15px;">
-      <?php foreach ($danhSachDuAn as $da): ?>
-        <article style="background: #f8fafc; padding: 18px; border-radius: 6px; border-left: 4px solid #0284c7;">
-          <h3 style="margin-top: 0; color: #0f172a;"><?= e($da['ten']) ?> (<?= $da['nam'] ?>)</h3>
-          <p style="margin: 4px 0;"><strong>Công nghệ áp dụng:</strong> <?= e($da['congNghe']) ?></p>
-          <p style="margin: 4px 0; color: #475569;"><strong>Đóng góp cá nhân:</strong> <?= e($da['vaiTro']) ?></p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px;">
+      <?php foreach ($dsDuAn as $da): ?>
+        <article style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h3 style="margin: 0 0 8px 0; color: #1e40af; font-size: 1.1rem;"><?= e($da['ten_du_an']) ?></h3>
+            <span style="display: inline-block; background: #e0f2fe; color: #0369a1; font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-bottom: 10px;">
+              <?= e($da['cong_nghe']) ?>
+            </span>
+            <p style="margin: 0 0 15px 0; color: #334155; font-size: 0.9rem; line-height: 1.5;"><?= nl2br(e($da['mo_ta'])) ?></p>
+          </div>
+          <?php if (!empty($da['link_github'])): ?>
+            <a href="<?= e($da['link_github']) ?>" target="_blank" rel="noopener" class="nut nut--vien" style="text-align: center; font-size: 0.85rem; padding: 6px;">
+              Xem mã nguồn trên GitHub &rarr;
+            </a>
+          <?php endif; ?>
         </article>
       <?php endforeach; ?>
     </div>
   </section>
-
-  <!-- Thời khóa biểu -->
-  <section style="margin-bottom: 30px;">
-    <h2>Thời khóa biểu học tập</h2>
-    <div class="khung-cuon-tkb">
-      <table>
-        <caption>Thời khóa biểu học phần của sinh viên Phommaket Hatsady</caption>
-        <thead>
-          <tr>
-            <th scope="col">Buổi</th>
-            <th scope="col">Thứ Hai</th>
-            <th scope="col">Thứ Ba</th>
-            <th scope="col">Thứ Tư</th>
-            <th scope="col">Thứ Năm</th>
-            <th scope="col">Thứ Sáu</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">Sáng</th>
-            <td>Thiết kế Web (A3.201)</td>
-            <td>Tự học</td>
-            <td>Mạng máy tính</td>
-            <td>Toán rời rạc</td>
-            <td>Thực hành Web (PM02)</td>
-          </tr>
-          <tr>
-            <th scope="row">Chiều</th>
-            <td>Cơ sở dữ liệu</td>
-            <td>Thực hành CSDL</td>
-            <td>Tiếng Anh chuyên ngành</td>
-            <td>Nghỉ</td>
-            <td>Giáo dục thể chất</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
 </main>
-
-<script type="module" src="js/canhan.js"></script>
 
 <?php require __DIR__ . '/../../inc/footer.php'; ?>

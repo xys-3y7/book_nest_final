@@ -2,8 +2,7 @@
 /**
  * gio-hang.php - Quản lý giỏ hàng mua sách lưu trong Session
  * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
- * Phụ trách: Phommaket Hatsady (MSV: 3120224181) & Xaiyasith Yoi (MSV: 3120224189)
- * Kỹ thuật: Session, kiểm tra số lượng min/max, PRG (Post/Redirect/Get), bảo vệ giá từ máy chủ
+ * Chức năng 1 (Bảng 1): Toàn bộ giỏ hàng lấy bằng một câu WHERE id IN (?, ...), bảo vệ đơn giá máy chủ
  */
 
 require_once __DIR__ . '/inc/config.php';
@@ -11,7 +10,7 @@ require_once __DIR__ . '/inc/config.php';
 use App\Data\KhoSanPham;
 use App\Services\GioHang;
 
-$kho = new KhoSanPham(__DIR__ . '/data/san-pham.json');
+$kho = new KhoSanPham(db());
 $gio = new GioHang();
 
 // Xử lý các thao tác giỏ hàng qua phương thức POST (theo mẫu Post/Redirect/Get)
@@ -73,6 +72,7 @@ $thongBao = $_SESSION['flash'] ?? '';
 $thongBaoLoi = $_SESSION['flash_loi'] ?? '';
 unset($_SESSION['flash'], $_SESSION['flash_loi']);
 
+// Đọc toàn bộ sản phẩm trong giỏ qua 1 câu WHERE IN duy nhất
 $chiTietGio = $gio->layChiTiet($kho);
 $tongTien = $gio->tongTien($kho);
 $soMon = $gio->soMon();
@@ -123,13 +123,13 @@ require __DIR__ . '/inc/header.php';
             ?>
               <tr style="border-bottom: 1px solid #e2e8f0;">
                 <td style="padding: 12px 15px; width: 80px;">
-                  <img src="<?= e($sp->hinhAnh) ?>" alt="Bìa sách <?= e($sp->ten) ?>" width="60" height="75" style="border-radius: 4px; object-fit: cover;">
+                  <img src="<?= e(anhSach($sp->anh)) ?>" alt="Bìa sách <?= e($sp->ten) ?>" width="60" height="75" style="border-radius: 4px; object-fit: cover;">
                 </td>
                 <td style="padding: 12px 15px;">
-                  <a href="chi-tiet.php?id=<?= $sp->id ?>" style="font-weight: bold; color: #0284c7; text-decoration: none;">
+                  <a href="chi-tiet.php?id=<?= $sp->id ?>" style="font-weight: bold; color: #1e40af; text-decoration: none;">
                     <?= e($sp->ten) ?>
                   </a>
-                  <div style="color: #64748b; font-size: 0.85rem; margin-top: 3px;">Tác giả: <?= e($sp->tacGia) ?></div>
+                  <div style="color: #64748b; font-size: 0.85rem; margin-top: 3px;">Danh mục: <?= e($sp->tenDanhMuc ?? 'Chuyên ngành') ?></div>
                 </td>
                 <td style="padding: 12px 15px; font-weight: 500;">
                   <?= vnd($sp->gia) ?>
@@ -171,7 +171,7 @@ require __DIR__ . '/inc/header.php';
           <button type="submit" form="form-xoa-het" class="nut nut--vien" style="color: #dc2626; border-color: #fca5a5;">
             🗑️ Xóa toàn bộ
           </button>
-          <a href="lien-he.php" class="nut nut--chinh" style="padding: 10px 24px; font-size: 1rem;">
+          <a href="dat-hang.php" class="nut nut--chinh" style="padding: 10px 24px; font-size: 1rem;">
             Tiến hành đặt sách &rarr;
           </a>
         </div>

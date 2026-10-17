@@ -1,48 +1,34 @@
 <?php
 /**
- * src/Data/KhoLienHe.php - Lớp lưu trữ và truy xuất các liên hệ phản hồi vào tệp JSON Lines (.jsonl)
+ * src/Data/KhoLienHe.php - Quản lý và lưu trữ liên hệ vào bảng lien_he MySQL qua PDO
  * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
  */
 
 namespace App\Data;
 
+use PDO;
+
 class KhoLienHe
 {
-    public function __construct(private string $tep)
-    {
-        $thuMuc = dirname($this->tep);
-        if (!is_dir($thuMuc)) {
-            mkdir($thuMuc, 0777, true);
-        }
-    }
+    public function __construct(private PDO $db) {}
 
     /**
-     * Thêm một bản ghi liên hệ mới vào cuối tệp JSON Lines kèm cơ chế khóa tệp an toàn (LOCK_EX)
+     * Lưu thông tin liên hệ mới vào bảng lien_he
      */
-    public function them(array $lh): void
+    public function luu(string $hoTen, string $email, string $chuDe, string $noiDung, ?string $anh = null): bool
     {
-        $dong = json_encode($lh, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        file_put_contents($this->tep, $dong . PHP_EOL, FILE_APPEND | LOCK_EX);
+        $st = $this->db->prepare(
+            'INSERT INTO lien_he (ho_ten, email, chu_de, noi_dung, anh) VALUES (?, ?, ?, ?, ?)'
+        );
+        return $st->execute([$hoTen, $email, $chuDe, $noiDung, $anh]);
     }
 
     /**
-     * Đọc toàn bộ danh sách liên hệ, trả về mảng với các bản ghi mới nhất xếp ở đầu tiên
-     * @return array[]
+     * Lấy toàn bộ danh sách liên hệ đã nhận, sắp xếp mới nhất xếp trước
      */
     public function tatCa(): array
     {
-        if (!is_file($this->tep)) {
-            return [];
-        }
-        $dong = file($this->tep, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if (!$dong) {
-            return [];
-        }
-        $ds = array_map(function ($d) {
-            $parsed = json_decode($d, true);
-            return is_array($parsed) ? $parsed : null;
-        }, $dong);
-
-        return array_reverse(array_filter($ds));
+        $st = $this->db->query('SELECT * FROM lien_he ORDER BY ngay_gui DESC, id DESC');
+        return $st->fetchAll();
     }
 }

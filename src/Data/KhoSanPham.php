@@ -1,98 +1,200 @@
 <?php
 /**
- * src/Data/KhoSanPham.php - Lớp truy xuất dữ liệu sản phẩm từ tệp JSON
+ * src/Data/KhoSanPham.php - Lớp truy xuất dữ liệu sản phẩm qua PDO MySQL
  * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
  */
 
 namespace App\Data;
 
 use App\Models\SanPham;
-use RuntimeException;
+use PDO;
 
 class KhoSanPham
 {
-    private ?array $ds = null;
-
-    public function __construct(private string $tepJson) {}
+    public function __construct(private PDO $db) {}
 
     /**
-     * Lấy toàn bộ danh sách sản phẩm. Đọc tệp đúng một lần trong mỗi vòng đời request.
-     * @return SanPham[]
+     * Xây dựng điều kiện WHERE và mảng tham số cho bộ lọc tìm kiếm
      */
-    public function tatCa(): array
+    private function dieuKien(array $loc): array
     {
-        if ($this->ds === null) {
-            if (!is_file($this->tepJson)) {
-                throw new RuntimeException("Không tìm thấy tệp dữ liệu sản phẩm: {$this->tepJson}");
-            }
-            $json = file_get_contents($this->tepJson);
-            if ($json === false) {
-                throw new RuntimeException("Không thể đọc tệp dữ liệu sản phẩm: {$this->tepJson}");
-            }
-            $mang = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-            $this->ds = array_map(fn($d) => SanPham::tuMang($d), $mang);
+        $dk = [];
+        $ts = [];
+
+        if (!empty($loc['q'])) {
+            $dk[] = 's.ten LIKE ?';
+            // Thoát ký tự đặc biệt % và _ trong LIKE để tránh sai lệch kết quả
+            $ts[] = '%' . addcslashes($loc['q'], '%_\\') . '%';
         }
-        return $this->ds;
+
+        if (!empty($loc['dm'])) {
+            $dk[] = 's.danh_muc_id = ?';
+            $ts[] = (int)$loc['dm'];
+        }
+
+        if (!empty($loc['giaToiDa'])) {
+            $dk[] = 's.gia <= ?';
+            $ts[] = (int)$loc['giaToiDa'];
+        }
+
+        $where = $dk ? 'WHERE ' . implode(' AND ', $dk) : '';
+        return [$where, $ts];
     }
 
     /**
-     * Tìm sản phẩm theo mã ID số nguyên duy nhất
+     * Đếm tổng số sản phẩm thỏa mãn điều kiện lọc
+     */
+    public function dem(array $loc): int
+    {
+        [$where, $ts] = $this->dieuKien($loc);
+        $st = $this->db->prepare("SELECT COUNT(*) FROM san_pham s $where");
+        $st->execute($ts);
+        return (int)$st->fetchColumn();
+    }
+
+    /**
+     * Lấy danh sách sản phẩm theo trang có phân trang và sắp xếp theo whitelist
+     * @return SanPham[]
+     */
+    public function trang(array $loc, string $sx, int $soDong, int $boQua): array
+    {
+        [$where, $ts] = $this->dieuKien($loc);
+
+        // Danh sách cho phép (Whitelist) chống SQL Injection ở mệnh đề ORDER BY
+        $orderBy = match ($sx) {
+            'gia-tang' => 's.gia ASC, s.id ASC',
+            'gia-giam' => 's.gia DESC, s.id DESC',
+            'ten'      => 's.ten ASC, s.id ASC',
+            default    => 's.id DESC', // Mặc định: sách mới nhất
+        };
+
+        $sql = "SELECT s.*, dm.ten AS ten_danh_muc
+                FROM san_pham s
+                JOIN danh_muc dm ON s.danh_muc_id = dm.id
+                $where
+                ORDER BY $orderBy
+                LIMIT ? OFFSET ?";
+
+        $st = $this->db->prepare($sql);
+        $st->execute([...$ts, $soDong, $boQua]);
+
+        return array_map(fn($d) => SanPham::tuMang($d), $st->fetchAll());
+    }
+
+    /**
+     * Tìm sách theo mã ID số nguyên duy nhất kèm tên danh mục qua JOIN
      */
     public function timTheoId(int $id): ?SanPham
     {
-        foreach ($this->tatCa() as $sp) {
-            if ($sp->id === $id) {
-                return $sp;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Tìm kiếm, lọc theo thể loại và sắp xếp sản phẩm
-     * @return SanPham[]
-     */
-    public function timKiem(string $tuKhoa = '', string $theLoai = '', string $sapXep = ''): array
-    {
-        $kq = $this->tatCa();
-
-        // 1. Lọc theo từ khóa tìm kiếm (không phân biệt chữ hoa thường tiếng Việt)
-        if ($tuKhoa !== '') {
-            $kq = array_filter($kq, function (SanPham $sp) use ($tuKhoa) {
-                return mb_stripos($sp->ten, $tuKhoa) !== false
-                    || mb_stripos($sp->tacGia, $tuKhoa) !== false
-                    || mb_stripos($sp->moTa, $tuKhoa) !== false;
-            });
-        }
-
-        // 2. Lọc theo thể loại
-        if ($theLoai !== '' && $theLoai !== 'tat-ca') {
-            $kq = array_filter($kq, fn(SanPham $sp) => $sp->theLoai === $theLoai);
-        }
-
-        $kq = array_values($kq);
-
-        // 3. Sắp xếp danh sách
-        match ($sapXep) {
-            'gia-tang' => usort($kq, fn(SanPham $a, SanPham $b) => $a->gia <=> $b->gia),
-            'gia-giam' => usort($kq, fn(SanPham $a, SanPham $b) => $b->gia <=> $a->gia),
-            'ten-az'   => usort($kq, fn(SanPham $a, SanPham $b) => strcasecmp($a->ten, $b->ten)),
-            'ten-za'   => usort($kq, fn(SanPham $a, SanPham $b) => strcasecmp($b->ten, $a->ten)),
-            default    => null, // Giữ nguyên thứ tự mặc định trong JSON
-        };
-
-        return $kq;
+        $st = $this->db->prepare(
+            'SELECT s.*, dm.ten AS ten_danh_muc
+             FROM san_pham s
+             JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             WHERE s.id = ?'
+        );
+        $st->execute([$id]);
+        $row = $st->fetch();
+        return $row ? SanPham::tuMang($row) : null;
     }
 
     /**
      * Lấy các sản phẩm liên quan cùng danh mục
      * @return SanPham[]
      */
-    public function sanPhamLienQuan(SanPham $spHienTai, int $gioiHan = 3): array
+    public function sanPhamLienQuan(int $danhMucId, int $idHienTai, int $soLuong = 4): array
     {
-        $lienQuan = array_filter($this->tatCa(), function (SanPham $item) use ($spHienTai) {
-            return $item->theLoai === $spHienTai->theLoai && $item->id !== $spHienTai->id;
-        });
-        return array_slice(array_values($lienQuan), 0, $gioiHan);
+        $st = $this->db->prepare(
+            'SELECT s.*, dm.ten AS ten_danh_muc
+             FROM san_pham s
+             JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             WHERE s.danh_muc_id = ? AND s.id != ?
+             ORDER BY s.id DESC
+             LIMIT ?'
+        );
+        $st->execute([$danhMucId, $idHienTai, $soLuong]);
+        return array_map(fn($d) => SanPham::tuMang($d), $st->fetchAll());
+    }
+
+    /**
+     * Lấy danh sách sản phẩm mới nhất hiển thị trang chủ
+     * @return SanPham[]
+     */
+    public function sanPhamMoi(int $soLuong = 6): array
+    {
+        $st = $this->db->prepare(
+            'SELECT s.*, dm.ten AS ten_danh_muc
+             FROM san_pham s
+             JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             ORDER BY s.id DESC
+             LIMIT ?'
+        );
+        $st->execute([$soLuong]);
+        return array_map(fn($d) => SanPham::tuMang($d), $st->fetchAll());
+    }
+
+    /**
+     * Lấy danh sách sản phẩm theo danh sách ID (dùng cho Giỏ hàng và khối Đã xem gần đây)
+     * Tránh lỗi truy vấn lặp N + 1 bằng cách gom tất cả ID vào một câu WHERE id IN (...)
+     * @param int[] $ids
+     * @return SanPham[]
+     */
+    public function layTheoDanhSachId(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+
+        $ids = array_unique(array_filter(array_map('intval', $ids)));
+        if (empty($ids)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "SELECT s.*, dm.ten AS ten_danh_muc
+                FROM san_pham s
+                JOIN danh_muc dm ON s.danh_muc_id = dm.id
+                WHERE s.id IN ($placeholders)";
+
+        $st = $this->db->prepare($sql);
+        $st->execute(array_values($ids));
+
+        $ketQua = [];
+        foreach ($st->fetchAll() as $row) {
+            $sp = SanPham::tuMang($row);
+            $ketQua[$sp->id] = $sp;
+        }
+
+        // Sắp xếp lại theo đúng thứ tự mảng $ids truyền vào
+        $sapXep = [];
+        foreach ($ids as $id) {
+            if (isset($ketQua[$id])) {
+                $sapXep[] = $ketQua[$id];
+            }
+        }
+
+        return $sapXep;
+    }
+
+    /**
+     * Tìm kiếm nhanh phục vụ REST API tức thời
+     * @return SanPham[]
+     */
+    public function timKiemNhanh(string $tuKhoa, int $gioiHan = 8): array
+    {
+        $tuKhoa = trim($tuKhoa);
+        if ($tuKhoa === '') {
+            return [];
+        }
+
+        $st = $this->db->prepare(
+            'SELECT s.*, dm.ten AS ten_danh_muc
+             FROM san_pham s
+             JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             WHERE s.ten LIKE ?
+             ORDER BY s.id DESC
+             LIMIT ?'
+        );
+        $st->execute(['%' . addcslashes($tuKhoa, '%_\\') . '%', $gioiHan]);
+        return array_map(fn($d) => SanPham::tuMang($d), $st->fetchAll());
     }
 }

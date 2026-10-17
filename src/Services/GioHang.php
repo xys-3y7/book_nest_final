@@ -28,7 +28,7 @@ class GioHang
             return false;
         }
 
-        // Kiểm tra ID sản phẩm có thực sự tồn tại trong CSDL/JSON không
+        // Kiểm tra ID sản phẩm có thực sự tồn tại trong CSDL không
         $sp = $kho->timTheoId($id);
         if ($sp === null) {
             return false;
@@ -97,19 +97,29 @@ class GioHang
 
     /**
      * Lấy danh sách chi tiết các mặt hàng kèm đối tượng SanPham và thành tiền
-     * Giá luôn lấy từ KhoSanPham máy chủ, không nhận từ client
+     * TỐI ƯU HÓA: Sử dụng phương thức layTheoDanhSachId() chạy đúng 1 câu SQL WHERE id IN (...)
+     * Tuyệt đối không truy vấn trong vòng lặp gây lỗi N + 1
+     *
      * @return array<int, array{sanPham: SanPham, soLuong: int, thanhTien: int}>
      */
     public function layChiTiet(KhoSanPham $kho): array
     {
+        $danhSach = $this->danhSach();
+        if (empty($danhSach)) {
+            return [];
+        }
+
+        $ids = array_keys($danhSach);
+        $sanPhams = $kho->layTheoDanhSachId($ids);
+
         $ketQua = [];
-        foreach ($this->danhSach() as $id => $soLuong) {
-            $sp = $kho->timTheoId((int)$id);
-            if ($sp !== null && $soLuong > 0) {
+        foreach ($sanPhams as $sp) {
+            $sl = (int)($danhSach[$sp->id] ?? 0);
+            if ($sl > 0) {
                 $ketQua[] = [
                     'sanPham'   => $sp,
-                    'soLuong'   => $soLuong,
-                    'thanhTien' => $sp->gia * $soLuong
+                    'soLuong'   => $sl,
+                    'thanhTien' => $sp->gia * $sl
                 ];
             }
         }

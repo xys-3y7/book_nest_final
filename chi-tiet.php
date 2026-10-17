@@ -2,15 +2,14 @@
 /**
  * chi-tiet.php - Trang chi tiết sản phẩm / sách theo tham số URL ?id=
  * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
- * Phụ trách: Nguyễn Thị Sinh (MSV: 3120223169)
- * Kỹ thuật: Kiểm tra số nguyên, 404 khi id sai, ghi cookie 'da_xem' an toàn trước output
+ * Chức năng 1 (Bảng 1): Đọc chi tiết kèm tên danh mục qua JOIN và 4 mục cùng danh mục
  */
 
 require_once __DIR__ . '/inc/config.php';
 
 use App\Data\KhoSanPham;
 
-$kho = new KhoSanPham(__DIR__ . '/data/san-pham.json');
+$kho = new KhoSanPham(db());
 
 // Kiểm tra tham số id: ép kiểm tra số nguyên nghiêm ngặt bằng filter_var
 $id = filter_var($_GET['id'] ?? '', FILTER_VALIDATE_INT);
@@ -24,7 +23,7 @@ if ($sp === null) {
 }
 
 // Ghi nhớ mục đã xem vào Cookie 'da_xem' (Tối đa 4 ID mới nhất đứng đầu)
-// Lưu ý: setcookie() gửi HTTP Header nên BẮT BUỘC phải gọi trước mọi output HTML
+// setcookie() gửi HTTP Header nên BẮT BUỘC phải gọi trước mọi output HTML
 $cu  = array_map('intval', explode(',', $_COOKIE['da_xem'] ?? ''));
 $moi = array_unique([$sp->id, ...array_filter($cu)]);
 setcookie('da_xem', implode(',', array_slice($moi, 0, 4)), [
@@ -36,10 +35,10 @@ setcookie('da_xem', implode(',', array_slice($moi, 0, 4)), [
 
 $tieuDe = $sp->ten;
 $trang = 'danh-sach';
-$moTaTrang = 'Xem thông tin chi tiết giáo trình ' . $sp->ten . ' của tác giả ' . $sp->tacGia . ' tại BookNest.';
+$moTaTrang = 'Xem thông tin chi tiết giáo trình ' . $sp->ten . ' tại BookNest UED.';
 
-// Lấy thêm các đầu sách liên quan cùng chuyên ngành
-$sachLienQuan = $kho->sanPhamLienQuan($sp, 3);
+// Lấy 4 đầu sách liên quan cùng danh mục qua KhoSanPham
+$sachLienQuan = $kho->sanPhamLienQuan($sp->danhMucId, $sp->id, 4);
 
 require __DIR__ . '/inc/header.php';
 ?>
@@ -58,10 +57,10 @@ require __DIR__ . '/inc/header.php';
     <!-- Ảnh bìa sách -->
     <div style="flex: 1; min-width: 280px; text-align: center;">
       <figure style="margin: 0;">
-        <img src="<?= e($sp->hinhAnh) ?>" alt="Bìa sách <?= e($sp->ten) ?>" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+        <img src="<?= e(anhSach($sp->anh)) ?>" alt="Bìa sách <?= e($sp->ten) ?>" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
       </figure>
-      <p style="margin-top: 15px; font-weight: bold; color: #d97706;">
-        Đánh giá chuyên môn: <?= number_format($sp->danhGia, 1) ?> / 5.0 ⭐
+      <p style="margin-top: 15px; font-weight: bold; color: #1e40af;">
+        Danh mục: <?= e($sp->tenDanhMuc ?? 'Chuyên ngành') ?>
       </p>
     </div>
 
@@ -69,54 +68,59 @@ require __DIR__ . '/inc/header.php';
     <div style="flex: 2; min-width: 300px;">
       <h1 style="margin-top: 0; color: #0f172a; font-size: 1.7rem;"><?= e($sp->ten) ?></h1>
       
-      <div style="font-size: 1.5rem; color: #dc2626; font-weight: bold; margin: 15px 0;">
+      <div style="font-size: 1.6rem; color: #dc2626; font-weight: bold; margin: 15px 0;">
         <?= vnd($sp->gia) ?>
-        <span style="font-size: 1.1rem; color: #94a3b8; text-decoration: line-through; margin-left: 10px; font-weight: normal;">
-          <?= vnd($sp->giaGoc) ?>
-        </span>
-        <span style="background: #fee2e2; color: #b91c1c; font-size: 0.85rem; padding: 3px 8px; border-radius: 4px; margin-left: 10px; vertical-align: middle;">
-          Tiết kiệm <?= round((($sp->giaGoc - $sp->gia) / $sp->giaGoc) * 100) ?>%
-        </span>
       </div>
 
       <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-        <p style="margin: 6px 0;"><strong>Tác giả:</strong> <?= e($sp->tacGia) ?></p>
-        <p style="margin: 6px 0;"><strong>Nhà xuất bản:</strong> <?= e($sp->nhaXuatBan) ?></p>
-        <p style="margin: 6px 0;"><strong>Năm xuất bản:</strong> <?= $sp->namXuatBan ?></p>
-        <p style="margin: 6px 0;"><strong>Số trang:</strong> <?= $sp->soTrang ?> trang</p>
-        <p style="margin: 6px 0;"><strong>Tình trạng:</strong> <span style="color: #16a34a; font-weight: bold;">Còn hàng (<?= $sp->soLuong ?> cuốn tại kho UED)</span></p>
+        <p style="margin: 6px 0;"><strong>Mã sản phẩm:</strong> #<?= $sp->id ?></p>
+        <p style="margin: 6px 0;"><strong>Thể loại:</strong> <?= e($sp->tenDanhMuc ?? 'Chuyên ngành') ?></p>
+        <p style="margin: 6px 0;"><strong>Tình trạng kho:</strong> 
+          <?php if ($sp->tonKho > 0): ?>
+            <span style="color: #16a34a; font-weight: bold;">Còn hàng (<?= $sp->tonKho ?> cuốn tại kho UED)</span>
+          <?php else: ?>
+            <span style="color: #dc2626; font-weight: bold;">Hết hàng tạm thời</span>
+          <?php endif; ?>
+        </p>
       </div>
 
-      <!-- Biểu mẫu Thêm vào giỏ hàng (POST - PRG) -->
-      <form method="POST" action="gio-hang.php" style="display: flex; gap: 15px; align-items: center; margin-bottom: 30px; flex-wrap: wrap;">
-        <input type="hidden" name="action" value="them">
-        <input type="hidden" name="id" value="<?= $sp->id ?>">
-        
-        <label for="so-luong-nhap" style="font-weight: bold;">Số lượng:</label>
-        <input type="number" id="so-luong-nhap" name="soLuong" value="1" min="1" max="99" style="width: 70px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center;">
+      <!-- Biểu mẫu Thêm vào giỏ hàng (Hỗ trợ cả POST thường khi tắt JS và fetch khi bật JS) -->
+      <?php if ($sp->tonKho > 0): ?>
+        <form method="POST" action="gio-hang.php" id="form-them-gio" class="form-them-gio" style="display: flex; gap: 15px; align-items: center; margin-bottom: 30px; flex-wrap: wrap;">
+          <input type="hidden" name="action" value="them">
+          <input type="hidden" name="id" value="<?= $sp->id ?>">
+          
+          <label for="so-luong-nhap" style="font-weight: bold;">Số lượng:</label>
+          <input type="number" id="so-luong-nhap" name="soLuong" value="1" min="1" max="<?= min(99, $sp->tonKho) ?>" style="width: 70px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center;">
 
-        <button type="submit" class="nut nut--chinh" style="padding: 10px 24px; font-size: 1rem;">
-          🛒 Thêm vào giỏ hàng
-        </button>
-      </form>
+          <button type="submit" id="btn-them-gio" class="nut nut--chinh" style="padding: 10px 24px; font-size: 1rem;">
+            🛒 Thêm vào giỏ hàng
+          </button>
+          <span id="thong-bao-gio" style="color: #16a34a; font-weight: bold; margin-left: 10px;"></span>
+        </form>
+      <?php else: ?>
+        <p style="color: #dc2626; font-style: italic; margin-bottom: 25px;">
+          * Sách này hiện đã hết hàng, vui lòng liên hệ để đặt trước hoặc quay lại sau.
+        </p>
+      <?php endif; ?>
 
       <!-- Nội dung giới thiệu tóm tắt giáo trình -->
       <h2>Mô tả nội dung giáo trình</h2>
       <p style="line-height: 1.7; color: #334155;">
-        <?= nl2br(e($sp->moTa)) ?>
+        <?= nl2br(e($sp->moTa ?? 'Chưa có mô tả chi tiết cho đầu sách này.')) ?>
       </p>
     </div>
   </article>
 
-  <!-- Khối sách liên quan cùng chuyên ngành -->
+  <!-- Khối sách liên quan cùng chuyên ngành (Tối đa 4 cuốn) -->
   <?php if (!empty($sachLienQuan)): ?>
     <section style="margin-top: 40px;">
-      <h2>Giáo trình cùng chuyên ngành bạn có thể quan tâm</h2>
+      <h2>Sách cùng danh mục bạn có thể quan tâm</h2>
       <div class="luoi-the">
         <?php foreach ($sachLienQuan as $lq): ?>
           <article class="the">
             <figure class="the__hinh-anh">
-              <img src="<?= e($lq->hinhAnh) ?>" alt="Bìa sách <?= e($lq->ten) ?>" width="175" height="225" loading="lazy">
+              <img src="<?= e(anhSach($lq->anh)) ?>" alt="Bìa sách <?= e($lq->ten) ?>" width="175" height="225" loading="lazy">
             </figure>
             <div class="the__than">
               <h3 class="the__tieu-de"><a href="chi-tiet.php?id=<?= $lq->id ?>"><?= e($lq->ten) ?></a></h3>
@@ -131,5 +135,7 @@ require __DIR__ . '/inc/header.php';
     </section>
   <?php endif; ?>
 </main>
+
+<script src="js/gio-hang.js"></script>
 
 <?php require __DIR__ . '/inc/footer.php'; ?>

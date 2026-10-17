@@ -6,14 +6,12 @@
 
 require_once __DIR__ . '/inc/config.php';
 
-// Xóa thông tin xác thực của tài khoản trong phiên
-unset($_SESSION['user'], $_SESSION['hoTen'], $_SESSION['quyen']);
+// Xóa toàn bộ thông tin định danh phiên
+unset($_SESSION['uid']);
 
-// Cấp lại Session ID mới để hủy bỏ hoàn toàn phiên đăng nhập cũ
+// Cấp lại Session ID mới để hủy bỏ phiên cũ
 session_regenerate_id(true);
 
-// Gán thông báo xác nhận đăng xuất thành công
-$_SESSION['flash_loi'] = 'Bạn đã đăng xuất khỏi hệ thống thành công.';
-
-header('Location: dang-nhap.php');
+$_SESSION['flash'] = 'Bạn đã đăng xuất khỏi hệ thống thành công.';
+header('Location: index.php');
 exit;

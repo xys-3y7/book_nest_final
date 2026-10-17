@@ -1,140 +1,97 @@
-# BÀI TẬP THỰC HÀNH NHÓM SỐ 5 - NHÓM 12
-## MÔN: THIẾT KẾ VÀ LẬP TRÌNH WEB (KHOA TOÁN - TIN, TRƯỜNG ĐH SƯ PHẠM - ĐH ĐÀ NẴNG)
-### CHƯƠNG 5: LẬP TRÌNH PHP PHÍA MÁY CHỦ (SERVER-SIDE SCRIPTING)
+# Đồ Án BookNest &ndash; Nhà Sách Trực Tuyến Sinh Viên UED
+
+**Học phần:** Thiết kế và Lập trình Web (Web Design and Programming)  
+**Nhóm thực hiện:** Nhóm 12 &ndash; Lớp học phần: 24CNTT3  
+**Khoa:** Toán &ndash; Tin, Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng  
+**Bài tập thực hành:** Bài tập nhóm số 6 (Chương 6 &ndash; PHP và cơ sở dữ liệu MySQL)
 
 ---
 
-### 👥 DANH SÁCH THÀNH VIÊN NHÓM 12 (LỚP 24CNTT3)
-
-1. **Xaiyasith Yoi** – MSV: **3120224189** (Nhóm trưởng)
-2. **Phommaket Hatsady** – MSV: **3120224181** (Thành viên)
-3. **Vongsena Sauphasith** – MSV: **3120224186** (Thành viên)
-4. **Nguyễn Thị Sinh** – MSV: **3120223169** (Thành viên)
-
-- **Tên đề tài đồ án:** **BookNest – Website Bán Sách & Văn Phòng Phẩm Trực Tuyến**
-- **Kho GitHub của nhóm:** `https://github.com/xys-3y7/ltweb-doan-nhom12`
-- **Thẻ nộp bài (Git Tag):** `btn4` (Chương 4) và nhánh `main` (Chương 5)
-- **Mã commit kiểm tra (Last Commit SHA):** `c58a12e9b41a7d890cf231aef71891bca72891d0`
+## 1. Giới thiệu tổng quan
+Dự án **BookNest** được nâng cấp toàn diện từ nền tảng tệp JSON sang hệ quản trị CSDL quan hệ **MySQL / MariaDB** thông qua tầng truy xuất dữ liệu PDO an toàn. Ứng dụng hỗ trợ đầy đủ các tính năng web động:
+- Thiết kế CSDL chuẩn hóa 3NF, ràng buộc toàn vẹn khóa ngoại, CHECK giá sách, chỉ mục tối ưu truy vấn.
+- Toàn bộ câu truy vấn chứa dữ liệu người dùng sử dụng Prepared Statements, loại bỏ 100% nguy cơ SQL Injection.
+- Tìm kiếm tức thời (Debounce + Fetch API), lọc nhiều tiêu chí, sắp xếp theo whitelist và phân trang bảo toàn tham số lọc qua `http_build_query`.
+- Đặt hàng an toàn trong giao dịch ACID (`beginTransaction`, `commit`, `rollBack`), kiểm tra tồn kho nguyên tử (`UPDATE ... WHERE ton_kho >= ?`) chống bán vượt tồn kho.
+- Xác thực và phân quyền máy chủ: mật khẩu băm BCRYPT qua `password_hash`, Session bảo mật chỉ lưu `uid`, phân quyền quản trị và phân quyền chủ sở hữu dữ liệu.
+- Bộ REST API trả JSON chuẩn HTTP Status (200, 400, 404, 405, 422, 500) và tệp kiểm thử `api.http`.
 
 ---
 
-### 💻 YÊU CẦU MÔI TRƯỜNG & HƯỚNG DẪN CÀI ĐẶT CHẠY WEBSITE
-
-#### 1. Yêu cầu môi trường
-- **PHP:** Phiên bản ≥ 8.1 (Khuyến nghị PHP 8.2 trở lên, hỗ trợ đầy đủ readonly properties, union types, match expression, finfo, session, cURL).
-- **Composer:** Quản lý tự động nạp lớp PSR-4 (getcomposer.org).
-- **Trình duyệt:** Google Chrome, Mozilla Firefox hoặc Microsoft Edge (hỗ trợ kiểm chuẩn DevTools & Lighthouse).
-
-#### 2. Các bước khởi chạy dự án
-Mở cửa sổ dòng lệnh (Terminal / PowerShell) tại thư mục `ltweb-doan-nhom12`:
-
-```bash
-# Bước 1: Nạp bộ nạp tự động PSR-4 của Composer
-composer install
-# (hoặc: composer dump-autoload)
-
-# Bước 2: Khởi động máy chủ phát triển tích hợp sẵn của PHP
-php -S localhost:8000
-```
-
-Truy cập website trên trình duyệt tại: **`http://localhost:8000/`**
+## 2. Thành viên nhóm và phân công nhiệm vụ
+| TT | Họ và tên | Mã sinh viên | Tài khoản GitHub | Nhiệm vụ chính (Chương 6) |
+|:--:|:---|:---:|:---:|:---|
+| 1 | **Xaiyasith Yoi** *(Nhóm trưởng)* | 3120224189 | `xys-3y7` | Kiến trúc CSDL, inc/db.php, giao dịch đặt hàng, Bảng tv_luu_but |
+| 2 | **Phommaket Hatsady** | 3120224181 | `hatsady-pk` | Trang danh mục sách, bộ lọc GET, phân trang, Bảng tv_du_an |
+| 3 | **Vongsena Sauphasith** | 3120224186 | `sauphasith-vs` | Biểu mẫu liên hệ, upload ảnh, xử lý lỗi 403/404, Bảng tv_luot_xem |
+| 4 | **Nguyễn Thị Sinh** | 3120223169 | `sinh-nguyen` | Chi tiết sách JOIN danh mục, CRUD quản trị, Bảng tv_sach_yeu_thich |
 
 ---
 
-### 🔐 TÀI KHOẢN THỬ NGHIỆM TRANG QUẢN TRỊ (QUAN-TRI.PHP)
+## 3. Yêu cầu môi trường & Cài đặt
 
-Hệ thống sử dụng hàm `password_verify()` để đối chiếu mật khẩu đã được băm an toàn bằng thuật toán BCRYPT (`password_hash`) trong tệp `inc/tai-khoan.php`:
+### Yêu cầu hệ thống:
+- **PHP:** Phiên bản ≥ 8.1 (bật extension `pdo_mysql`, `mbstring`, `fileinfo`).
+- **CSDL:** MySQL ≥ 8.0 hoặc MariaDB ≥ 10.4 (có sẵn trong XAMPP hoặc Laragon).
+- **Composer:** Để nạp tự động PSR-4 (`App\\`: `src/`).
 
-| Tên đăng nhập (Username) | Mật khẩu (Password) | Vai trò | Quyền hạn |
-| :--- | :--- | :--- | :--- |
-| **`admin`** | **`admin123`** | Quản trị viên hệ thống | Quản lý toàn bộ hộp thư liên hệ, tải ảnh đính kèm |
-| **`giaovien`** | **`ued2026`** | Giảng viên đánh giá | Xem danh sách liên hệ, kiểm thử chức năng |
-
----
-
-### 🌐 BẢNG ĐIỀU HƯỚNG: CHỨC NĂNG – URL – TỆP PHP MÁY CHỦ
-
-| TT | Tên chức năng chính | Đường dẫn URL truy cập | Tệp PHP xử lý | Người phụ trách |
-| :---: | :--- | :--- | :--- | :--- |
-| **1** | Khung trang dùng chung, Menu active, Trang 404, 500, Config & Exception | `http://localhost:8000/`<br>`http://localhost:8000/404.php`<br>`http://localhost:8000/500.php` | `inc/config.php`<br>`inc/header.php`<br>`inc/footer.php`<br>`404.php`, `500.php` | **Xaiyasith Yoi**<br>(Nhóm trưởng) |
-| **2** | Danh mục sách, tìm kiếm từ khóa, lọc theo ngành, sắp xếp giá/tên (GET) | `http://localhost:8000/danh-sach.php`<br>`?q=web&dm=cntt&sx=gia-tang` | `danh-sach.php`<br>`src/Data/KhoSanPham.php` | **Phommaket Hatsady** |
-| **3** | Chi tiết giáo trình, Cookie `da_xem` (tối đa 4 ID), khối đã xem trang chủ | `http://localhost:8000/chi-tiet.php?id=1`<br>`http://localhost:8000/index.php` | `chi-tiet.php`<br>`index.php` | **Nguyễn Thị Sinh** |
-| **4** | Biểu mẫu liên hệ, Server validation, upload ảnh an toàn qua finfo, JSONL | `http://localhost:8000/lien-he.php` | `lien-he.php`<br>`src/Data/KhoLienHe.php` | **Vongsena Sauphasith** |
-| **5** | Giỏ hàng mua sách trong Session, tính tổng tiền, bảo vệ giá máy chủ (PRG) | `http://localhost:8000/gio-hang.php` | `gio-hang.php`<br>`src/Services/GioHang.php` | **Phommaket Hatsady** &<br>**Xaiyasith Yoi** |
-| **6** | Đăng nhập password_hash, bảo vệ phiên `inc/bao-ve.php`, Bảng quản trị | `http://localhost:8000/dang-nhap.php`<br>`http://localhost:8000/quan-tri.php`<br>`http://localhost:8000/dang-xuat.php` | `dang-nhap.php`<br>`quan-tri.php`<br>`dang-xuat.php`<br>`inc/bao-ve.php` | **Xaiyasith Yoi** &<br>**Nguyễn Thị Sinh** |
-
----
-
-### 👤 TRANG CÁ NHÂN VÀ 2 CHỨC NĂNG MÁY CHỦ CỦA TỪNG THÀNH VIÊN (PHẦN C)
-
-1. **Xaiyasith Yoi (Nhóm trưởng):**
-   - **URL:** `http://localhost:8000/thanhvien/3120224189_yoi/gioithieu.php`
-   - **Chức năng máy chủ 1:** Sổ lưu bút sinh viên (lưu vào `storage/3120224189_luubut.jsonl`, hiển thị 5 lời nhắn mới nhất, PRG).
-   - **Chức năng máy chủ 2:** Giao diện Sáng/Tối ghi nhớ trạng thái bằng Cookie máy chủ (`$_COOKIE['yoi_theme']`), không chớp giật layout.
-
-2. **Phommaket Hatsady:**
-   - **URL:** `http://localhost:8000/thanhvien/3120224181_hatsady/gioithieu.php`
-   - **Chức năng máy chủ 1:** Máy tính điểm học phần theo tín chỉ UED (`0.2*A1 + 0.3*A2 + 0.5*A3`), kiểm tra 0 - 10, xếp loại học lực và điểm chữ.
-   - **Chức năng máy chủ 2:** Danh mục dự án cá nhân từ mảng PHP, lọc theo thể loại qua tham số GET (`?theloai=web|di-dong|csdl`).
-
-3. **Vongsena Sauphasith:**
-   - **URL:** `http://localhost:8000/thanhvien/3120224186_sauphasith/gioithieu.php`
-   - **Chức năng máy chủ 1:** Bộ đếm lượt xem hồ sơ cá nhân (Session + tệp `storage/3120224186_luotxem.txt`, mỗi phiên chỉ tăng 1 lần kèm LOCK_EX).
-   - **Chức năng máy chủ 2:** Danh mục kỹ năng chuyên môn từ mảng PHP, lọc theo nhóm qua tham số GET (`?nhom=frontend|backend|devops`).
-
-4. **Nguyễn Thị Sinh:**
-   - **URL:** `http://localhost:8000/thanhvien/3120223169_sinh/gioithieu.php`
-   - **Chức năng máy chủ 1:** Tải lên và thay đổi ảnh đại diện cá nhân an toàn (kiểm tra MIME type qua finfo, dung lượng ≤ 2 MB, lưu `uploads/avatars/`).
-   - **Chức năng máy chủ 2:** Sổ góp ý & đánh giá cá nhân (lưu vào `storage/3120223169_danhgia.jsonl`, hiển thị danh sách nhận xét, PRG).
+### Các bước cài đặt và chạy:
+1. **Cài đặt thư viện:**
+   ```bash
+   composer install
+   ```
+2. **Khởi tạo CSDL `ltweb_nhom12` (Xóa và tạo lại từ đầu):**
+   - Mở `phpMyAdmin` &rarr; Import `database/schema.sql`, sau đó Import `database/seed.sql`.
+   - Hoặc gõ lệnh trong terminal (mysql XAMPP ở `C:\xampp\mysql\bin`):
+     ```bash
+     mysql -u root < database/schema.sql
+     mysql -u root ltweb_nhom12 < database/seed.sql
+     ```
+3. **Khởi động máy chủ phát triển:**
+   ```bash
+   php -S localhost:8000
+   ```
+   Sau đó mở trình duyệt truy cập: [http://localhost:8000](http://localhost:8000).
 
 ---
 
-### 📂 CẤU TRÚC THƯ MỤC DỰ ÁN
+## 4. Tài khoản thử nghiệm (Mật khẩu chung: `matkhau123`)
+| Email | Họ và tên | Vai trò | Quyền hạn & Chức năng |
+|:---|:---|:---:|:---|
+| `admin@ued.vn` | Quản trị viên Hệ thống | `quan_tri` | Toàn quyền vào `quan-tri.php`, thêm/sửa/xóa sách, đổi trạng thái đơn |
+| `lan@ued.vn` | Nguyễn Thị Lan | `khach_hang` | Đặt mua sách, xem đơn hàng cá nhân trong `don-hang.php` |
+| `an@ued.vn` | Trần Văn An | `khach_hang` | Đặt mua sách, xem đơn hàng cá nhân trong `don-hang.php` |
+| `yoi@ued.vn` | Xaiyasith Yoi | `quan_tri` | Chủ trang cá nhân Yoi, quyền xóa lưu bút |
+| `hatsady@ued.vn` | Phommaket Hatsady | `khach_hang` | Chủ trang cá nhân Hatsady, thêm dự án mới |
+| `sinh@ued.vn` | Nguyễn Thị Sinh | `khach_hang` | Chủ trang cá nhân Sinh, thêm đánh giá sách |
 
-```text
-ltweb-doan-nhom12/
-├── inc/                                 # Thư mục mã nguồn dùng chung cho toàn bộ website
-│   ├── config.php                       # Cấu hình hằng môi trường MOI_TRUONG='dev', E_ALL, log_errors, exception_handler
-│   ├── ham.php                          # Hàm tiện ích dùng chung: e($str) chống XSS, vnd($tien) định dạng tiền Việt Nam
-│   ├── tai-khoan.php                    # Danh sách tài khoản thử nghiệm với mật khẩu băm BCRYPT (password_hash)
-│   ├── bao-ve.php                       # Middleware bảo vệ các trang yêu cầu quyền quản trị viên
-│   ├── header.php                       # Khung đầu trang dùng chung: Logo, điều hướng ngữ nghĩa, giỏ hàng, thông tin phiên
-│   └── footer.php                       # Khung chân trang dùng chung: Bản quyền, địa chỉ, liên kết môn học
-├── src/                                 # Mã nguồn tổ chức theo chuẩn Hướng đối tượng (OOP) & Composer PSR-4
-│   ├── Models/
-│   │   └── SanPham.php                  # Thực thể Sách với các thuộc tính readonly và phương thức tĩnh tuMang()
-│   ├── Data/
-│   │   ├── KhoSanPham.php               # Lớp truy xuất tệp JSON, tìm kiếm, lọc theo thể loại và sắp xếp
-│   │   └── KhoLienHe.php                # Lớp lưu trữ và truy xuất tệp JSON Lines (.jsonl) kèm cơ chế khóa tệp LOCK_EX
-│   └── Services/
-│       └── GioHang.php                  # Dịch vụ quản lý giỏ hàng lưu trong Session: thêm, sửa, xóa, tính tổng tiền
-├── storage/                             # Thư mục lưu trữ dữ liệu nhật ký dạng văn bản phía máy chủ
-│   ├── lien-he.jsonl                    # Tệp lưu trữ danh sách biểu mẫu liên hệ và đặt giáo trình
-│   ├── 3120224189_luubut.jsonl          # Sổ lưu bút của sinh viên Xaiyasith Yoi
-│   ├── 3120224186_luotxem.txt           # Bộ đếm lượt xem trang cá nhân của Vongsena Sauphasith
-│   ├── 3120223169_avatar.txt            # Tên ảnh đại diện tùy chỉnh của Nguyễn Thị Sinh
-│   └── 3120223169_danhgia.jsonl         # Sổ góp ý cá nhân của Nguyễn Thị Sinh
-├── uploads/                             # Thư mục lưu trữ các tệp ảnh tải lên an toàn từ người dùng
-│   └── avatars/                         # Thư mục lưu ảnh đại diện của thành viên
-├── logs/                                # Nhật ký lỗi phía máy chủ
-│   └── php-error.log                    # Nhật ký ghi toàn bộ lỗi Warning, Notice, Exception và nỗ lực đăng nhập sai
-├── data/
-│   └── san-pham.json                    # CSDL 12 giáo trình có cấu trúc JSON chuẩn hóa
-├── thanhvien/                           # Thư mục trang cá nhân của 4 thành viên
-│   ├── 3120224189_yoi/gioithieu.php     # Hồ sơ Xaiyasith Yoi (Sổ lưu bút + Dark/Light Theme Cookie)
-│   ├── 3120224181_hatsady/gioithieu.php # Hồ sơ Phommaket Hatsady (Máy tính điểm học phần + Lọc dự án)
-│   ├── 3120224186_sauphasith/gioithieu.php # Hồ sơ Vongsena Sauphasith (Bộ đếm lượt xem + Lọc kỹ năng)
-│   └── 3120223169_sinh/gioithieu.php    # Hồ sơ Nguyễn Thị Sinh (Upload avatar finfo + Sổ đánh giá)
-├── index.php                            # Trang chủ: Sách nổi bật, khối sách đã xem từ Cookie, thời tiết API
-├── danh-sach.php                        # Danh mục: Bộ lọc GET, tìm kiếm từ khóa, sắp xếp, giữ nguyên lựa chọn
-├── chi-tiet.php                         # Chi tiết: URL ?id=, ghi Cookie da_xem an toàn, form thêm giỏ, sách liên quan
-├── gio-hang.php                         # Giỏ hàng: Lưu trong PHP Session, cập nhật số lượng, xóa mục, PRG
-├── lien-he.php                          # Biểu mẫu: Server validation, upload ảnh finfo, lưu JSONL, flash message
-├── dang-nhap.php                        # Đăng nhập: password_verify, cấp ID phiên mới, ghi log sai pass
-├── dang-xuat.php                        # Đăng xuất: Hủy phiên làm việc an toàn, chuyển hướng về đăng nhập
-├── quan-tri.php                         # Bảng quản trị: Xem danh sách liên hệ & ảnh đính kèm, bảo vệ bởi inc/bao-ve.php
-├── 404.php                              # Trang báo lỗi 404 thân thiện kèm HTTP Status 404 Not Found
-├── 500.php                              # Trang báo lỗi 500 thân thiện (khi MOI_TRUONG='prod')
-├── composer.json                        # Cấu hình gói Composer và cơ chế tự động nạp PSR-4: "App\\": "src/"
-└── kiemtra/                             # Thư mục lưu 18 ảnh minh chứng phân tích web thực tế, kiểm thử và chất lượng
-```
+---
+
+## 5. Bảng chức năng & Đường dẫn URL hệ thống
+| Chức năng | Đường dẫn URL | Tệp xử lý | Người phụ trách |
+|:---|:---|:---|:---|
+| Trang chủ & Đã xem gần đây | `/index.php` | `index.php` | Xaiyasith Yoi |
+| Danh mục & Tìm kiếm phân trang | `/danh-sach.php` | `danh-sach.php` | Phommaket Hatsady |
+| Chi tiết sách & Sách cùng loại | `/chi-tiet.php?id=1` | `chi-tiet.php` | Nguyễn Thị Sinh |
+| Giỏ hàng mua sách | `/gio-hang.php` | `gio-hang.php` | Phommaket Hatsady |
+| Đặt hàng trong giao dịch ACID | `/dat-hang.php` | `dat-hang.php` | Xaiyasith Yoi |
+| Đơn hàng của tôi | `/don-hang.php` | `don-hang.php` | Xaiyasith Yoi |
+| Quản trị sách & Đơn hàng | `/quan-tri.php` | `quan-tri.php` | Nguyễn Thị Sinh |
+| Thêm sách mới | `/them-san-pham.php` | `them-san-pham.php` | Nguyễn Thị Sinh |
+| Chỉnh sửa sách | `/sua-san-pham.php?id=1` | `sua-san-pham.php` | Nguyễn Thị Sinh |
+| Xóa sách (Chỉ nhận POST) | `/xoa-san-pham.php` | `xoa-san-pham.php` | Nguyễn Thị Sinh |
+| Đăng ký tài khoản | `/dang-ky.php` | `dang-ky.php` | Xaiyasith Yoi |
+| Đăng nhập hệ thống | `/dang-nhap.php` | `dang-nhap.php` | Xaiyasith Yoi |
+| Đăng xuất an toàn | `/dang-xuat.php` | `dang-xuat.php` | Xaiyasith Yoi |
+| Liên hệ & Upload ảnh minh chứng | `/lien-he.php` | `lien-he.php` | Vongsena Sauphasith |
+
+---
+
+## 6. Danh mục REST API Endpoints
+| Phương thức | Endpoint URL | Tham số | Mã HTTP | Mô tả phản hồi |
+|:---:|:---|:---|:---:|:---|
+| **GET** | `/api/san-pham.php` | `?q=tu_khoa` | 200 | Tìm kiếm nhanh sách theo từ khóa (JSON) |
+| **GET** | `/api/san-pham.php` | `?id=1` | 200, 400, 404 | Chi tiết 1 cuốn sách (chỉ chứa trường công khai) |
+| **GET** | `/api/gio-hang.php` | Không | 200 | Xem tổng quan số lượng và danh sách giỏ hàng |
+| **POST** | `/api/gio-hang.php` | Thân JSON: `{"id": 1, "sl": 2}` | 200, 400, 404, 422 | Thêm sách vào giỏ không tải lại trang |
+| Khác | `/api/...` | Phương thức không hỗ trợ | 405 | Header `Allow`, thông báo lỗi JSON |

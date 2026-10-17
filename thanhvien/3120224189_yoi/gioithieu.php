@@ -1,245 +1,200 @@
 <?php
 /**
- * thanhvien/3120224189_yoi/gioithieu.php - Trang giới thiệu cá nhân sinh viên Xaiyasith Yoi
- * Tệp này hiển thị hồ sơ cá nhân, thời khóa biểu và tích hợp 2 chức năng máy chủ:
- * 1. Sổ lưu bút sinh viên (lưu vào storage/3120224189_luubut.jsonl, hiển thị 5 lời nhắn mới nhất, PRG)
- * 2. Giao diện Sáng/Tối ghi nhớ trạng thái bằng Cookie máy chủ (chuyển đổi qua GET ?doitheme=1)
- * Cách thử: Mở trình duyệt truy cập http://localhost:8000/thanhvien/3120224189_yoi/gioithieu.php
+ * thanhvien/3120224189_yoi/gioithieu.php - Trang cá nhân của Xaiyasith Yoi (Nhóm trưởng)
+ * Mã sinh viên: 3120224189 - Lớp: 24CNTT3
+ * Chức năng Phần B: 
+ *   1. Sổ lưu bút dùng CSDL MySQL (bảng tv_luu_but) có phân trang; chỉ chủ trang đăng nhập mới thấy nút Xóa.
+ *   2. Thống kê tổng quan dữ liệu đồ án BookNest (tổng số sách, tổng danh mục, tổng đơn hàng).
+ * Cách thử: Gửi lời nhắn mới; sang trang 2; đăng nhập tài khoản yoi@ued.vn (chủ trang) để thấy nút Xóa.
  */
 
-$goc = '../../';
 require_once __DIR__ . '/../../inc/config.php';
 
-// Chức năng 2: Chuyển đổi giao diện Sáng / Tối ghi nhớ bằng Cookie máy chủ
-$themeHienTai = $_COOKIE['yoi_theme'] ?? 'light';
-if (isset($_GET['doitheme'])) {
-    $themeMoi = ($themeHienTai === 'dark') ? 'light' : 'dark';
-    setcookie('yoi_theme', $themeMoi, [
-        'expires'  => time() + 30 * 24 * 3600,
-        'path'     => '/',
-        'httponly' => true,
-        'samesite' => 'Lax'
-    ]);
-    header('Location: gioithieu.php');
-    exit;
-}
+const MSSV = '3120224189';
+$goc = '../../';
+$db = db();
 
-// Chức năng 1: Xử lý gửi Sổ lưu bút sinh viên (Guestbook)
-$loiYoi = [];
-$duYoi = ['ten' => '', 'loiNhan' => ''];
-$tepLuuBut = __DIR__ . '/../../storage/3120224189_luubut.jsonl';
+// Kiểm tra quyền chủ trang từ bảng thanh_vien
+$st = $db->prepare('SELECT ho_ten, nguoi_dung_id FROM thanh_vien WHERE mssv = ?');
+$st->execute([MSSV]);
+$tv = $st->fetch();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'gui_luubut') {
-    $duYoi['ten'] = trim($_POST['ten'] ?? '');
-    $duYoi['loiNhan'] = trim($_POST['loiNhan'] ?? '');
+$u = nguoiDung();
+$laChuTrang = ($u['id'] ?? 0) === ($tv['nguoi_dung_id'] ?? -1);
 
-    if ($duYoi['ten'] === '') {
-        $loiYoi['ten'] = 'Vui lòng nhập họ tên hoặc biệt danh của bạn.';
-    } elseif (mb_strlen($duYoi['ten']) < 2) {
-        $loiYoi['ten'] = 'Tên phải có độ dài từ 2 ký tự trở lên.';
-    }
+$loi = [];
 
-    if ($duYoi['loiNhan'] === '') {
-        $loiYoi['loiNhan'] = 'Vui lòng nhập lời nhắn lưu bút.';
-    } elseif (mb_strlen($duYoi['loiNhan']) < 5) {
-        $loiYoi['loiNhan'] = 'Lời nhắn phải có ít nhất 5 ký tự.';
-    }
+// Xử lý gửi lời nhắn hoặc xóa lời nhắn (POST - PRG)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $xoa = filter_var($_POST['xoa'] ?? '', FILTER_VALIDATE_INT);
 
-    if (empty($loiYoi)) {
-        $thuMucStorage = dirname($tepLuuBut);
-        if (!is_dir($thuMucStorage)) {
-            mkdir($thuMucStorage, 0777, true);
+    if ($xoa && $laChuTrang) {
+        // Chỉ chủ trang mới được xóa, và chỉ xóa trên trang của mình (AND mssv = ?)
+        $stXoa = $db->prepare('DELETE FROM tv_luu_but WHERE id = ? AND mssv = ?');
+        $stXoa->execute([$xoa, MSSV]);
+        $_SESSION['flash'] = 'Đã xóa lời nhắn thành công!';
+    } elseif (!$xoa) {
+        $tenKhach = trim($_POST['ten_khach'] ?? '');
+        $loiNhan  = trim($_POST['loi_nhan'] ?? '');
+
+        if ($tenKhach === '' || mb_strlen($tenKhach) > 50) {
+            $loi['ten_khach'] = 'Họ tên phải dài từ 1 đến 50 ký tự';
+        }
+        if ($loiNhan === '' || mb_strlen($loiNhan) > 500) {
+            $loi['loi_nhan'] = 'Lời nhắn phải dài từ 1 đến 500 ký tự';
         }
 
-        $banGhi = [
-            'thoiGian' => date('d/m/Y H:i'),
-            'ten'      => $duYoi['ten'],
-            'loiNhan'  => $duYoi['loiNhan'],
-            'ip'       => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
-        ];
-        $dong = json_encode($banGhi, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        file_put_contents($tepLuuBut, $dong . PHP_EOL, FILE_APPEND | LOCK_EX);
+        if (empty($loi)) {
+            $stThem = $db->prepare('INSERT INTO tv_luu_but (mssv, ten_khach, loi_nhan) VALUES (?, ?, ?)');
+            $stThem->execute([MSSV, $tenKhach, $loiNhan]);
+            $_SESSION['flash'] = 'Cảm ơn bạn đã để lại lời nhắn lưu bút!';
+        }
+    }
 
-        $_SESSION['flash_yoi'] = 'Đã gửi lời nhắn vào Sổ lưu bút thành công!';
+    if (empty($loi)) {
         header('Location: gioithieu.php');
         exit;
     }
 }
 
-$thongBaoYoi = $_SESSION['flash_yoi'] ?? '';
-unset($_SESSION['flash_yoi']);
+// Phân trang sổ lưu bút: 5 lời nhắn mỗi trang
+$stDem = $db->prepare('SELECT COUNT(*) FROM tv_luu_but WHERE mssv = ?');
+$stDem->execute([MSSV]);
+$tongLuuBut = (int)$stDem->fetchColumn();
+$moiTrang = 5;
+$soTrang = max(1, (int) ceil($tongLuuBut / $moiTrang));
 
-// Đọc 5 lời nhắn mới nhất từ tệp JSONL
-$danhSachLuuBut = [];
-if (is_file($tepLuuBut)) {
-    $cacDong = file($tepLuuBut, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if ($cacDong) {
-        $ds = array_map(fn($d) => json_decode($d, true), $cacDong);
-        $danhSachLuuBut = array_slice(array_reverse(array_filter($ds, 'is_array')), 0, 5);
-    }
-}
+$hienTai = filter_var($_GET['trang'] ?? 1, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'default' => 1]]);
+$hienTai = min($hienTai, $soTrang);
 
-$tieuDe = 'Hồ sơ sinh viên: Xaiyasith Yoi (Nhóm trưởng)';
+$stLb = $db->prepare(
+    'SELECT id, ten_khach, loi_nhan, thoi_gian 
+     FROM tv_luu_but 
+     WHERE mssv = ? 
+     ORDER BY thoi_gian DESC, id DESC 
+     LIMIT 5 OFFSET ?'
+);
+$stLb->execute([MSSV, ($hienTai - 1) * $moiTrang]);
+$dsLuuBut = $stLb->fetchAll();
+
+// Chức năng 2: Thống kê số liệu đồ án từ CSDL
+$tongSach = (int)$db->query('SELECT COUNT(*) FROM san_pham')->fetchColumn();
+$tongDm = (int)$db->query('SELECT COUNT(*) FROM danh_muc')->fetchColumn();
+$tongDon = (int)$db->query('SELECT COUNT(*) FROM don_hang')->fetchColumn();
+
+$thongBao = $_SESSION['flash'] ?? '';
+unset($_SESSION['flash']);
+
+$tieuDe = 'Trang cá nhân - Xaiyasith Yoi';
 $trang = 'gioi-thieu';
-$moTaTrang = 'Hồ sơ lý lịch, thời khóa biểu và chức năng PHP cá nhân của sinh viên Xaiyasith Yoi.';
 
 require __DIR__ . '/../../inc/header.php';
 ?>
 
-<!-- Nạp thêm CSS riêng của thành viên -->
-<link rel="stylesheet" href="css/style.css">
-
-<style>
-  <?php if ($themeHienTai === 'dark'): ?>
-    body { background-color: #0f172a !important; color: #f8fafc !important; }
-    .noi-dung-chinh, .khung-chua { color: #f8fafc !important; }
-    .ho-so-ca-nhan, .khu-vuc-chuc-nang, .hop-luu-but { background: #1e293b !important; color: #f8fafc !important; border-color: #334155 !important; }
-    table { background: #1e293b !important; color: #f8fafc !important; border-color: #334155 !important; }
-    th { background: #334155 !important; color: #f8fafc !important; }
-    td { border-color: #334155 !important; color: #cbd5e1 !important; }
-  <?php endif; ?>
-</style>
-
-<main class="noi-dung-chinh khung-chua">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
-    <h1>Hồ sơ sinh viên: Xaiyasith Yoi</h1>
-    
-    <!-- Chức năng 2: Nút chuyển đổi Theme Sáng / Tối (Cookie) -->
-    <a href="gioithieu.php?doitheme=1" class="nut nut--vien" style="text-decoration: none;">
-      <?= ($themeHienTai === 'dark') ? '☀️ Chuyển sang Giao diện Sáng' : '🌙 Chuyển sang Giao diện Tối (Cookie)' ?>
-    </a>
-  </div>
-
-  <!-- 1. Khối thông tin lý lịch cá nhân -->
-  <section class="ho-so-ca-nhan" style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
-    <figure>
-      <img src="../../images/yoi-avatar.png" alt="Ảnh chân dung sinh viên Xaiyasith Yoi" width="140" height="140" style="border-radius: 50%; border: 3px solid #0284c7;">
-      <figcaption><strong>Xaiyasith Yoi</strong><br>Sinh viên Khoa Toán &ndash; Tin</figcaption>
-    </figure>
-
+<main class="noi-dung-chinh khung-chua" style="max-width: 900px; margin: 30px auto;">
+  <!-- Thông tin cá nhân -->
+  <section style="display: flex; gap: 30px; align-items: center; background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px; flex-wrap: wrap;">
+    <img src="<?= $goc ?>images/yoi-avatar.png" alt="Ảnh Xaiyasith Yoi" width="130" height="130" style="border-radius: 50%; object-fit: cover; border: 3px solid #1e3b6d;">
     <div>
-      <h2>Thông tin chi tiết</h2>
-      <ul>
-        <li><strong>Họ và tên:</strong> Xaiyasith Yoi</li>
-        <li><strong>Mã sinh viên:</strong> 3120224189</li>
-        <li><strong>Lớp sinh hoạt:</strong> 24CNTT3</li>
-        <li><strong>Chuyên ngành:</strong> Công nghệ thông tin</li>
-        <li><strong>Đơn vị đào tạo:</strong> Khoa Toán &ndash; Tin, Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng</li>
-        <li><strong>Vai trò trong nhóm:</strong> Nhóm trưởng (Quản trị dự án, khung PHP MVC dùng chung, Giỏ hàng Session, Git)</li>
-        <li><strong>Email học tập:</strong> <a href="mailto:3120224189@ued.udn.vn">3120224189@ued.udn.vn</a></li>
-        <li><strong>Tài khoản GitHub:</strong> <a href="https://github.com/xys-3y7" target="_blank" rel="noopener">xys-3y7</a></li>
-      </ul>
+      <h1 style="margin: 0; color: #1e3b6d; font-size: 1.8rem;">Xaiyasith Yoi</h1>
+      <p style="margin: 5px 0; color: #64748b;">Mã sinh viên: <strong>3120224189</strong> | Lớp: <strong>24CNTT3</strong></p>
+      <p style="margin: 5px 0;">Vai trò: <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Nhóm trưởng Nhóm 12</span></p>
+      <p style="margin: 5px 0; color: #475569;">Trách nhiệm: Quản trị CSDL MySQL, kiến trúc PDO, bảo mật phiên, xác thực và chức năng giao dịch đơn hàng.</p>
+      <?php if ($laChuTrang): ?>
+        <p style="margin: 8px 0 0 0; color: #16a34a; font-weight: bold;">✓ Bạn đang đăng nhập với tư cách Chủ trang (yoi@ued.vn)</p>
+      <?php else: ?>
+        <p style="margin: 8px 0 0 0; font-size: 0.85rem; color: #64748b;">(Đăng nhập tài khoản <code>yoi@ued.vn</code> / <code>matkhau123</code> để kích hoạt quyền xóa lưu bút)</p>
+      <?php endif; ?>
     </div>
   </section>
 
-  <!-- 2. Danh sách kỹ năng chuyên môn -->
-  <section style="margin-bottom: 30px;">
-    <h2>Danh sách kỹ năng chuyên môn</h2>
-    <ul class="danh-sach-ky-nang">
-      <li>PHP 8 Thuần &amp; Kiến trúc MVC / Hướng đối tượng (OOP)</li>
-      <li>Quản lý gói Composer &amp; PSR-4 Autoloading</li>
-      <li>Kiến trúc CSS3 BEM &amp; Mobile-First Responsive</li>
-      <li>Bố cục CSS Grid &amp; Flexbox chuẩn W3C</li>
-      <li>HTML5 Ngữ nghĩa &amp; WCAG AA Accessibility</li>
-      <li>Quản lý mã nguồn với Git &amp; GitHub Branching</li>
-    </ul>
+  <!-- Thông báo trạng thái -->
+  <?php if ($thongBao !== ''): ?>
+    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px 16px; border-radius: 6px; margin-bottom: 25px;" aria-live="polite">
+      <strong>✓ Thành công:</strong> <?= e($thongBao) ?>
+    </div>
+  <?php endif; ?>
+
+  <!-- Chức năng CSDL 2: Thống kê số liệu hệ thống đồ án -->
+  <section style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 35px;">
+    <h2 style="margin-top: 0; color: #1e3b6d; font-size: 1.3rem;">📊 Thống kê dữ liệu đồ án BookNest (CSDL MySQL)</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 15px;">
+      <div style="background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; text-align: center;">
+        <span style="font-size: 2rem; font-weight: bold; color: #1e40af;"><?= $tongSach ?></span>
+        <div style="color: #64748b; font-size: 0.9rem; margin-top: 4px;">Tổng số đầu sách</div>
+      </div>
+      <div style="background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; text-align: center;">
+        <span style="font-size: 2rem; font-weight: bold; color: #059669;"><?= $tongDm ?></span>
+        <div style="color: #64748b; font-size: 0.9rem; margin-top: 4px;">Danh mục sách</div>
+      </div>
+      <div style="background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; text-align: center;">
+        <span style="font-size: 2rem; font-weight: bold; color: #d97706;"><?= $tongDon ?></span>
+        <div style="color: #64748b; font-size: 0.9rem; margin-top: 4px;">Tổng đơn đã đặt</div>
+      </div>
+    </div>
   </section>
 
-  <!-- 3. HAI CHỨC NĂNG XỬ LÝ PHÍA MÁY CHỦ (PHẦN C) -->
-  <section class="khu-vuc-chuc-nang" style="background: #f8fafc; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 35px;">
-    <h2>Chức năng máy chủ: Sổ lưu bút sinh viên (Guestbook)</h2>
-    <p>Gửi lời chúc, nhắn nhủ tới Yoi &mdash; Dữ liệu được máy chủ kiểm tra và ghi nhận an toàn vào <code>storage/3120224189_luubut.jsonl</code>:</p>
+  <!-- Chức năng CSDL 1: Sổ lưu bút cá nhân (bảng tv_luu_but) -->
+  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0;">
+    <h2 style="margin-top: 0; color: #1e3b6d;">✍️ Sổ lưu bút bạn bè (Bảng tv_luu_but - Phân trang)</h2>
+    <p style="color: #64748b; font-size: 0.95rem;">Để lại lời chúc hoặc góp ý cho nhóm trưởng Yoi. Dữ liệu lưu trong bảng <code>tv_luu_but</code>.</p>
 
-    <?php if ($thongBaoYoi !== ''): ?>
-      <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 10px 14px; border-radius: 6px; margin-bottom: 20px;">
-        ✓ <?= e($thongBaoYoi) ?>
-      </div>
-    <?php endif; ?>
-
-    <!-- Biểu mẫu Sổ lưu bút (POST - PRG) -->
-    <form method="POST" action="gioithieu.php" style="max-width: 600px; margin-bottom: 30px;" novalidate>
-      <input type="hidden" name="action" value="gui_luubut">
-
+    <!-- Biểu mẫu gửi lưu bút -->
+    <form method="POST" action="gioithieu.php" style="margin-bottom: 30px; background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0;">
       <div style="margin-bottom: 15px;">
-        <label for="yoi-ten" style="display: block; font-weight: bold; margin-bottom: 5px;">Họ và tên hoặc Biệt danh <span style="color: #dc2626;">*</span>:</label>
-        <input type="text" id="yoi-ten" name="ten" value="<?= e($duYoi['ten']) ?>" placeholder="Ví dụ: Bạn học cùng lớp" style="width: 100%; padding: 8px 12px; border: 1px solid <?= isset($loiYoi['ten']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px;">
-        <?php if (isset($loiYoi['ten'])): ?>
-          <div style="color: #dc2626; font-size: 0.85rem; margin-top: 4px;"><?= e($loiYoi['ten']) ?></div>
+        <label for="ten_khach" style="display: block; font-weight: bold; margin-bottom: 5px;">Họ và tên của bạn <span style="color:#dc2626;">*</span></label>
+        <input type="text" id="ten_khach" name="ten_khach" placeholder="Ví dụ: Nguyễn Thị Sinh" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box;">
+        <?php if (isset($loi['ten_khach'])): ?>
+          <p style="color: #dc2626; font-size: 0.85rem; margin: 4px 0 0 0;"><?= e($loi['ten_khach']) ?></p>
         <?php endif; ?>
       </div>
 
       <div style="margin-bottom: 15px;">
-        <label for="yoi-loinhan" style="display: block; font-weight: bold; margin-bottom: 5px;">Lời nhắn gửi Yoi <span style="color: #dc2626;">*</span>:</label>
-        <textarea id="yoi-loinhan" name="loiNhan" rows="3" placeholder="Nhập lời nhắn động viên..." style="width: 100%; padding: 8px 12px; border: 1px solid <?= isset($loiYoi['loiNhan']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px;"><?= e($duYoi['loiNhan']) ?></textarea>
-        <?php if (isset($loiYoi['loiNhan'])): ?>
-          <div style="color: #dc2626; font-size: 0.85rem; margin-top: 4px;"><?= e($loiYoi['loiNhan']) ?></div>
+        <label for="loi_nhan" style="display: block; font-weight: bold; margin-bottom: 5px;">Lời nhắn lưu bút <span style="color:#dc2626;">*</span></label>
+        <textarea id="loi_nhan" name="loi_nhan" rows="3" placeholder="Viết vài dòng chia sẻ cùng Yoi..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box;"></textarea>
+        <?php if (isset($loi['loi_nhan'])): ?>
+          <p style="color: #dc2626; font-size: 0.85rem; margin: 4px 0 0 0;"><?= e($loi['loi_nhan']) ?></p>
         <?php endif; ?>
       </div>
 
-      <button type="submit" class="nut nut--chinh">✍️ Gửi lưu bút</button>
+      <button type="submit" class="nut nut--chinh">Gửi lưu bút ngay</button>
     </form>
 
-    <!-- Hiển thị 5 lời nhắn gần nhất -->
-    <h3>5 Lời nhắn mới nhất đã nhận:</h3>
-    <?php if (!empty($danhSachLuuBut)): ?>
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <?php foreach ($danhSachLuuBut as $lb): ?>
-          <div class="hop-luu-but" style="background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; color: #64748b;">
-              <strong><?= e($lb['ten']) ?></strong>
-              <span><?= e($lb['thoiGian']) ?></span>
+    <!-- Danh sách lưu bút -->
+    <h3>Các lời nhắn đã nhận (Tổng: <?= $tongLuuBut ?>)</h3>
+    <?php if (empty($dsLuuBut)): ?>
+      <p style="color: #64748b; font-style: italic;">Chưa có lời nhắn nào. Hãy là người đầu tiên ghi lưu bút nhé!</p>
+    <?php else: ?>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px;">
+        <?php foreach ($dsLuuBut as $lb): ?>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+            <div>
+              <div style="font-weight: bold; color: #1e3b6d;"><?= e($lb['ten_khach']) ?></div>
+              <p style="margin: 5px 0 6px 0; color: #334155; line-height: 1.5;"><?= nl2br(e($lb['loi_nhan'])) ?></p>
+              <small style="color: #94a3b8;"><?= e($lb['thoi_gian']) ?></small>
             </div>
-            <p style="margin: 0; line-height: 1.5;"><?= nl2br(e($lb['loiNhan'])) ?></p>
+            <?php if ($laChuTrang): ?>
+              <form method="POST" action="gioithieu.php" onsubmit="return confirm('Bạn có chắc muốn xóa lời nhắn này?');" style="margin: 0;">
+                <input type="hidden" name="xoa" value="<?= $lb['id'] ?>">
+                <button type="submit" class="nut nut--vien" style="color: #dc2626; border-color: #fca5a5; padding: 4px 10px; font-size: 0.8rem;">Xóa</button>
+              </form>
+            <?php endif; ?>
           </div>
         <?php endforeach; ?>
       </div>
-    <?php else: ?>
-      <p style="color: #64748b; font-style: italic;">Chưa có lời nhắn nào. Hãy là người đầu tiên viết lưu bút nhé!</p>
+
+      <!-- Phân trang lưu bút -->
+      <?php if ($soTrang > 1): ?>
+        <nav aria-label="Phân trang lưu bút" style="display: flex; gap: 6px; justify-content: center;">
+          <?php for ($i = 1; $i <= $soTrang; $i++): ?>
+            <a href="gioithieu.php?trang=<?= $i ?>" class="nut <?= $i === $hienTai ? 'nut--chinh' : 'nut--vien' ?>" style="padding: 4px 10px; font-size: 0.85rem;">
+              <?= $i ?>
+            </a>
+          <?php endfor; ?>
+        </nav>
+      <?php endif; ?>
     <?php endif; ?>
   </section>
-
-  <!-- 4. Bảng thời khóa biểu bọc trong khung cuộn ngang -->
-  <section style="margin-bottom: 30px;">
-    <h2>Thời khóa biểu học tập học kỳ 1 (Năm học 2026 &ndash; 2027)</h2>
-    <div class="khung-cuon-tkb">
-      <table>
-        <caption>Bảng 1. Thời khóa biểu học tập trong tuần của sinh viên Xaiyasith Yoi</caption>
-        <thead>
-          <tr>
-            <th scope="col">Buổi học</th>
-            <th scope="col">Thứ Hai</th>
-            <th scope="col">Thứ Ba</th>
-            <th scope="col">Thứ Tư</th>
-            <th scope="col">Thứ Năm</th>
-            <th scope="col">Thứ Sáu</th>
-            <th scope="col">Thứ Bảy</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">Sáng (Tiết 1 - 4)</th>
-            <td>Thiết kế Web (Lý thuyết - A3.201)</td>
-            <td>Tự học thư viện</td>
-            <td>Mạng máy tính (Lý thuyết - A2.102)</td>
-            <td>Toán rời rạc &amp; Đồ thị</td>
-            <td>Thực hành Web (Phòng máy 02)</td>
-            <td>Sinh hoạt CLB Tin học</td>
-          </tr>
-          <tr>
-            <th scope="row">Chiều (Tiết 6 - 9)</th>
-            <td>Cơ sở dữ liệu (A4.305)</td>
-            <td>Thực hành CSDL</td>
-            <td>Tiếng Anh chuyên ngành CNTT</td>
-            <td>Nghỉ tự học</td>
-            <td>Giáo dục thể chất</td>
-            <td>Nghỉ cuối tuần</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
 </main>
-
-<script type="module" src="js/canhan.js"></script>
 
 <?php require __DIR__ . '/../../inc/footer.php'; ?>
