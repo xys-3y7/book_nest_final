@@ -1,4 +1,19 @@
+# Tệp biến môi trường nhạy cảm - Tuyệt đối không đưa lên GitHub
+.env
+
+# Thư viện Composer
 vendor/
+
+# Tệp nhật ký hệ thống và bảo mật
 logs/*.log
+
+# Thư mục tải lên và tệp đính kèm
+uploads/*
+!uploads/.htaccess
+!uploads/.gitkeep
+storage/anh/*
+!storage/anh/.gitkeep
+
+# Hệ điều hành
 .DS_Store
 Thumbs.db
