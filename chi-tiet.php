@@ -146,11 +146,21 @@ require __DIR__ . '/inc/header.php';
         <?php foreach ($sachLienQuan as $lq): ?>
           <article class="the">
             <figure class="the__hinh-anh">
+              <span class="the__tag-noi-bat">GỢI Ý</span>
               <img src="<?= e(anhSach($lq->anh)) ?>" alt="Bìa sách <?= e($lq->ten) ?>" width="175" height="225" loading="lazy">
             </figure>
             <div class="the__than">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span class="the__the-loai"><?= e($lq->tenDanhMuc ?? 'Chuyên ngành') ?></span>
+                <div class="the__danh-gia">
+                  <span>★</span> 4.9
+                </div>
+              </div>
               <h3 class="the__tieu-de"><a href="chi-tiet.php?id=<?= $lq->id ?>"><?= e($lq->ten) ?></a></h3>
-              <p class="the__gia"><?= vnd($lq->gia) ?></p>
+              <div style="display: flex; align-items: baseline; gap: 8px; margin: 4px 0 6px 0;">
+                <span class="the__gia" style="margin: 0;"><?= vnd($lq->gia) ?></span>
+                <span class="the__gia-goc"><?= vnd(round($lq->gia * 1.25, -3)) ?></span>
+              </div>
               <!-- 4 NÚT THAO TÁC: ĐẶT MUA, THÊM GIỎ, YÊU THÍCH, CHI TIẾT (2x2 GRID ĐỐI XỨNG) -->
               <div class="the__chan">
                 <!-- 1. Đặt mua ngay -->

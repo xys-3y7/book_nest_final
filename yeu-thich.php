@@ -133,13 +133,22 @@ require __DIR__ . '/inc/header.php';
       <?php foreach ($dsYeuThich as $sp): ?>
         <article class="the">
           <figure class="the__hinh-anh">
+            <span class="the__tag-noi-bat">❤️ ĐÃ LƯU</span>
             <img src="<?= e(anhSach($sp->anh)) ?>" alt="Bìa sách <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
           </figure>
           <div class="the__than">
-            <span class="the__the-loai" style="font-size:0.8rem;color:#1e40af;font-weight:bold;"><?= e($sp->tenDanhMuc ?? 'Chuyên ngành') ?></span>
-            <h3 class="the__tieu-de" style="font-size:1.05rem;margin:0.25rem 0;"><?= e($sp->ten) ?></h3>
-            <p class="the__gia" style="margin:0.4rem 0;"><strong><?= vnd($sp->gia) ?></strong></p>
-            <p class="the__ton-kho" style="font-size:0.85rem;color:<?= $sp->tonKho > 0 ? '#16a34a' : '#dc2626' ?>;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="the__the-loai"><?= e($sp->tenDanhMuc ?? 'Chuyên ngành') ?></span>
+              <div class="the__danh-gia">
+                <span>★</span> 4.9 (24)
+              </div>
+            </div>
+            <h3 class="the__tieu-de" title="<?= e($sp->ten) ?>"><?= e($sp->ten) ?></h3>
+            <div style="display: flex; align-items: baseline; gap: 8px; margin: 4px 0 6px 0;">
+              <span class="the__gia" style="margin: 0;"><?= vnd($sp->gia) ?></span>
+              <span class="the__gia-goc"><?= vnd(round($sp->gia * 1.25, -3)) ?></span>
+            </div>
+            <p class="the__ton-kho" style="color:<?= $sp->tonKho > 0 ? '#16a34a' : '#dc2626' ?>;">
               <?= $sp->tonKho > 0 ? 'Còn hàng (' . $sp->tonKho . ' cuốn)' : 'Hết hàng tạm thời' ?>
             </p>
 
