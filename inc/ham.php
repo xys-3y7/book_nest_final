@@ -84,10 +84,20 @@ function daYeuThich(int $id): bool
     return in_array($id, $_SESSION['yeu_thich'] ?? [], true);
 }
 
+function laYeuThich(int $id): bool
+{
+    return daYeuThich($id);
+}
+
 /**
  * Đếm số lượng sản phẩm trong danh sách yêu thích
  */
 function soLuongYeuThich(): int
 {
     return count($_SESSION['yeu_thich'] ?? []);
+}
+
+function layDanhSachYeuThich(): array
+{
+    return $_SESSION['yeu_thich'] ?? [];
 }

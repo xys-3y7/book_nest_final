@@ -1,81 +1,99 @@
 <?php
 /**
- * inc/footer.php - Phần chân trang dùng chung cho mọi trang website BookNest
- * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
+ * inc/footer.php - Phần chân trang chuẩn Sàn Thương mại Điện tử thực thụ
+ * Nhóm 12 - Lớp 24CNTT3 - Khoa Toán & Tin học, Trường ĐH Sư phạm - ĐH Đà Nẵng
+ * Chương 7: Bảo mật ứng dụng web (OWASP Defense-in-Depth, CSRF, CSP, Least Privilege)
  */
 
 $goc ??= '';
 ?>
+  <!-- CHÂN TRANG SÀN THƯƠNG MẠI ĐIỆN TỬ BOOKNEST -->
   <footer class="phan-chan">
-    <div class="khung-chua phan-chan__grid">
-      <!-- Cột 1: Thông tin thương hiệu -->
-      <div class="phan-chan__col phan-chan__col--brand">
-        <div class="phan-chan__logo" style="margin-bottom: 12px;">
-          <img src="<?= $goc ?>images/logo-booknest.png" alt="Logo BookNest" width="180" height="55" class="footer-logo-img">
-        </div>
-        <p class="phan-chan__desc">
-          <strong>BookNest</strong> là hệ sinh thái nhà sách trực tuyến trợ giá giáo trình chuẩn đại học dành riêng cho sinh viên Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.
-        </p>
-        <div class="phan-chan__badges">
-          <span class="badge-chip">🎓 UED Đà Nẵng</span>
-          <span class="badge-chip">🔒 OWASP Security</span>
-          <span class="badge-chip">⚡ 24h KTX Delivery</span>
-        </div>
-      </div>
-
-      <!-- Cột 2: Điều hướng nhanh -->
-      <div class="phan-chan__col">
-        <h4 class="phan-chan__tieu-de">Khám phá sách</h4>
-        <ul class="phan-chan__links">
-          <li><a href="<?= $goc ?>index.php">&rarr; Trang chủ</a></li>
-          <li><a href="<?= $goc ?>danh-sach.php">&rarr; Danh mục toàn bộ giáo trình</a></li>
-          <li><a href="<?= $goc ?>danh-sach.php?dm=1">&rarr; Sách Công nghệ thông tin</a></li>
-          <li><a href="<?= $goc ?>danh-sach.php?dm=2">&rarr; Sách Kinh tế &amp; Khởi nghiệp</a></li>
-          <li><a href="<?= $goc ?>yeu-thich.php">&rarr; Danh sách sách yêu thích</a></li>
-        </ul>
-      </div>
-
-      <!-- Cột 3: Hỗ trợ sinh viên -->
-      <div class="phan-chan__col">
-        <h4 class="phan-chan__tieu-de">Hỗ trợ sinh viên</h4>
-        <ul class="phan-chan__links">
-          <li><a href="<?= $goc ?>lien-he.php">&rarr; Hướng dẫn đặt mua giáo trình</a></li>
-          <li><a href="<?= $goc ?>lien-he.php">&rarr; Điểm giao nhận tại Ký túc xá</a></li>
-          <li><a href="<?= $goc ?>lien-he.php">&rarr; Chính sách đổi trả trong 7 ngày</a></li>
-          <li><a href="<?= $goc ?>gioi-thieu.php">&rarr; Đồ án môn học Nhóm 12</a></li>
-          <li><a href="<?= $goc ?>lien-he.php">&rarr; Liên hệ &amp; Góp ý</a></li>
-        </ul>
-      </div>
-
-      <!-- Cột 4: Thông tin đồ án & Bảo mật -->
-      <div class="phan-chan__col">
-        <h4 class="phan-chan__tieu-de">Bảo mật &amp; Nhóm tác giả</h4>
-        <div class="phan-chan__security-box">
-          <div class="security-status">
-            <span class="status-indicator"></span>
-            <strong>Hệ thống bảo vệ Chapter 7</strong>
+    <div class="khung-chua">
+      <div class="footer-tmdt-grid">
+        
+        <!-- Cột 1: Thông tin thương hiệu & Liên hệ trường -->
+        <div class="footer-tmdt-col">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <div style="font-size:1.6rem;">📚</div>
+            <div style="font-size:1.4rem;font-weight:800;color:#1a56db;">Book<span style="color:#e02424;">Nest</span></div>
           </div>
-          <p class="security-note">
-            Đạt chuẩn 7 biện pháp an toàn ứng dụng web: CSRF Token 100% biểu mẫu, HttpOnly/SameSite Session, CSP Script-src 'self', Apache .htaccess, Least Privilege CSDL.
+          <p style="color:#6b7280;line-height:1.6;margin:0 0 12px 0;">
+            Nhà sách trực tuyến chuyên cung cấp giáo trình đại học, sách chuyên ngành CNTT và Toán học chuẩn hóa 3NF cho sinh viên Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.
           </p>
-          <div class="phan-chan__author-info">
-            <span>Thực hiện: <strong>Nhóm 12 (Lớp 24CNTT3)</strong></span><br>
-            <span>Khoa Toán &ndash; Tin, Trường ĐH Sư phạm &ndash; ĐH Đà Nẵng</span>
+          <div style="font-size:0.85rem;color:#4b5563;display:flex;flex-direction:column;gap:5px;">
+            <div>📍 <strong>Địa chỉ:</strong> 459 Tôn Đức Thắng, Liên Chiểu, TP. Đà Nẵng</div>
+            <div>📞 <strong>Hotline:</strong> 0236.3841.323 (Khoa Toán &ndash; Tin)</div>
+            <div>📧 <strong>Email:</strong> nhom12.24cntt3@ued.vn</div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Thanh bản quyền đáy trang -->
-    <div class="phan-chan__day">
-      <div class="khung-chua phan-chan__day-khung">
-        <p>&copy; 2026 <strong>BookNest &ndash; Nhóm 12</strong> (Lớp 24CNTT3, Khoa Toán &ndash; Tin, Trường ĐH Sư phạm &ndash; ĐH Đà Nẵng). All rights reserved.</p>
-        <p>Học phần Thiết kế và Lập trình Web &bull; Địa chỉ: 459 Tôn Đức Thắng, Q. Liên Chiểu, TP. Đà Nẵng.</p>
+        <!-- Cột 2: Danh mục giáo trình nổi bật -->
+        <div class="footer-tmdt-col">
+          <h4>Danh mục giáo trình</h4>
+          <ul>
+            <li><a href="<?= $goc ?>danh-sach.php?dm=1">💻 Công nghệ thông tin & Lập trình</a></li>
+            <li><a href="<?= $goc ?>danh-sach.php?dm=2">📊 Kinh tế & Kỹ năng khởi nghiệp</a></li>
+            <li><a href="<?= $goc ?>danh-sach.php?dm=3">🎨 Văn học, Nghệ thuật & Triết học</a></li>
+            <li><a href="<?= $goc ?>danh-sach.php?dm=4">🌱 Kỹ năng sống & Phát triển bản thân</a></li>
+            <li><a href="<?= $goc ?>danh-sach.php">📚 Toàn bộ giáo trình trên kệ</a></li>
+          </ul>
+        </div>
+
+        <!-- Cột 3: Chính sách & Hỗ trợ sinh viên -->
+        <div class="footer-tmdt-col">
+          <h4>Chính sách & Hỗ trợ</h4>
+          <ul>
+            <li><a href="<?= $goc ?>lien-he.php">🚀 Hướng dẫn đặt sách & Nhận tại KTX</a></li>
+            <li><a href="<?= $goc ?>don-hang.php">📦 Kiểm tra tiến độ đơn hàng</a></li>
+            <li><a href="<?= $goc ?>gioi-thieu.php">👥 Giới thiệu đồ án Nhóm 12</a></li>
+            <li><a href="<?= $goc ?>gio-hang.php">🛒 Quản lý giỏ hàng cá nhân</a></li>
+            <li><a href="<?= $goc ?>yeu-thich.php">❤️ Danh sách sách yêu thích</a></li>
+          </ul>
+        </div>
+
+        <!-- Cột 4: Thành viên nhóm & Thanh toán & An ninh -->
+        <div class="footer-tmdt-col">
+          <h4>Đồ án Nhóm 12 (24CNTT3)</h4>
+          <p style="font-size:0.85rem;color:#6b7280;margin:0 0 10px 0;">
+            Học phần: <strong>Thiết kế & Lập trình Web</strong> (Chương 7: Bảo mật ứng dụng Web)
+          </p>
+          <div style="font-size:0.85rem;color:#374151;line-height:1.6;margin-bottom:12px;">
+            <div>• <strong>Xaiyasith Yoi</strong> (Nhóm trưởng &bull; GitHub: <code>xys-3y7</code>)</div>
+            <div>• <strong>Phommaket Hatsady</strong> (Thành viên &bull; GitHub: <code>daimobile33076-eng</code>)</div>
+            <div>• <strong>Vongsena Sauphasith</strong> (Thành viên &bull; GitHub: <code>happy2072005-prog</code>)</div>
+            <div>• <strong>Nguyễn Thị Sinh</strong> (Thành viên &bull; GitHub: <code>chingg2005</code>)</div>
+          </div>
+          
+          <div style="font-size:0.8rem;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:6px;">Chấp nhận thanh toán</div>
+          <div class="footer-payment-icons">
+            <span class="pay-badge">💵 Tiền mặt COD</span>
+            <span class="pay-badge">🏦 VietQR</span>
+            <span class="pay-badge">📱 MoMo</span>
+            <span class="pay-badge">💳 VNPAY</span>
+          </div>
+
+          <!-- Huy hiệu Bảo mật Chương 7 (Defense-in-Depth) -->
+          <div class="phan-chan__security-box" style="margin-top:12px;background:#f8fafc;border:1px solid #e2e8f0;padding:10px;border-radius:8px;">
+            <div style="font-size:0.8rem;font-weight:700;color:#0e9f6e;display:flex;align-items:center;gap:5px;margin-bottom:4px;">
+              <span>🛡️</span>
+              <span>BẢO MẬT PHÒNG THỦ CHIỀU SÂU</span>
+            </div>
+            <div style="font-size:0.75rem;color:#64748b;line-height:1.4;">
+              100% POST CSRF Protected &bull; Session HttpOnly/SameSite &bull; CSP &bull; Least-Privilege DB &bull; Rate Limit 429
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom-bar">
+        © 2026 <strong>BookNest &ndash; Nhóm 12</strong> (Lớp 24CNTT3 &bull; Khoa Toán &ndash; Tin, Trường ĐH Sư phạm &ndash; ĐH Đà Nẵng). Dữ liệu CSDL chuẩn hóa 3NF trên hệ quản trị MariaDB / MySQL.
       </div>
     </div>
   </footer>
 
-  <!-- Nạp script điều khiển tương tác menu mobile và phím Esc -->
+  <!-- Script điều hướng chung & Tác vụ giỏ hàng / yêu thích -->
   <script type="module" src="<?= $goc ?>js/main.js"></script>
 </body>
 </html>

@@ -17,19 +17,25 @@ if (!isset($_SESSION['yeu_thich']) || !is_array($_SESSION['yeu_thich'])) {
     $_SESSION['yeu_thich'] = [];
 }
 
-// Xử lý POST (toggle hoặc xóa)
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-    $id = filter_var($_POST['id'] ?? '', FILTER_VALIDATE_INT);
+// Xử lý yêu cầu toggle hoặc xóa (Hỗ trợ cả GET, POST và AJAX Fetch)
+$action = $_REQUEST['action'] ?? '';
+if ($action === 'toggle' || $action === 'xoa' || $action === 'xoa_het') {
+    $id = filter_var($_REQUEST['id'] ?? '', FILTER_VALIDATE_INT);
     $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
               || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+
+    if ($action === 'xoa_het') {
+        $_SESSION['yeu_thich'] = [];
+        header('Location: yeu-thich.php');
+        exit;
+    }
 
     if ($id === false || $id <= 0) {
         if ($isAjax) {
             traJson(['thanh_cong' => false, 'loi' => 'Mã sách không hợp lệ'], 400);
         }
         $_SESSION['flash_loi'] = 'Mã sách không hợp lệ.';
-        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'yeu-thich.php'));
+        header('Location: ' . ($_REQUEST['redirect'] ?? $_SERVER['HTTP_REFERER'] ?? 'yeu-thich.php'));
         exit;
     }
 
@@ -39,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             traJson(['thanh_cong' => false, 'loi' => 'Sách không tồn tại'], 404);
         }
         $_SESSION['flash_loi'] = 'Sách không tồn tại trong hệ thống.';
-        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'yeu-thich.php'));
+        header('Location: ' . ($_REQUEST['redirect'] ?? $_SERVER['HTTP_REFERER'] ?? 'yeu-thich.php'));
         exit;
     }
 
@@ -65,7 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
         $_SESSION['flash'] = $thongBao;
-        header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? 'yeu-thich.php'));
+        $chuyenHuong = $_REQUEST['redirect'] ?? ($_SERVER['HTTP_REFERER'] ?? 'yeu-thich.php');
+        header('Location: ' . $chuyenHuong);
         exit;
     }
 

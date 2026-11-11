@@ -25,6 +25,6 @@ function csrfField(): string
  */
 function csrfHopLe(): bool
 {
-    $gui = $_POST['csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    $gui = $_POST['csrf'] ?? $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
     return is_string($gui) && !empty($gui) && hash_equals(csrfToken(), $gui);
 }

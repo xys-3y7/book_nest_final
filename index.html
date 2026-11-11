@@ -3,503 +3,639 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="BookNest - Nhà sách trực tuyến chuyên cung cấp giáo trình đại học, sách chuyên ngành Công nghệ thông tin, Toán học và văn phòng phẩm chất lượng cao cho sinh viên Trường Đại học Sư phạm - Đại học Đà Nẵng.">
+  <meta name="description" content="BookNest - Nhà sách trực tuyến chuyên cung cấp giáo trình đại học, sách chuyên ngành CNTT, Toán học cho sinh viên Trường ĐH Sư phạm - ĐH Đà Nẵng.">
   <title>Trang chủ | BookNest - Nhà sách sinh viên UED</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="trang-grid">
 
-  <!-- Header chính BookNest -->
-  <header class="phan-dau">
-    <!-- 1. Thanh thông báo ưu đãi sinh viên đầu trang -->
-    <div class="thanh-thong-bao-top">
-      <div class="khung-chua thanh-thong-bao-top__khung">
-        <div class="thong-bao-item">
-          <span class="thong-bao-badge">🔥 ƯU ĐÃI HỌC KỲ</span>
-          <span>Trợ giá sinh viên UED đến <strong>25%</strong> cho toàn bộ giáo trình chuyên ngành</span>
-        </div>
-        <div class="thong-bao-item thong-bao-item--phu">
-          <span>📍 459 Tôn Đức Thắng, Đà Nẵng</span>
-          <span class="phoi-phan-cach">&bull;</span>
-          <span>⚡ Giao nhanh 24h tại Ký túc xá</span>
-        </div>
+  <!-- 1. THANH TOP BAR TMĐT TRÊN CÙNG -->
+  <div class="top-bar-tmdt">
+    <div class="khung-chua top-bar-tmdt__inner">
+      <div class="top-bar-tmdt__left">
+        <span class="top-bar-tmdt__tag">Ưu đãi SV</span>
+        <span>Hội sách học kỳ mới 2026: Giảm đến <strong>25%</strong> toàn bộ giáo trình!</span>
+      </div>
+      <div class="top-bar-tmdt__right chi-hien-tren-may-tinh">
+        <a href="danh-sach.html" class="top-bar-tmdt__link">📦 Tra cứu đơn hàng</a>
+        <span>|</span>
+        <a href="lien-he.html" class="top-bar-tmdt__link">💬 Hỗ trợ sinh viên</a>
+        <span>|</span>
+        <span class="top-bar-tmdt__link">📍 ĐH Sư Phạm - ĐH Đà Nẵng</span>
       </div>
     </div>
+  </div>
 
-    <div class="khung-chua phan-dau__khung">
-      <!-- Logo thương hiệu -->
-      <div class="phan-dau__logo-nhom">
-        <a href="index.html" class="logo-link">
-          <img src="images/logo-booknest.png" alt="Logo BookNest - Nhà sách trực tuyến UED" width="210" height="65">
-        </a>
-        <div class="phan-dau__sub-badge">
-          <span class="sub-badge-truong">ĐH SƯ PHẠM ĐÀ NẴNG</span>
-          <span class="sub-badge-khoa">KHOA TOÁN - TIN</span>
+  <!-- 2. HEADER CHÍNH SÀN THƯƠNG MẠI ĐIỆN TỬ -->
+  <header class="header-tmdt">
+    <div class="khung-chua header-tmdt__inner">
+      
+      <!-- Logo Thương hiệu BookNest -->
+      <a href="index.html" class="header-tmdt__logo">
+        <div class="header-tmdt__logo-badge">📚</div>
+        <div class="header-tmdt__logo-text">
+          <div class="header-tmdt__logo-brand">Book<span>Nest</span></div>
+          <span class="header-tmdt__logo-sub">Nhà sách sinh viên UED</span>
+        </div>
+      </a>
+
+      <!-- Thanh tìm kiếm kiểu Shopee/Tiki/Fahasa -->
+      <div class="header-tmdt__search">
+        <form action="danh-sach.html" method="GET" class="header-tmdt__search-form">
+          <select name="dm" class="header-tmdt__search-cat chi-hien-tren-may-tinh">
+            <option value="">Tất cả danh mục</option>
+            <option value="1">CNTT & Lập trình</option>
+            <option value="2">Kinh tế & Khởi nghiệp</option>
+            <option value="3">Văn học & Nghệ thuật</option>
+            <option value="4">Kỹ năng sống</option>
+          </select>
+          <input type="text" name="q" class="header-tmdt__search-input" placeholder="Tìm kiếm tên sách, tác giả, giáo trình CNTT, Toán học..." autocomplete="off">
+          <button type="submit" class="header-tmdt__search-btn">
+            <span>🔍</span>
+            <span class="chi-hien-tren-may-tinh">Tìm kiếm</span>
+          </button>
+        </form>
+
+        <div class="header-tmdt__search-tags chi-hien-tren-may-tinh">
+          <span>Gợi ý:</span>
+          <a href="danh-sach.html?q=PHP">Lập trình PHP</a>
+          <a href="danh-sach.html?q=MySQL">Cơ sở dữ liệu</a>
+          <a href="danh-sach.html?q=Toán">Toán cao cấp</a>
+          <a href="danh-sach.html?q=Web">Thiết kế Web</a>
         </div>
       </div>
 
-      <!-- Ô tìm kiếm thông minh -->
-      <form class="phan-dau__tim-kiem" action="danh-sach.html" method="GET" role="search">
-        <div class="tim-kiem-hop">
-          <span class="icon-tim-kiem" aria-hidden="true">🔍</span>
-          <input type="search" name="q" placeholder="Tìm kiếm giáo trình, môn học, tác giả..." autocomplete="off" aria-label="Tìm kiếm sách">
-          <button type="submit" class="nut-tim-kiem-header">
-            <span>Tìm sách</span>
-          </button>
-        </div>
-      </form>
-
-      <!-- Cụm tiện ích: Yêu thích, Giỏ hàng, Tài khoản -->
-      <div class="phan-dau__tien-ich">
-        <a href="danh-sach.html" class="tien-ich-pill" title="Danh sách sách yêu thích">
-          <span class="tien-ich-icon">❤️</span>
-          <span class="tien-ich-label">Yêu thích</span>
-          <span class="so-luong-yeu-thich">0</span>
+      <!-- Cụm tác vụ người dùng: Yêu thích, Giỏ hàng, Tài khoản -->
+      <div class="header-tmdt__actions">
+        
+        <!-- Yêu thích (Wishlist) -->
+        <a href="danh-sach.html" class="action-pill-tmdt" title="Danh sách yêu thích">
+          <div class="action-pill-tmdt__icon">
+            <span>❤️</span>
+            <span class="action-pill-tmdt__badge so-luong-yeu-thich">0</span>
+          </div>
+          <div class="action-pill-tmdt__text chi-hien-tren-may-tinh">
+            <span class="action-pill-tmdt__title">Quan tâm</span>
+            <span class="action-pill-tmdt__val">Yêu thích</span>
+          </div>
         </a>
 
-        <a href="danh-sach.html" class="tien-ich-pill tien-ich-pill--gio" title="Giỏ hàng của bạn">
-          <span class="tien-ich-icon">🛒</span>
-          <span class="tien-ich-label">Giỏ hàng</span>
-          <span class="so-luong-gio">0</span>
+        <!-- Giỏ hàng (Cart) -->
+        <a href="danh-sach.html" class="action-pill-tmdt" title="Giỏ hàng của bạn">
+          <div class="action-pill-tmdt__icon">
+            <span>🛒</span>
+            <span class="action-pill-tmdt__badge so-luong-gio">0</span>
+          </div>
+          <div class="action-pill-tmdt__text chi-hien-tren-may-tinh">
+            <span class="action-pill-tmdt__title">Giỏ hàng</span>
+            <span class="action-pill-tmdt__val">0 đ</span>
+          </div>
         </a>
 
-        <div class="tien-ich-auth">
-          <a href="lien-he.html" class="nut nut--vien nut-auth-sm">Liên hệ</a>
-          <a href="gioi-thieu.html" class="nut nut--chinh nut-auth-sm">Nhóm 12</a>
+        <!-- Tài khoản cá nhân -->
+        <div class="header-tmdt__auth">
+          <a href="lien-he.html" class="btn-auth-tmdt btn-auth-tmdt--login">Liên hệ</a>
+          <a href="gioi-thieu.html" class="btn-auth-tmdt btn-auth-tmdt--reg chi-hien-tren-may-tinh">Nhóm 12</a>
         </div>
+
       </div>
     </div>
   </header>
 
-  <!-- 3. Thanh điều hướng chính Sticky -->
-  <nav class="thanh-dieu-huong" aria-label="Điều hướng chính">
-    <div class="khung-chua thanh-dieu-huong__khung">
-      <button class="nut-menu" id="nut-menu" aria-label="Mở menu điều hướng" aria-expanded="false">&#9776; Menu</button>
-      <ul>
-        <li><a href="index.html" class="hien-tai" aria-current="page"><span>🏠</span> Trang chủ</a></li>
-        <li><a href="danh-sach.html"><span>📚</span> Danh mục sách</a></li>
-        <li><a href="chi-tiet.html"><span>⭐</span> Sách tiêu biểu</a></li>
-        <li><a href="gioi-thieu.html"><span>👥</span> Giới thiệu nhóm</a></li>
-        <li><a href="lien-he.html"><span>✉️</span> Liên hệ đặt sách</a></li>
-        <li><a href="danh-sach-bootstrap.html"><span>🎨</span> Bản Bootstrap 5</a></li>
-      </ul>
+  <!-- 3. THANH ĐIỀU HƯỚNG DANH MỤC SÀN TMĐT -->
+  <nav class="navbar-tmdt" aria-label="Danh mục chính">
+    <div class="khung-chua navbar-tmdt__inner">
+      <div class="navbar-tmdt__left">
+        <a href="danh-sach.html" class="btn-danhmuc-all">
+          <span>☰</span>
+          <span>Danh Mục Sách</span>
+        </a>
+
+        <ul class="navbar-tmdt__menu">
+          <li><a href="index.html" class="active">Trang chủ</a></li>
+          <li><a href="danh-sach.html">Tất cả giáo trình</a></li>
+          <li><a href="gioi-thieu.html">Nhóm 12 (UED)</a></li>
+          <li><a href="lien-he.html">Liên hệ &amp; Hỗ trợ</a></li>
+          <li><a href="danh-sach-bootstrap.html">Bản Bootstrap 5</a></li>
+        </ul>
+      </div>
+
+      <div class="navbar-tmdt__right chi-hien-tren-may-tinh">
+        <span class="badge-flash-hot">HOT</span>
+        <span>⚡ Giao nhanh KTX trong 24h &bull; Hotline: <strong>0236.3841.323</strong></span>
+      </div>
     </div>
   </nav>
 
   <main class="noi-dung-chinh khung-chua">
 
-    <!-- 1. KHU VỰC HERO HIỆN ĐẠI (SPLIT 2 CỘT CAO CẤP) -->
-    <section class="hero-modern">
-      <div class="hero-modern__content">
-        <div class="hero-badge">
-          <span class="hero-badge__dot"></span>
-          <span>✨ Nhà sách trực tuyến sinh viên UED Đà Nẵng</span>
-        </div>
-        <h1 class="hero-title">
-          Tri Thức Nâng Bước, <br>
-          <span class="text-gradient">Đồng Hành Tương Lai</span>
+    <!-- 1. HERO BANNER SÀN THƯƠNG MẠI ĐIỆN TỬ -->
+    <section class="hero-tmdt-grid">
+      <!-- Banner chính lớn bên trái -->
+      <div class="banner-chinh-tmdt">
+        <div class="banner-chinh-tmdt__tag">🔥 HỘI SÁCH SINH VIÊN 2026 &bull; TRỢ GIÁ ĐẾN 25%</div>
+        <h1 class="banner-chinh-tmdt__title">
+          Giáo Trình Chuẩn Hóa<br><span>Đại Học Sư Phạm Đà Nẵng</span>
         </h1>
-        <p class="hero-desc">
-          Hệ thống cung cấp hơn 1.000+ đầu sách giáo trình chuẩn, tài liệu chuyên ngành Công nghệ thông tin, Toán học &amp; Kỹ năng sống với chính sách trợ giá độc quyền từ 10% &ndash; 25% dành riêng cho sinh viên UED.
+        <p class="banner-chinh-tmdt__desc">
+          Hơn 30+ đầu sách Công nghệ thông tin, Toán học &amp; Kỹ năng sống được thẩm định chính quy. Giao nhanh tận phòng ký túc xá Liên Chiểu trong vòng 24 giờ.
         </p>
-
-        <!-- Ô tìm kiếm thông minh trong Hero -->
-        <form class="hero-search" action="danh-sach.html" method="GET">
-          <div class="hero-search__inner">
-            <span class="hero-search__icon">🔍</span>
-            <input type="text" name="q" placeholder="Tìm kiếm giáo trình, tên tác giả, môn học..." aria-label="Tìm kiếm sách">
-            <button type="submit" class="hero-search__btn">
-              <span>Tìm sách</span>
-              <span aria-hidden="true">&rarr;</span>
-            </button>
-          </div>
-        </form>
-
-        <!-- Các nút hành động chính -->
-        <div class="hero-actions">
-          <a href="danh-sach.html" class="hero-btn-primary">
-            <span>Khám phá kho sách</span>
-            <span aria-hidden="true">&rarr;</span>
-          </a>
-          <a href="gioi-thieu.html" class="hero-btn-secondary">
-            <span>Hồ sơ Nhóm 12</span>
-          </a>
-        </div>
-
-        <!-- Thống kê cam kết uy tín -->
-        <div class="hero-stats">
-          <div class="hero-stat-item">
-            <div class="hero-stat-num">1.000+</div>
-            <div class="hero-stat-label">Giáo trình &amp; Sách</div>
-          </div>
-          <div class="hero-stat-divider"></div>
-          <div class="hero-stat-item">
-            <div class="hero-stat-num">25%</div>
-            <div class="hero-stat-label">Trợ giá sinh viên</div>
-          </div>
-          <div class="hero-stat-divider"></div>
-          <div class="hero-stat-item">
-            <div class="hero-stat-num">24h</div>
-            <div class="hero-stat-label">Giao tận phòng KTX</div>
-          </div>
-          <div class="hero-stat-divider"></div>
-          <div class="hero-stat-item">
-            <div class="hero-stat-num">100%</div>
-            <div class="hero-stat-label">Chuẩn OWASP BMTT</div>
-          </div>
+        <div class="banner-chinh-tmdt__cta">
+          <a href="danh-sach.html" class="btn-banner-mua">⚡ Mua giáo trình ngay &rarr;</a>
+          <a href="gioi-thieu.html" class="btn-banner-nhom">👥 Đồ án Nhóm 12</a>
         </div>
       </div>
 
-      <!-- Cột hiển thị hình ảnh minh họa nổi bật (3D Book Showcase) -->
-      <div class="hero-modern__visual">
-        <div class="hero-showcase-card">
-          <div class="hero-showcase-glow"></div>
-          <div class="hero-showcase-badge">🔥 BÁN CHẠY NHẤT HỌC KỲ</div>
-          
-          <div class="hero-book-stage">
-            <div class="hero-3d-book">
-              <img src="images/sach-laptrinh-web.png" alt="Bìa sách Lập trình Web hiện đại" class="hero-3d-book__cover" width="135" height="185">
-            </div>
-            
-            <div class="hero-showcase-details">
-              <span class="hero-book-chuyen-nganh">KHOA TOÁN - TIN</span>
-              <h3 class="hero-book-title">Lập trình Web hiện đại với HTML5, CSS3 &amp; PHP</h3>
-              <p class="hero-book-author">✍️ ThS. Nguyễn Văn A &bull; ĐH Sư phạm</p>
-              <div class="hero-book-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-text">5.0 (48 SV đánh giá)</span>
-              </div>
-              <div class="hero-book-price-row">
-                <span class="hero-book-price">96.000 VNĐ</span>
-                <span class="hero-book-old">120.000 VNĐ</span>
-                <span class="hero-book-badge-sale">-20% Trợ giá</span>
-              </div>
-              <div class="hero-book-cta-row">
-                <a href="dat-hang.html?id=1" class="hero-book-btn-buy">
-                  <span>⚡ Mua ngay</span>
-                </a>
-                <a href="chi-tiet.html" class="hero-book-btn-detail">
-                  <span>🔍 Chi tiết</span>
-                </a>
-              </div>
-            </div>
+      <!-- Cột phụ bên phải: Voucher sinh viên & Smart Weather Assistant -->
+      <div class="hero-tmdt-phu">
+        <!-- Khối Voucher độc quyền sinh viên UED -->
+        <div class="card-voucher-sv">
+          <div class="card-voucher-sv__head">
+            <strong style="color:#0f172a;font-size:0.95rem;">🎁 Voucher Ưu Đãi Sinh Viên</strong>
+            <span class="card-voucher-sv__badge">HỌC KỲ MỚI</span>
           </div>
+          <div class="card-voucher-sv__code">UED2026</div>
+          <p class="card-voucher-sv__note">
+            Giảm ngay <strong>25.000đ</strong> cho đơn đặt từ 2 cuốn giáo trình trở lên. Áp dụng cho toàn thể sinh viên Trường ĐH Sư phạm!
+          </p>
+        </div>
 
-          <!-- 2 huy hiệu nổi bật góc -->
-          <div class="hero-float-badge hero-float-badge--top">
-            <span class="hero-float-icon">🎓</span>
-            <div>
-              <strong>Chính hãng UED</strong>
-              <small>Giảng viên thẩm định</small>
-            </div>
+        <!-- Smart Weather Assistant từ Open-Meteo REST API -->
+        <div class="card-weather-tmdt" id="khoi-thoi-tiet-dong" aria-live="polite">
+          <div class="card-weather-tmdt__head">
+            <span>🌤️</span>
+            <span>Thời tiết Đà Nẵng hôm nay</span>
           </div>
-          <div class="hero-float-badge hero-float-badge--bottom">
-            <span class="hero-float-icon">⚡</span>
-            <div>
-              <strong>Giao nhanh 24h</strong>
-              <small>Miễn phí tại KTX</small>
-            </div>
+          <div class="card-weather-tmdt__stats">
+            <div>Nhiệt độ: <strong id="thoi-tiet-nhiet-do">26 °C</strong></div>
+            <div>Độ ẩm: <strong id="thoi-tiet-do-am">85%</strong></div>
           </div>
+          <p class="card-weather-tmdt__tip" id="thoi-tiet-loi-khuyen">
+            💡 <em>Thời tiết Đà Nẵng mát mẻ, rất thích hợp để đọc sách chuyên ngành và luyện lập trình tại thư viện!</em>
+          </p>
         </div>
       </div>
     </section>
 
-    <!-- Khối thời tiết động từ Open-Meteo REST API -->
-    <section id="khoi-thoi-tiet-dong" class="khoi-thoi-tiet-container" aria-live="polite"></section>
-
-    <!-- 2. HÀNG 4 THẺ CAM KẾT VÀ GIÁ TRỊ CỐT LÕI -->
-    <section class="tinh-nang-section">
-      <div class="tinh-nang-grid">
-        <div class="tinh-nang-card">
-          <div class="tinh-nang-icon tinh-nang-icon--blue">📚</div>
-          <div class="tinh-nang-content">
-            <h4>Giáo trình chuẩn hóa</h4>
-            <p>100% tài liệu được thẩm định bởi giảng viên ĐH Sư phạm &ndash; ĐH Đà Nẵng.</p>
-          </div>
+    <!-- 2. THANH CAM KẾT SÀN (TRUST BADGES 4 TRỤ CỘT) -->
+    <section class="trust-badges-bar">
+      <div class="trust-item">
+        <div class="trust-item__icon">🚚</div>
+        <div>
+          <p class="trust-item__title">Giao nhanh KTX trong 24h</p>
+          <p class="trust-item__sub">Nhận sách tận phòng hoặc sảnh Khoa</p>
         </div>
-        <div class="tinh-nang-card">
-          <div class="tinh-nang-icon tinh-nang-icon--orange">🏷️</div>
-          <div class="tinh-nang-content">
-            <h4>Trợ giá sinh viên</h4>
-            <p>Giảm từ 10% đến 25% so với giá bìa giúp tiết kiệm chi phí học tập.</p>
-          </div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-item__icon">🛡️</div>
+        <div>
+          <p class="trust-item__title">100% Chuẩn Bản Quyền</p>
+          <p class="trust-item__sub">Biên soạn bởi giảng viên uy tín ĐHĐN</p>
         </div>
-        <div class="tinh-nang-card">
-          <div class="tinh-nang-icon tinh-nang-icon--green">🚀</div>
-          <div class="tinh-nang-content">
-            <h4>Giao nhận 24 giờ</h4>
-            <p>Nhận sách trực tiếp tại sảnh Khoa hoặc giao tận phòng ký túc xá.</p>
-          </div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-item__icon">🔄</div>
+        <div>
+          <p class="trust-item__title">Đổi trả trong 7 ngày</p>
+          <p class="trust-item__sub">Bảo hành nếu sách lỗi in, rách trang</p>
         </div>
-        <div class="tinh-nang-card">
-          <div class="tinh-nang-icon tinh-nang-icon--purple">🛡️</div>
-          <div class="tinh-nang-content">
-            <h4>Bảo mật tuyệt đối</h4>
-            <p>Đáp ứng 7 biện pháp an ninh mạng OWASP: CSRF, CSP, HttpOnly, .env.</p>
-          </div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-item__icon">🏷️</div>
+        <div>
+          <p class="trust-item__title">Trợ giá sinh viên 25%</p>
+          <p class="trust-item__sub">Giá ưu đãi đặc quyền cho sinh viên UED</p>
         </div>
       </div>
     </section>
 
-    <!-- 3. KHÁM PHÁ NHANH THEO CHUYÊN NGÀNH (CATEGORY CHIPS) -->
-    <div class="danh-muc-chips-wrap">
-      <div class="danh-muc-chips-header">
-        <h3>Khám phá theo chuyên ngành:</h3>
+    <!-- 3. KHỐI FLASH SALE GIÁ SỐC (REAL E-COMMERCE FLASH SALE) -->
+    <section class="flash-sale-box">
+      <div class="flash-sale-header">
+        <div class="flash-sale-title">
+          <span>⚡ FLASH SALE HÔM NAY</span>
+        </div>
+        <div class="flash-timer">
+          <span>Kết thúc sau:</span>
+          <span class="timer-pill" id="fs-gio">02</span> :
+          <span class="timer-pill" id="fs-phut">45</span> :
+          <span class="timer-pill" id="fs-giay">18</span>
+        </div>
       </div>
-      <div class="danh-muc-chips">
-        <a href="danh-sach.html" class="chip active">✨ Tất cả sách</a>
-        <a href="danh-sach.html" class="chip">💻 Công nghệ thông tin</a>
-        <a href="danh-sach.html" class="chip">📊 Kinh tế &amp; Khởi nghiệp</a>
-        <a href="danh-sach.html" class="chip">📖 Văn học &amp; Nghệ thuật</a>
-        <a href="danh-sach.html" class="chip">🌱 Kỹ năng sống &amp; Phát triển</a>
-      </div>
-    </div>
 
-    <!-- 4. DANH MỤC SÁCH NỔI BẬT VỚI 4 NÚT HÀNH ĐỘNG -->
+      <!-- Lưới sách Flash Sale -->
+      <div class="grid-books-tmdt">
+        
+        <!-- Sách 1 -->
+        <article class="the">
+          <figure class="the__hinh-anh">
+            <span class="the__the-loai-badge">-25%</span>
+            <button class="btn-fav-corner nut-bam-yeu-thich" role="button" aria-label="Yêu thích">🤍</button>
+            <img src="images/sach-laptrinh-web.png" alt="Bìa sách Lập trình Web với PHP 8 và MySQL" width="175" height="225" loading="lazy">
+          </figure>
+          <div class="the__than">
+            <span class="the__the-loai">CNTT &amp; Lập trình</span>
+            <h3 class="the__tieu-de"><a href="chi-tiet.html">Lập trình Web với PHP 8 và MySQL</a></h3>
+            <div class="rating-stars-tmdt">
+              <span class="stars">★★★★★</span>
+              <span>(4.9) &bull; Đã bán 68</span>
+            </div>
+            <div class="the__gia-row">
+              <span class="the__gia">85.000 đ</span>
+              <span class="the__gia-goc">106.000 đ</span>
+            </div>
+            <div class="deal-progress-bar">
+              <div class="deal-progress-bar__fill" style="width: 82%;"></div>
+              <div class="deal-progress-bar__text">Đang bán chạy 🔥</div>
+            </div>
+            <p class="the__ton-kho the__ton-kho--con">✓ Còn 15 cuốn</p>
+            <div class="the__chan">
+              <div class="the__chan-hang1">
+                <a href="chi-tiet.html" class="btn-mua-ngay">⚡ Mua ngay</a>
+                <button type="button" class="btn-gio-hang btn-them-nhanh">🛒 + Giỏ</button>
+              </div>
+              <div class="the__chan-hang2">
+                <a href="chi-tiet.html" class="btn-chi-tiet">🔍 Chi tiết</a>
+                <button type="button" class="nut-bam-yeu-thich" role="button">🤍 Yêu thích</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Sách 2 -->
+        <article class="the">
+          <figure class="the__hinh-anh">
+            <span class="the__the-loai-badge">-25%</span>
+            <button class="btn-fav-corner nut-bam-yeu-thich" role="button" aria-label="Yêu thích">🤍</button>
+            <img src="images/sach-python.png" alt="Bìa sách Lập trình Python từ cơ bản đến nâng cao" width="175" height="225" loading="lazy">
+          </figure>
+          <div class="the__than">
+            <span class="the__the-loai">CNTT &amp; Lập trình</span>
+            <h3 class="the__tieu-de"><a href="chi-tiet.html">Lập trình Python từ cơ bản đến nâng cao</a></h3>
+            <div class="rating-stars-tmdt">
+              <span class="stars">★★★★★</span>
+              <span>(4.8) &bull; Đã bán 42</span>
+            </div>
+            <div class="the__gia-row">
+              <span class="the__gia">95.000 đ</span>
+              <span class="the__gia-goc">119.000 đ</span>
+            </div>
+            <div class="deal-progress-bar">
+              <div class="deal-progress-bar__fill" style="width: 70%;"></div>
+              <div class="deal-progress-bar__text">Đang bán chạy 🔥</div>
+            </div>
+            <p class="the__ton-kho the__ton-kho--con">✓ Còn 12 cuốn</p>
+            <div class="the__chan">
+              <div class="the__chan-hang1">
+                <a href="chi-tiet.html" class="btn-mua-ngay">⚡ Mua ngay</a>
+                <button type="button" class="btn-gio-hang btn-them-nhanh">🛒 + Giỏ</button>
+              </div>
+              <div class="the__chan-hang2">
+                <a href="chi-tiet.html" class="btn-chi-tiet">🔍 Chi tiết</a>
+                <button type="button" class="nut-bam-yeu-thich" role="button">🤍 Yêu thích</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Sách 3 -->
+        <article class="the">
+          <figure class="the__hinh-anh">
+            <span class="the__the-loai-badge">-25%</span>
+            <button class="btn-fav-corner nut-bam-yeu-thich" role="button" aria-label="Yêu thích">🤍</button>
+            <img src="images/sach-kinh-te.png" alt="Bìa sách Kinh tế học đại cương và Khởi nghiệp" width="175" height="225" loading="lazy">
+          </figure>
+          <div class="the__than">
+            <span class="the__the-loai">Kinh tế &amp; Khởi nghiệp</span>
+            <h3 class="the__tieu-de"><a href="chi-tiet.html">Kinh tế học đại cương và Khởi nghiệp</a></h3>
+            <div class="rating-stars-tmdt">
+              <span class="stars">★★★★★</span>
+              <span>(4.9) &bull; Đã bán 55</span>
+            </div>
+            <div class="the__gia-row">
+              <span class="the__gia">78.000 đ</span>
+              <span class="the__gia-goc">98.000 đ</span>
+            </div>
+            <div class="deal-progress-bar">
+              <div class="deal-progress-bar__fill" style="width: 75%;"></div>
+              <div class="deal-progress-bar__text">Đang bán chạy 🔥</div>
+            </div>
+            <p class="the__ton-kho the__ton-kho--con">✓ Còn 20 cuốn</p>
+            <div class="the__chan">
+              <div class="the__chan-hang1">
+                <a href="chi-tiet.html" class="btn-mua-ngay">⚡ Mua ngay</a>
+                <button type="button" class="btn-gio-hang btn-them-nhanh">🛒 + Giỏ</button>
+              </div>
+              <div class="the__chan-hang2">
+                <a href="chi-tiet.html" class="btn-chi-tiet">🔍 Chi tiết</a>
+                <button type="button" class="nut-bam-yeu-thich" role="button">🤍 Yêu thích</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Sách 4 -->
+        <article class="the">
+          <figure class="the__hinh-anh">
+            <span class="the__the-loai-badge">-25%</span>
+            <button class="btn-fav-corner nut-bam-yeu-thich" role="button" aria-label="Yêu thích">🤍</button>
+            <img src="images/sach-csdl.png" alt="Bìa sách Hệ quản trị cơ sở dữ liệu và SQL nâng cao" width="175" height="225" loading="lazy">
+          </figure>
+          <div class="the__than">
+            <span class="the__the-loai">CNTT &amp; Lập trình</span>
+            <h3 class="the__tieu-de"><a href="chi-tiet.html">Hệ quản trị CSDL và SQL nâng cao</a></h3>
+            <div class="rating-stars-tmdt">
+              <span class="stars">★★★★★</span>
+              <span>(4.9) &bull; Đã bán 61</span>
+            </div>
+            <div class="the__gia-row">
+              <span class="the__gia">90.000 đ</span>
+              <span class="the__gia-goc">112.000 đ</span>
+            </div>
+            <div class="deal-progress-bar">
+              <div class="deal-progress-bar__fill" style="width: 88%;"></div>
+              <div class="deal-progress-bar__text">Đang bán chạy 🔥</div>
+            </div>
+            <p class="the__ton-kho the__ton-kho--con">✓ Còn 18 cuốn</p>
+            <div class="the__chan">
+              <div class="the__chan-hang1">
+                <a href="chi-tiet.html" class="btn-mua-ngay">⚡ Mua ngay</a>
+                <button type="button" class="btn-gio-hang btn-them-nhanh">🛒 + Giỏ</button>
+              </div>
+              <div class="the__chan-hang2">
+                <a href="chi-tiet.html" class="btn-chi-tiet">🔍 Chi tiết</a>
+                <button type="button" class="nut-bam-yeu-thich" role="button">🤍 Yêu thích</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- 4. KHỐI TẤT CẢ SÁCH MỚI CẬP NHẬT TRÊN KỆ -->
     <section>
-      <div class="phan-doan-header">
-        <div class="phan-doan-header__title">
-          <span class="phan-doan-badge">🔥 Nổi Bật Tuần Này</span>
-          <h2>Sách và giáo trình tiêu biểu trên kệ BookNest</h2>
-        </div>
-        <a href="danh-sach.html" class="phan-doan-link">
-          <span>Xem tất cả sách</span>
-          <span aria-hidden="true">&rarr;</span>
+      <div class="section-tmdt-head">
+        <h2 class="section-tmdt-head__title">
+          <span>📚</span> Giáo trình mới cập nhật trên kệ
+        </h2>
+        <a href="danh-sach.html" class="section-tmdt-head__link">
+          <span>Xem tất cả hơn 30+ đầu sách</span>
+          <span>&rarr;</span>
         </a>
       </div>
 
-      <div class="luoi-the">
-        <!-- Thẻ 1 -->
+      <div class="grid-books-tmdt">
+        
+        <!-- Sách 5 -->
         <article class="the">
           <figure class="the__hinh-anh">
-            <span class="the__tag-noi-bat">🔥 BÁN CHẠY</span>
-            <img src="images/sach-laptrinh-web.png" alt="Bìa sách Lập trình Web hiện đại với HTML5, CSS3 và PHP" width="175" height="225" loading="lazy">
+            <span class="the__the-loai-badge" style="background:#1a56db;">CNTT</span>
+            <button class="btn-fav-corner nut-bam-yeu-thich" role="button">🤍</button>
+            <img src="images/sach-ctdl.png" alt="Bìa sách Cấu trúc dữ liệu và giải thuật" width="175" height="225" loading="lazy">
           </figure>
           <div class="the__than">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span class="the__the-loai">Công nghệ thông tin</span>
-              <div class="the__danh-gia">
-                <span>★</span> 5.0 (48)
-              </div>
+            <span class="the__the-loai">CNTT &amp; Lập trình</span>
+            <h3 class="the__tieu-de"><a href="chi-tiet.html">Cấu trúc dữ liệu và giải thuật thực hành</a></h3>
+            <div class="rating-stars-tmdt">
+              <span class="stars">★★★★★</span>
+              <span>(4.8) &bull; Đã bán 35</span>
             </div>
-            <h3 class="the__tieu-de">Lập trình Web hiện đại với HTML5, CSS3 và PHP</h3>
-            <div style="display: flex; align-items: baseline; gap: 8px; margin: 4px 0 6px 0;">
-              <span class="the__gia" style="margin: 0;">96.000 VNĐ</span>
-              <span class="the__gia-goc">120.000 VNĐ</span>
+            <div class="the__gia-row">
+              <span class="the__gia">110.000 đ</span>
+              <span class="the__gia-goc">132.000 đ</span>
             </div>
-            <p class="the__ton-kho" style="color: #16a34a;">Còn hàng (45 cuốn)</p>
-
-            <!-- 4 NÚT THAO TÁC THEO YÊU CẦU: 2x2 GRID ĐỐI XỨNG -->
+            <p class="the__ton-kho the__ton-kho--con">✓ Còn 14 cuốn</p>
             <div class="the__chan">
-              <a href="chi-tiet.html" class="nut nut--nhan btn-mua-ngay" title="Đặt mua sách ngay">⚡ Mua ngay</a>
-              <button type="button" class="nut nut--chinh btn-them-nhanh" title="Thêm vào giỏ hàng">🛒 Thêm giỏ</button>
-              <button type="button" class="nut nut--vien btn-yeu-thich da-thich" title="Đã yêu thích">❤️ Đã thích</button>
-              <a href="chi-tiet.html" class="nut nut--vien" title="Xem chi tiết nội dung cuốn sách">🔍 Chi tiết</a>
+              <div class="the__chan-hang1">
+                <a href="chi-tiet.html" class="btn-mua-ngay">⚡ Mua ngay</a>
+                <button type="button" class="btn-gio-hang btn-them-nhanh">🛒 + Giỏ</button>
+              </div>
+              <div class="the__chan-hang2">
+                <a href="chi-tiet.html" class="btn-chi-tiet">🔍 Chi tiết</a>
+                <button type="button" class="nut-bam-yeu-thich" role="button">🤍 Yêu thích</button>
+              </div>
             </div>
           </div>
         </article>
 
-        <!-- Thẻ 2 -->
+        <!-- Sách 6 -->
         <article class="the">
           <figure class="the__hinh-anh">
-            <span class="the__tag-noi-bat">⭐ MỚI</span>
-            <img src="images/sach-ctdl-gt.png" alt="Bìa sách Cấu trúc dữ liệu và Giải thuật ứng dụng" width="175" height="225" loading="lazy">
+            <span class="the__the-loai-badge" style="background:#1a56db;">Kỹ năng</span>
+            <button class="btn-fav-corner nut-bam-yeu-thich" role="button">🤍</button>
+            <img src="images/sach-ky-nang.png" alt="Bìa sách Kỹ năng mềm và giao tiếp sinh viên" width="175" height="225" loading="lazy">
           </figure>
           <div class="the__than">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span class="the__the-loai">Công nghệ thông tin</span>
-              <div class="the__danh-gia">
-                <span>★</span> 4.9 (35)
-              </div>
+            <span class="the__the-loai">Kỹ năng sống</span>
+            <h3 class="the__tieu-de"><a href="chi-tiet.html">Kỹ năng mềm và thuyết trình sinh viên</a></h3>
+            <div class="rating-stars-tmdt">
+              <span class="stars">★★★★★</span>
+              <span>(4.9) &bull; Đã bán 50</span>
             </div>
-            <h3 class="the__tieu-de">Cấu trúc dữ liệu và Giải thuật ứng dụng</h3>
-            <div style="display: flex; align-items: baseline; gap: 8px; margin: 4px 0 6px 0;">
-              <span class="the__gia" style="margin: 0;">116.000 VNĐ</span>
-              <span class="the__gia-goc">145.000 VNĐ</span>
+            <div class="the__gia-row">
+              <span class="the__gia">65.000 đ</span>
+              <span class="the__gia-goc">78.000 đ</span>
             </div>
-            <p class="the__ton-kho" style="color: #16a34a;">Còn hàng (30 cuốn)</p>
-
-            <!-- 4 NÚT THAO TÁC THEO YÊU CẦU: 2x2 GRID ĐỐI XỨNG -->
+            <p class="the__ton-kho the__ton-kho--con">✓ Còn 25 cuốn</p>
             <div class="the__chan">
-              <a href="chi-tiet.html" class="nut nut--nhan btn-mua-ngay" title="Đặt mua sách ngay">⚡ Mua ngay</a>
-              <button type="button" class="nut nut--chinh btn-them-nhanh" title="Thêm vào giỏ hàng">🛒 Thêm giỏ</button>
-              <button type="button" class="nut nut--vien btn-yeu-thich" title="Thêm vào yêu thích">🤍 Yêu thích</button>
-              <a href="chi-tiet.html" class="nut nut--vien" title="Xem chi tiết nội dung cuốn sách">🔍 Chi tiết</a>
+              <div class="the__chan-hang1">
+                <a href="chi-tiet.html" class="btn-mua-ngay">⚡ Mua ngay</a>
+                <button type="button" class="btn-gio-hang btn-them-nhanh">🛒 + Giỏ</button>
+              </div>
+              <div class="the__chan-hang2">
+                <a href="chi-tiet.html" class="btn-chi-tiet">🔍 Chi tiết</a>
+                <button type="button" class="nut-bam-yeu-thich" role="button">🤍 Yêu thích</button>
+              </div>
             </div>
           </div>
         </article>
 
-        <!-- Thẻ 3 -->
+        <!-- Sách 7 -->
         <article class="the">
           <figure class="the__hinh-anh">
-            <span class="the__tag-noi-bat">🔥 BÁN CHẠY</span>
-            <img src="images/sach-csdl-sql.png" alt="Bìa sách Hệ quản trị Cơ sở dữ liệu và Ngôn ngữ SQL" width="175" height="225" loading="lazy">
+            <span class="the__the-loai-badge" style="background:#1a56db;">Toán học</span>
+            <button class="btn-fav-corner nut-bam-yeu-thich" role="button">🤍</button>
+            <img src="images/sach-toan-cc.png" alt="Bìa sách Toán cao cấp A1" width="175" height="225" loading="lazy">
           </figure>
           <div class="the__than">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span class="the__the-loai">Công nghệ thông tin</span>
-              <div class="the__danh-gia">
-                <span>★</span> 5.0 (42)
-              </div>
+            <span class="the__the-loai">Toán học đại cương</span>
+            <h3 class="the__tieu-de"><a href="chi-tiet.html">Toán cao cấp A1 - Giải tích hàm một biến</a></h3>
+            <div class="rating-stars-tmdt">
+              <span class="stars">★★★★★</span>
+              <span>(4.7) &bull; Đã bán 60</span>
             </div>
-            <h3 class="the__tieu-de">Hệ quản trị Cơ sở dữ liệu và Ngôn ngữ SQL</h3>
-            <div style="display: flex; align-items: baseline; gap: 8px; margin: 4px 0 6px 0;">
-              <span class="the__gia" style="margin: 0;">88.000 VNĐ</span>
-              <span class="the__gia-goc">110.000 VNĐ</span>
+            <div class="the__gia-row">
+              <span class="the__gia">75.000 đ</span>
+              <span class="the__gia-goc">90.000 đ</span>
             </div>
-            <p class="the__ton-kho" style="color: #16a34a;">Còn hàng (40 cuốn)</p>
-
-            <!-- 4 NÚT THAO TÁC THEO YÊU CẦU: 2x2 GRID ĐỐI XỨNG -->
+            <p class="the__ton-kho the__ton-kho--con">✓ Còn 22 cuốn</p>
             <div class="the__chan">
-              <a href="chi-tiet.html" class="nut nut--nhan btn-mua-ngay" title="Đặt mua sách ngay">⚡ Mua ngay</a>
-              <button type="button" class="nut nut--chinh btn-them-nhanh" title="Thêm vào giỏ hàng">🛒 Thêm giỏ</button>
-              <button type="button" class="nut nut--vien btn-yeu-thich" title="Thêm vào yêu thích">🤍 Yêu thích</button>
-              <a href="chi-tiet.html" class="nut nut--vien" title="Xem chi tiết nội dung cuốn sách">🔍 Chi tiết</a>
+              <div class="the__chan-hang1">
+                <a href="chi-tiet.html" class="btn-mua-ngay">⚡ Mua ngay</a>
+                <button type="button" class="btn-gio-hang btn-them-nhanh">🛒 + Giỏ</button>
+              </div>
+              <div class="the__chan-hang2">
+                <a href="chi-tiet.html" class="btn-chi-tiet">🔍 Chi tiết</a>
+                <button type="button" class="nut-bam-yeu-thich" role="button">🤍 Yêu thích</button>
+              </div>
             </div>
           </div>
         </article>
-      </div>
-    </section>
 
-    <!-- 5. BANNER KHUYẾN MÃI HỌC KỲ VỚI MÃ GIẢM GIÁ -->
-    <section class="banner-khuyen-mai-ngang">
-      <div class="banner-km-text">
-        <h3>🎁 Chương trình Tri ân Sinh viên UED 2026</h3>
-        <p>Nhận ngay ưu đãi giảm thêm 10% khi nhập mã voucher trong quá trình thanh toán đơn hàng trực tuyến.</p>
-      </div>
-      <div class="banner-km-cta">
-        <div class="banner-ma-giam">MÃ: SINHVIEN2026</div>
-        <a href="danh-sach.html" class="nut nut--nhan" style="border-radius: 10px; font-weight: 700;">Áp dụng ngay &rarr;</a>
-      </div>
-    </section>
-
-    <!-- 6. GÓC ĐÁNH GIÁ CỦA CỘNG ĐỒNG SINH VIÊN SƯ PHẠM -->
-    <section class="danh-gia-section">
-      <div class="phan-doan-header" style="justify-content: center; text-align: center;">
-        <div class="phan-doan-header__title" style="align-items: center;">
-          <span class="phan-doan-badge">💬 Cảm Nhận Độc Giả</span>
-          <h2>Sinh viên UED nói gì về BookNest?</h2>
-        </div>
-      </div>
-
-      <div class="danh-gia-grid">
-        <div class="danh-gia-card">
-          <div class="danh-gia-sao">★★★★★</div>
-          <p class="danh-gia-text">
-            "Giáo trình Lập trình Web và CSDL của BookNest chuẩn khung chương trình trường mình, giá lại rẻ hơn tiệm sách ngoài cổng nhiều. Đặt buổi sáng, chiều đã nhận được ở sảnh Khoa Toán - Tin!"
-          </p>
-          <div class="danh-gia-author">
-            <div class="author-avatar">TN</div>
-            <div class="author-info">
-              <h5>Trần Nhật Nam</h5>
-              <span>Sinh viên K24 CNTT, ĐH Sư phạm</span>
+        <!-- Sách 8 -->
+        <article class="the">
+          <figure class="the__hinh-anh">
+            <span class="the__the-loai-badge" style="background:#1a56db;">CNTT</span>
+            <button class="btn-fav-corner nut-bam-yeu-thich" role="button">🤍</button>
+            <img src="images/sach-mang-mt.png" alt="Bìa sách Mạng máy tính và truyền thông dữ liệu" width="175" height="225" loading="lazy">
+          </figure>
+          <div class="the__than">
+            <span class="the__the-loai">CNTT &amp; Lập trình</span>
+            <h3 class="the__tieu-de"><a href="chi-tiet.html">Mạng máy tính và truyền thông dữ liệu</a></h3>
+            <div class="rating-stars-tmdt">
+              <span class="stars">★★★★★</span>
+              <span>(4.8) &bull; Đã bán 28</span>
+            </div>
+            <div class="the__gia-row">
+              <span class="the__gia">88.000 đ</span>
+              <span class="the__gia-goc">105.000 đ</span>
+            </div>
+            <p class="the__ton-kho the__ton-kho--con">✓ Còn 16 cuốn</p>
+            <div class="the__chan">
+              <div class="the__chan-hang1">
+                <a href="chi-tiet.html" class="btn-mua-ngay">⚡ Mua ngay</a>
+                <button type="button" class="btn-gio-hang btn-them-nhanh">🛒 + Giỏ</button>
+              </div>
+              <div class="the__chan-hang2">
+                <a href="chi-tiet.html" class="btn-chi-tiet">🔍 Chi tiết</a>
+                <button type="button" class="nut-bam-yeu-thich" role="button">🤍 Yêu thích</button>
+              </div>
             </div>
           </div>
-        </div>
+        </article>
 
-        <div class="danh-gia-card">
-          <div class="danh-gia-sao">★★★★★</div>
-          <p class="danh-gia-text">
-            "Trang web chạy rất mượt, giao diện đẹp và tính năng thêm vào giỏ hàng hoặc yêu thích không hề bị tải lại trang. Rất thích mục lời khuyên chọn sách theo thời tiết Đà Nẵng!"
-          </p>
-          <div class="danh-gia-author">
-            <div class="author-avatar" style="background:#fce7f3; color:#be185d;">ML</div>
-            <div class="author-info">
-              <h5>Mai Thùy Linh</h5>
-              <span>Sinh viên Khoa Giáo dục Tiểu học</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="danh-gia-card">
-          <div class="danh-gia-sao">★★★★★</div>
-          <p class="danh-gia-text">
-            "Chính sách bảo mật của web rất nghiêm ngặt, có chống CSRF và bảo vệ tài khoản tốt. Đặt sách ở KTX trường được giao tận phòng chỉ trong vài giờ rất tiện lợi."
-          </p>
-          <div class="danh-gia-author">
-            <div class="author-avatar" style="background:#fef3c7; color:#b45309;">HQ</div>
-            <div class="author-info">
-              <h5>Hoàng Đăng Quang</h5>
-              <span>Sinh viên K23 Sư phạm Toán</span>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
 
   </main>
 
+  <!-- CHÂN TRANG SÀN THƯƠNG MẠI ĐIỆN TỬ BOOKNEST -->
   <footer class="phan-chan">
-    <div class="khung-chua phan-chan__grid">
-      <!-- Cột 1: Thông tin thương hiệu -->
-      <div class="phan-chan__col phan-chan__col--brand">
-        <div class="phan-chan__logo" style="margin-bottom: 12px;">
-          <img src="images/logo-booknest.png" alt="Logo BookNest" width="180" height="55" class="footer-logo-img">
-        </div>
-        <p class="phan-chan__desc">
-          <strong>BookNest</strong> là hệ sinh thái nhà sách trực tuyến trợ giá giáo trình chuẩn đại học dành riêng cho sinh viên Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.
-        </p>
-        <div class="phan-chan__badges">
-          <span class="badge-chip">🎓 UED Đà Nẵng</span>
-          <span class="badge-chip">🔒 OWASP Security</span>
-          <span class="badge-chip">⚡ 24h KTX Delivery</span>
-        </div>
-      </div>
-
-      <!-- Cột 2: Điều hướng nhanh -->
-      <div class="phan-chan__col">
-        <h4 class="phan-chan__tieu-de">Khám phá sách</h4>
-        <ul class="phan-chan__links">
-          <li><a href="index.html">&rarr; Trang chủ</a></li>
-          <li><a href="danh-sach.html">&rarr; Danh mục toàn bộ giáo trình</a></li>
-          <li><a href="chi-tiet.html">&rarr; Sách tiêu biểu</a></li>
-          <li><a href="gioi-thieu.html">&rarr; Giới thiệu nhóm</a></li>
-          <li><a href="lien-he.html">&rarr; Liên hệ đặt sách</a></li>
-        </ul>
-      </div>
-
-      <!-- Cột 3: Hỗ trợ sinh viên -->
-      <div class="phan-chan__col">
-        <h4 class="phan-chan__tieu-de">Hỗ trợ sinh viên</h4>
-        <ul class="phan-chan__links">
-          <li><a href="lien-he.html">&rarr; Hướng dẫn đặt mua giáo trình</a></li>
-          <li><a href="lien-he.html">&rarr; Điểm giao nhận tại Ký túc xá</a></li>
-          <li><a href="lien-he.html">&rarr; Chính sách đổi trả trong 7 ngày</a></li>
-          <li><a href="gioi-thieu.html">&rarr; Đồ án môn học Nhóm 12</a></li>
-          <li><a href="lien-he.html">&rarr; Liên hệ &amp; Góp ý</a></li>
-        </ul>
-      </div>
-
-      <!-- Cột 4: Thông tin đồ án & Bảo mật -->
-      <div class="phan-chan__col">
-        <h4 class="phan-chan__tieu-de">Bảo mật &amp; Nhóm tác giả</h4>
-        <div class="phan-chan__security-box">
-          <div class="security-status">
-            <span class="status-indicator"></span>
-            <strong>Hệ thống bảo vệ Chapter 7</strong>
+    <div class="khung-chua">
+      <div class="footer-tmdt-grid">
+        
+        <!-- Cột 1: Thông tin thương hiệu & Liên hệ trường -->
+        <div class="footer-tmdt-col">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <div style="font-size:1.6rem;">📚</div>
+            <div style="font-size:1.4rem;font-weight:800;color:#1a56db;">Book<span style="color:#e02424;">Nest</span></div>
           </div>
-          <p class="security-note">
-            Đạt chuẩn 7 biện pháp an toàn ứng dụng web: CSRF Token 100% biểu mẫu, HttpOnly/SameSite Session, CSP Script-src 'self', Apache .htaccess, Least Privilege CSDL.
+          <p style="color:#6b7280;line-height:1.6;margin:0 0 12px 0;">
+            Nhà sách trực tuyến chuyên cung cấp giáo trình đại học, sách chuyên ngành CNTT và Toán học cho sinh viên Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.
           </p>
-          <div class="phan-chan__author-info">
-            <span>Thực hiện: <strong>Nhóm 12 (Lớp 24CNTT3)</strong></span><br>
-            <span>Khoa Toán &ndash; Tin, Trường ĐH Sư phạm &ndash; ĐH Đà Nẵng</span>
+          <div style="font-size:0.85rem;color:#4b5563;display:flex;flex-direction:column;gap:5px;">
+            <div>📍 <strong>Địa chỉ:</strong> 459 Tôn Đức Thắng, Liên Chiểu, TP. Đà Nẵng</div>
+            <div>📞 <strong>Hotline:</strong> 0236.3841.323 (Khoa Toán &ndash; Tin)</div>
+            <div>📧 <strong>Email:</strong> nhom12.24cntt3@ued.vn</div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Thanh bản quyền đáy trang -->
-    <div class="phan-chan__day">
-      <div class="khung-chua phan-chan__day-khung">
-        <p>&copy; 2026 <strong>BookNest &ndash; Nhóm 12</strong> (Lớp 24CNTT3, Khoa Toán &ndash; Tin, Trường ĐH Sư phạm &ndash; ĐH Đà Nẵng). All rights reserved.</p>
-        <p>Học phần Thiết kế và Lập trình Web &bull; Địa chỉ: 459 Tôn Đức Thắng, Q. Liên Chiểu, TP. Đà Nẵng.</p>
+        <!-- Cột 2: Danh mục giáo trình nổi bật -->
+        <div class="footer-tmdt-col">
+          <h4>Danh mục giáo trình</h4>
+          <ul>
+            <li><a href="danh-sach.html?dm=1">💻 Công nghệ thông tin &amp; Lập trình</a></li>
+            <li><a href="danh-sach.html?dm=2">📊 Kinh tế &amp; Kỹ năng khởi nghiệp</a></li>
+            <li><a href="danh-sach.html?dm=3">🎨 Văn học, Nghệ thuật &amp; Triết học</a></li>
+            <li><a href="danh-sach.html?dm=4">🌱 Kỹ năng sống &amp; Phát triển bản thân</a></li>
+            <li><a href="danh-sach.html">📚 Toàn bộ giáo trình trên kệ</a></li>
+          </ul>
+        </div>
+
+        <!-- Cột 3: Chính sách & Hỗ trợ sinh viên -->
+        <div class="footer-tmdt-col">
+          <h4>Chính sách &amp; Hỗ trợ</h4>
+          <ul>
+            <li><a href="lien-he.html">🚀 Hướng dẫn đặt sách &amp; Nhận tại KTX</a></li>
+            <li><a href="danh-sach.html">📦 Kiểm tra tiến độ đơn hàng</a></li>
+            <li><a href="gioi-thieu.html">👥 Giới thiệu đồ án Nhóm 12</a></li>
+            <li><a href="danh-sach.html">🛒 Quản lý giỏ hàng cá nhân</a></li>
+            <li><a href="danh-sach.html">❤️ Danh sách sách yêu thích</a></li>
+          </ul>
+        </div>
+
+        <!-- Cột 4: Thành viên nhóm & Thanh toán -->
+        <div class="footer-tmdt-col">
+          <h4>Đồ án Nhóm 12 (24CNTT3)</h4>
+          <p style="font-size:0.85rem;color:#6b7280;margin:0 0 10px 0;">
+            Học phần: <strong>Thiết kế &amp; Lập trình Web</strong> (Chương 7: Bảo mật ứng dụng Web)
+          </p>
+          <div style="font-size:0.85rem;color:#374151;line-height:1.6;margin-bottom:12px;">
+            <div>• <strong>Xaiyasith Yoi</strong> (Nhóm trưởng &bull; GitHub: <code>xys-3y7</code>)</div>
+            <div>• <strong>Phommaket Hatsady</strong> (Thành viên &bull; GitHub: <code>daimobile33076-eng</code>)</div>
+            <div>• <strong>Vongsena Sauphasith</strong> (Thành viên &bull; GitHub: <code>happy2072005-prog</code>)</div>
+            <div>• <strong>Nguyễn Thị Sinh</strong> (Thành viên &bull; GitHub: <code>chingg2005</code>)</div>
+          </div>
+          
+          <div style="font-size:0.8rem;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:6px;">Chấp nhận thanh toán</div>
+          <div class="footer-payment-icons">
+            <span class="pay-badge">💵 Tiền mặt COD</span>
+            <span class="pay-badge">🏦 VietQR</span>
+            <span class="pay-badge">📱 MoMo</span>
+            <span class="pay-badge">💳 VNPAY</span>
+          </div>
+
+          <!-- Huy hiệu Bảo mật Chương 7 (Defense-in-Depth) -->
+          <div class="phan-chan__security-box" style="margin-top:12px;background:#f8fafc;border:1px solid #e2e8f0;padding:10px;border-radius:8px;">
+            <div style="font-size:0.8rem;font-weight:700;color:#0e9f6e;display:flex;align-items:center;gap:5px;margin-bottom:4px;">
+              <span>🛡️</span>
+              <span>BẢO MẬT PHÒNG THỦ CHIỀU SÂU</span>
+            </div>
+            <div style="font-size:0.75rem;color:#64748b;line-height:1.4;">
+              100% POST CSRF Protected &bull; Session HttpOnly/SameSite &bull; CSP &bull; Least-Privilege DB &bull; Rate Limit 429
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom-bar">
+        © 2026 <strong>BookNest &ndash; Nhóm 12</strong> (Lớp 24CNTT3 &bull; Khoa Toán &ndash; Tin, Trường ĐH Sư phạm &ndash; ĐH Đà Nẵng). Dữ liệu CSDL chuẩn hóa 3NF trên hệ quản trị MariaDB / MySQL.
       </div>
     </div>
   </footer>
 
-  <!-- Nạp các module JavaScript ES6+ (Chương 4) -->
-  <script type="module" src="js/main.js"></script>
-  <script type="module" src="js/trang-chu.js"></script>
+  <script>
+    // Timer đếm ngược Flash Sale
+    function capNhatCountdown() {
+      const elGiay = document.getElementById('fs-giay');
+      const elPhut = document.getElementById('fs-phut');
+      const elGio  = document.getElementById('fs-gio');
+      if (!elGiay || !elPhut || !elGio) return;
+
+      let s = parseInt(elGiay.innerText, 10);
+      let m = parseInt(elPhut.innerText, 10);
+      let h = parseInt(elGio.innerText, 10);
+
+      s--;
+      if (s < 0) {
+        s = 59;
+        m--;
+        if (m < 0) {
+          m = 59;
+          h = (h > 0) ? h - 1 : 2;
+        }
+      }
+
+      elGiay.innerText = s < 10 ? '0' + s : s;
+      elPhut.innerText = m < 10 ? '0' + m : m;
+      elGio.innerText  = h < 10 ? '0' + h : h;
+    }
+    setInterval(capNhatCountdown, 1000);
+  </script>
 </body>
 </html>
