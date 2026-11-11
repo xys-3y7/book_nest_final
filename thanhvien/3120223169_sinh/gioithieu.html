@@ -46,12 +46,40 @@
         <ul>
           <li><strong>Họ và tên:</strong> Nguyễn Thị Sinh</li>
           <li><strong>Mã sinh viên:</strong> 3120223169</li>
-          <li><strong>Lớp sinh hoạt:</strong> 23CNTT1</li>
+          <li><strong>Lớp sinh hoạt:</strong> 24CNTT3</li>
           <li><strong>Chuyên ngành:</strong> Công nghệ thông tin</li>
           <li><strong>Đơn vị đào tạo:</strong> Khoa Toán &ndash; Tin, Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng</li>
-          <li><strong>Vai trò trong nhóm:</strong> Thành viên (Phụ trách trang giới thiệu <code>gioi-thieu.html</code>, tối ưu hóa CSS trải nghiệm người dùng UI/UX, hỗ trợ kiểm thử tính tương thích đa màn hình)</li>
+          <li><strong>Vai trò trong nhóm:</strong> Thành viên (Phụ trách bảo vệ phiên Session Security và bộ tiêu đề bảo mật HTTP CSP)</li>
           <li><strong>Email học tập:</strong> <a href="mailto:3120223169@ued.udn.vn">3120223169@ued.udn.vn</a></li>
+          <li><strong>Tài khoản GitHub:</strong> <a href="https://github.com/chingg2005" target="_blank" rel="noopener">chingg2005</a></li>
         </ul>
+      </div>
+    </section>
+
+    <!-- BẢNG NHIỆM VỤ CHI TIẾT TRONG VIỆC LÀM BÁO CÁO BÀI TẬP 7 (BẢO MẬT ỨNG DỤNG WEB) -->
+    <section style="background: #ffffff; padding: 25px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+        <h2 style="margin: 0; color: #123b6d; font-size: 1.35rem;">📋 Nhiệm vụ &amp; Đóng góp trong Báo cáo Bài tập nhóm số 7 (Bảo mật Web)</h2>
+        <span style="background: #dcfce7; color: #166534; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; border: 1px solid #bbf7d0;">Đóng góp: 100%</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 18px;">
+        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #123b6d;">
+          <h4 style="margin: 0 0 8px 0; color: #123b6d; font-size: 1rem;">1. Biện pháp bảo mật phụ trách</h4>
+          <ul style="margin: 0; padding-left: 18px; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+            <li><strong>Biện pháp 2:</strong> Bảo vệ phiên làm việc (Session Security): thiết lập <code>HttpOnly</code>, <code>SameSite=Lax</code>, tự động hủy phiên sau 30 phút, chống tấn công Session Fixation qua <code>session_regenerate_id(true)</code>.</li>
+            <li><strong>Biện pháp 3:</strong> Cấu hình bộ tiêu đề an ninh HTTP chuẩn OWASP: Content Security Policy (CSP) <code>script-src 'self'</code>, <code>frame-ancestors 'none'</code>, <code>X-Content-Type-Options: nosniff</code>, <code>Referrer-Policy</code>, gỡ bỏ <code>X-Powered-By</code>.</li>
+          </ul>
+        </div>
+
+        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border-left: 4px solid #ea580c;">
+          <h4 style="margin: 0 0 8px 0; color: #ea580c; font-size: 1rem;">2. Soạn thảo báo cáo &amp; Lý luận chuyên sâu</h4>
+          <ul style="margin: 0; padding-left: 18px; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+            <li><strong>Phần B:</strong> Báo cáo tính năng sách yêu thích (Wishlist) và kiểm tra phân quyền truy cập 403 Forbidden.</li>
+            <li><strong>Phần C:</strong> Biên soạn lời giải chuyên sâu <strong>Câu C.2</strong> (Phân tích tác dụng bảo vệ và giới hạn của cờ <code>HttpOnly</code> trước tấn công XSS).</li>
+            <li>Chụp ảnh minh chứng thực tế trên Chrome DevTools cho Hình 2 (Headers an ninh) và Hình 3 (Cookie bảo mật).</li>
+          </ul>
+        </div>
       </div>
     </section>
 

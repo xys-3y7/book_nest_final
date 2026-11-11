@@ -9,124 +9,386 @@
 </head>
 <body class="trang-grid">
 
+  <!-- Header chính BookNest -->
   <header class="phan-dau">
-    <div class="khung-chua phan-dau__khung">
-      <div class="phan-dau__logo">
-        <a href="index.html">
-          <img src="images/logo-booknest.png" alt="Logo BookNest - Nhà sách trực tuyến UED" width="250" height="80">
-        </a>
+    <!-- 1. Thanh thông báo ưu đãi sinh viên đầu trang -->
+    <div class="thanh-thong-bao-top">
+      <div class="khung-chua thanh-thong-bao-top__khung">
+        <div class="thong-bao-item">
+          <span class="thong-bao-badge">🔥 ƯU ĐÃI HỌC KỲ</span>
+          <span>Trợ giá sinh viên UED đến <strong>25%</strong> cho toàn bộ giáo trình chuyên ngành</span>
+        </div>
+        <div class="thong-bao-item thong-bao-item--phu">
+          <span>📍 459 Tôn Đức Thắng, Đà Nẵng</span>
+          <span class="phoi-phan-cach">&bull;</span>
+          <span>⚡ Giao nhanh 24h tại Ký túc xá</span>
+        </div>
       </div>
-      <p class="phan-dau__khau-hieu"><strong>BookNest</strong> &mdash; Tri thức nâng bước tương lai, người bạn đồng hành của sinh viên Sư phạm</p>
+    </div>
+
+    <div class="khung-chua phan-dau__khung">
+      <!-- Logo thương hiệu -->
+      <div class="phan-dau__logo-nhom">
+        <a href="index.html" class="logo-link">
+          <img src="images/logo-booknest.png" alt="Logo BookNest - Nhà sách trực tuyến UED" width="210" height="65">
+        </a>
+        <div class="phan-dau__sub-badge">
+          <span class="sub-badge-truong">ĐH SƯ PHẠM ĐÀ NẴNG</span>
+          <span class="sub-badge-khoa">KHOA TOÁN - TIN</span>
+        </div>
+      </div>
+
+      <!-- Ô tìm kiếm thông minh -->
+      <form class="phan-dau__tim-kiem" action="danh-sach.html" method="GET" role="search">
+        <div class="tim-kiem-hop">
+          <span class="icon-tim-kiem" aria-hidden="true">🔍</span>
+          <input type="search" name="q" placeholder="Tìm kiếm giáo trình, môn học, tác giả..." autocomplete="off" aria-label="Tìm kiếm sách">
+          <button type="submit" class="nut-tim-kiem-header">
+            <span>Tìm sách</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Cụm tiện ích: Yêu thích, Giỏ hàng, Tài khoản -->
+      <div class="phan-dau__tien-ich">
+        <a href="danh-sach.html" class="tien-ich-pill" title="Danh sách sách yêu thích">
+          <span class="tien-ich-icon">❤️</span>
+          <span class="tien-ich-label">Yêu thích</span>
+          <span class="so-luong-yeu-thich">0</span>
+        </a>
+
+        <a href="danh-sach.html" class="tien-ich-pill tien-ich-pill--gio" title="Giỏ hàng của bạn">
+          <span class="tien-ich-icon">🛒</span>
+          <span class="tien-ich-label">Giỏ hàng</span>
+          <span class="so-luong-gio">0</span>
+        </a>
+
+        <div class="tien-ich-auth">
+          <a href="lien-he.html" class="nut nut--vien nut-auth-sm">Liên hệ</a>
+          <a href="gioi-thieu.html" class="nut nut--chinh nut-auth-sm">Nhóm 12</a>
+        </div>
+      </div>
     </div>
   </header>
 
+  <!-- 3. Thanh điều hướng chính Sticky -->
   <nav class="thanh-dieu-huong" aria-label="Điều hướng chính">
-    <div class="khung-chua">
+    <div class="khung-chua thanh-dieu-huong__khung">
       <button class="nut-menu" id="nut-menu" aria-label="Mở menu điều hướng" aria-expanded="false">&#9776; Menu</button>
       <ul>
-        <li><a href="index.html">Trang chủ</a></li>
-        <li><a href="danh-sach.html">Danh mục sách</a></li>
-        <li><a href="chi-tiet.html">Sách tiêu biểu</a></li>
-        <li><a href="gioi-thieu.html" class="hien-tai" aria-current="page">Giới thiệu nhóm</a></li>
-        <li><a href="lien-he.html">Liên hệ đặt sách</a></li>
-        <li><a href="danh-sach-bootstrap.html">Bản Bootstrap 5</a></li>
-        <li><a href="danh-sach.html#yeu-thich" class="nut-yeu-thich-nav">❤️ Yêu thích (<span class="so-luong-yeu-thich">0</span>)</a></li>
+        <li><a href="index.html"><span>🏠</span> Trang chủ</a></li>
+        <li><a href="danh-sach.html"><span>📚</span> Danh mục sách</a></li>
+        <li><a href="chi-tiet.html"><span>⭐</span> Sách tiêu biểu</a></li>
+        <li><a href="gioi-thieu.html" class="hien-tai" aria-current="page"><span>👥</span> Giới thiệu nhóm</a></li>
+        <li><a href="lien-he.html"><span>✉️</span> Liên hệ đặt sách</a></li>
+        <li><a href="danh-sach-bootstrap.html"><span>🎨</span> Bản Bootstrap 5</a></li>
       </ul>
     </div>
   </nav>
 
-  <main class="noi-dung-chinh khung-chua">
-    <h1>Giới thiệu Nhóm phát triển 12 và Đồ án BookNest</h1>
+  <main class="noi-dung-chinh khung-chua" style="padding-top: 30px; padding-bottom: 50px;">
+    
+    <!-- Tiêu đề trang & Giới thiệu tổng quan -->
+    <div style="margin-bottom: 35px; text-align: center;">
+      <span class="hero-badge">👥 ĐỘI NGŨ PHÁT TRIỂN DỰ ÁN</span>
+      <h1 style="color: #0f2b5c; font-size: 2.2rem; margin-top: 10px; margin-bottom: 12px; font-weight: 800;">
+        Giới thiệu Nhóm 12 &amp; Dự án BookNest
+      </h1>
+      <p style="color: #64748b; max-width: 750px; margin: 0 auto; font-size: 1.05rem;">
+        Học phần Thiết kế và Lập trình Web &bull; Lớp 24CNTT3 &bull; Khoa Toán &ndash; Tin, Trường ĐH Sư phạm &ndash; ĐH Đà Nẵng
+      </p>
+    </div>
 
-    <!-- 1. Văn bản dài giới thiệu đồ án (Giới hạn độ dài dòng max-width: 65ch theo yêu cầu Bảng 1) -->
-    <section>
-      <h2>Tổng quan về đồ án môn học</h2>
-      <p class="doan-van-dai">Dự án website <strong>BookNest</strong> được xây dựng trong khuôn khổ học phần <em>Thiết kế và Lập trình web</em> (Web Design and Programming), Học kỳ 1 năm học 2026 - 2027 tại Khoa Toán - Tin, Trường Đại học Sư phạm - Đại học Đà Nẵng.</p>
-      <p class="doan-van-dai">Mục tiêu của dự án là áp dụng các kiến thức thực tế về kiến trúc web hiện đại: từ việc phân tích cấu trúc ngữ nghĩa HTML5, thiết kế giao diện thích ứng đa thiết bị (Responsive CSS3), lập trình tương tác máy khách (JavaScript DOM/AJAX) đến xây dựng hệ thống quản trị nội dung hoàn chỉnh phía máy chủ với PHP &amp; MySQL.</p>
+    <!-- 1. Tổng quan về đồ án môn học -->
+    <section style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px; margin-bottom: 40px; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);">
+      <h2 style="color: #0f2b5c; font-size: 1.45rem; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">
+        📖 Tổng quan về đồ án môn học BookNest
+      </h2>
+      <p class="doan-van-dai" style="line-height: 1.7; color: #334155;">
+        Dự án website <strong>BookNest</strong> được xây dựng trong khuôn khổ học phần <em>Thiết kế và Lập trình web</em> (Web Design and Programming), Học kỳ 1 năm học 2026 &ndash; 2027 tại Khoa Toán &ndash; Tin, Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.
+      </p>
+      <p class="doan-van-dai" style="line-height: 1.7; color: #334155;">
+        Mục tiêu của dự án là áp dụng các kiến thức thực tế về kiến trúc web hiện đại: từ việc phân tích cấu trúc ngữ nghĩa HTML5, thiết kế giao diện thích ứng đa thiết bị (Responsive CSS3), lập trình tương tác máy khách (JavaScript DOM/AJAX) đến xây dựng hệ thống quản trị nội dung hoàn chỉnh phía máy chủ với PHP 8.2 &amp; MySQL 8.0, đặc biệt tuân thủ đầy đủ <strong>7 biện pháp an toàn ứng dụng web theo chuẩn OWASP</strong> (Chương 7).
+      </p>
       
-      <h3>Tầm nhìn và sứ mệnh</h3>
-      <ul class="doan-van-dai">
-        <li><strong>Tầm nhìn:</strong> Trở thành cổng thông tin tra cứu và phân phối giáo trình, văn phòng phẩm trực tuyến số một cho sinh viên Trường Đại học Sư phạm - Đại học Đà Nẵng.</li>
-        <li><strong>Sự mệnh:</strong> Số hóa quy trình mượn, mua và chia sẻ tài liệu học tập, góp phần giảm thiểu chi phí và nâng cao chất lượng học tập của sinh viên sư phạm và công nghệ.</li>
-      </ul>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px;">
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px;">
+          <h3 style="color: #166534; font-size: 1.1rem; margin-top: 0; margin-bottom: 8px;">🌟 Tầm nhìn</h3>
+          <p style="margin: 0; color: #14532d; font-size: 0.92rem; line-height: 1.6;">
+            Trở thành cổng thông tin tra cứu và phân phối giáo trình, văn phòng phẩm trực tuyến số một cho sinh viên Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.
+          </p>
+        </div>
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 18px;">
+          <h3 style="color: #1e40af; font-size: 1.1rem; margin-top: 0; margin-bottom: 8px;">🚀 Sứ mệnh</h3>
+          <p style="margin: 0; color: #1e3a8a; font-size: 0.92rem; line-height: 1.6;">
+            Số hóa quy trình mượn, mua và chia sẻ tài liệu học tập, góp phần giảm thiểu chi phí và nâng cao chất lượng học tập của sinh viên sư phạm và công nghệ.
+          </p>
+        </div>
+      </div>
     </section>
 
-    <!-- 2. Danh sách thành viên (Flexbox bố cục thẻ theo Bảng 1) -->
+    <!-- 2. Danh sách thành viên Nhóm 12 (Card hiện đại với nhiệm vụ báo cáo) -->
     <section>
-      <h2>Danh sách thành viên Nhóm 12 (Lớp 24CNTT3)</h2>
-      <p>Nhóm 12 gồm 4 sinh viên chuyên ngành Công nghệ thông tin cùng hợp tác và phân chia nhiệm vụ cụ thể:</p>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 24px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h2 style="color: #0f2b5c; font-size: 1.55rem; margin: 0 0 4px 0; font-weight: 800;">
+            Danh sách thành viên Nhóm 12 (Lớp 24CNTT3)
+          </h2>
+          <p style="margin: 0; color: #64748b; font-size: 0.95rem;">
+            Nhấp vào từng thành viên để xem hồ sơ cá nhân và bảng thời khóa biểu chi tiết:
+          </p>
+        </div>
+        <span class="huy-hieu huy-hieu--thanh-cong" style="font-size: 0.85rem; padding: 6px 14px;">4 thành viên</span>
+      </div>
 
-      <div class="danh-sach-thanh-vien">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 45px;">
         
-        <!-- Thành viên 1 -->
-        <article class="the-thanh-vien">
-          <figure>
-            <img src="images/yoi-avatar.png" alt="Ảnh chân dung sinh viên Xaiyasith Yoi" width="120" height="120" loading="lazy">
-            <figcaption><strong>Xaiyasith Yoi</strong><br><small>MSV: 3120224189</small></figcaption>
-          </figure>
-          <p><span class="huy-hieu huy-hieu--thanh-cong">Nhóm trưởng</span></p>
-          <p><strong>GitHub:</strong> <a href="https://github.com/xys-3y7" target="_blank" rel="noopener noreferrer">@xys-3y7</a></p>
-          <p class="the__mo-ta"><strong>Nhiệm vụ báo cáo:</strong> Chủ trì tổng hợp báo cáo Word/PDF, Biện pháp 1 (CSRF 19 form), Biện pháp 7 (Rate limit 429 &amp; Log bảo mật), Bộ kiểm thử 14 ca tự động, Phần B và Thảo luận C.1.</p>
-          <a href="thanhvien/3120224189_yoi/gioithieu.php" class="nut nut--chinh">Xem hồ sơ cá nhân chi tiết &rarr;</a>
+        <!-- Thành viên 1: Xaiyasith Yoi -->
+        <article class="the-thanh-vien" style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 22px; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05); transition: transform 0.25s ease, box-shadow 0.25s ease;">
+          <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+            <img src="images/yoi-avatar.png" alt="Ảnh chân dung sinh viên Xaiyasith Yoi" width="90" height="90" loading="lazy" style="border-radius: 50%; object-fit: cover; border: 3px solid #0284c7; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.2);">
+            <div>
+              <h3 style="margin: 0; color: #0f2b5c; font-size: 1.25rem; font-weight: 800;">Xaiyasith Yoi</h3>
+              <p style="margin: 3px 0; font-size: 0.85rem; color: #64748b;">MSSV: <strong>3120224189</strong></p>
+              <span class="huy-hieu huy-hieu--thanh-cong" style="font-size: 0.72rem; padding: 3px 8px;">Nhóm trưởng</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 14px; font-size: 0.9rem;">
+            <div style="margin: 6px 0;">
+              <a href="https://github.com/xys-3y7" target="_blank" rel="noopener noreferrer" class="github-pill" style="display: inline-flex; align-items: center; gap: 6px; background: #0f172a; color: #ffffff; padding: 4px 12px; border-radius: 9999px; font-size: 0.8rem; text-decoration: none; font-weight: 600;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <span>xys-3y7</span>
+              </a>
+            </div>
+            <p style="margin: 6px 0; color: #475569; font-size: 0.85rem;">
+              <strong>Vai trò:</strong> Quản trị CSDL MySQL, kiến trúc PDO, giỏ hàng Session, Wishlist và điều phối chung đồ án.
+            </p>
+          </div>
+
+          <!-- Khối nhiệm vụ làm báo cáo -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 10px; font-size: 0.85rem; line-height: 1.5; color: #334155; margin-bottom: 18px; flex-grow: 1;">
+            <strong style="color: #0f2b5c; display: block; margin-bottom: 6px; font-size: 0.9rem;">📋 Nhiệm vụ làm báo cáo Bài tập 7:</strong>
+            <ul style="margin: 0; padding-left: 18px;">
+              <li>Chủ trì tổng hợp &amp; định dạng báo cáo (Word &amp; PDF).</li>
+              <li><strong>Biện pháp 1:</strong> CSRF Token trên 19 form POST &amp; API fetch.</li>
+              <li><strong>Biện pháp 7:</strong> Rate limiting 429 &amp; nhật ký an ninh độc lập.</li>
+              <li>Xây dựng bộ kiểm thử tự động 14 ca (<code>tests/bao-mat.sh</code>).</li>
+              <li>Báo cáo Phần B (Lưu bút &amp; xóa bảo mật) &amp; Thảo luận C.1.</li>
+            </ul>
+          </div>
+
+          <a href="thanhvien/3120224189_yoi/gioithieu.html" class="nut nut--chinh" style="width: 100%; text-align: center; justify-content: center; font-size: 0.9rem; padding: 10px 14px; border-radius: 8px;">
+            Xem hồ sơ cá nhân chi tiết &rarr;
+          </a>
         </article>
 
-        <!-- Thành viên 2 -->
-        <article class="the-thanh-vien">
-          <figure>
-            <img src="images/hatsady-avatar.png" alt="Ảnh chân dung sinh viên Phommaket Hatsady" width="120" height="120" loading="lazy">
-            <figcaption><strong>Phommaket Hatsady</strong><br><small>MSV: 3120224181</small></figcaption>
-          </figure>
-          <p><span class="huy-hieu huy-hieu--thanh-cong">Thành viên</span></p>
-          <p><strong>GitHub:</strong> <a href="https://github.com/daimobile33076-eng" target="_blank" rel="noopener noreferrer">@daimobile33076-eng</a></p>
-          <p class="the__mo-ta"><strong>Nhiệm vụ báo cáo:</strong> Biện pháp 5 (Cấu hình Apache .htaccess &amp; uploads/.htaccess cấm chạy PHP, chặn tệp ẩn .env/.git), Phần B (Dự án công nghệ) và Thảo luận C.3.</p>
-          <a href="thanhvien/3120224181_hatsady/gioithieu.php" class="nut nut--chinh">Xem hồ sơ cá nhân chi tiết &rarr;</a>
+        <!-- Thành viên 2: Phommaket Hatsady -->
+        <article class="the-thanh-vien" style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 22px; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05); transition: transform 0.25s ease, box-shadow 0.25s ease;">
+          <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+            <img src="images/hatsady-avatar.png" alt="Ảnh chân dung sinh viên Phommaket Hatsady" width="90" height="90" loading="lazy" style="border-radius: 50%; object-fit: cover; border: 3px solid #0284c7; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.2);">
+            <div>
+              <h3 style="margin: 0; color: #0f2b5c; font-size: 1.25rem; font-weight: 800;">Phommaket Hatsady</h3>
+              <p style="margin: 3px 0; font-size: 0.85rem; color: #64748b;">MSSV: <strong>3120224181</strong></p>
+              <span class="huy-hieu huy-hieu--thanh-cong" style="font-size: 0.72rem; padding: 3px 8px;">Thành viên</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 14px; font-size: 0.9rem;">
+            <div style="margin: 6px 0;">
+              <a href="https://github.com/daimobile33076-eng" target="_blank" rel="noopener noreferrer" class="github-pill" style="display: inline-flex; align-items: center; gap: 6px; background: #0f172a; color: #ffffff; padding: 4px 12px; border-radius: 9999px; font-size: 0.8rem; text-decoration: none; font-weight: 600;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <span>daimobile33076-eng</span>
+              </a>
+            </div>
+            <p style="margin: 6px 0; color: #475569; font-size: 0.85rem;">
+              <strong>Vai trò:</strong> Thiết kế trang danh mục <code>danh-sach.html</code>, bản Bootstrap 5, bảng dữ liệu responsive và kiểm thử W3C.
+            </p>
+          </div>
+
+          <!-- Khối nhiệm vụ làm báo cáo -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 10px; font-size: 0.85rem; line-height: 1.5; color: #334155; margin-bottom: 18px; flex-grow: 1;">
+            <strong style="color: #0f2b5c; display: block; margin-bottom: 6px; font-size: 0.9rem;">📋 Nhiệm vụ làm báo cáo Bài tập 7:</strong>
+            <ul style="margin: 0; padding-left: 18px;">
+              <li><strong>Biện pháp 5:</strong> Cấu hình Apache <code>.htaccess</code> máy chủ và <code>uploads/.htaccess</code>.</li>
+              <li>Chặn triệt để thực thi mã PHP trong thư mục upload: <code>php_flag engine off</code>.</li>
+              <li>Chặn truy cập tệp ẩn, nhạy cảm: <code>.env</code>, <code>.git</code>, <code>composer.json</code> (HTTP 403).</li>
+              <li>Báo cáo Phần B (Cấu trúc dự án &amp; uploads) &amp; Thảo luận C.3 (Web Shell).</li>
+            </ul>
+          </div>
+
+          <a href="thanhvien/3120224181_hatsady/gioithieu.html" class="nut nut--chinh" style="width: 100%; text-align: center; justify-content: center; font-size: 0.9rem; padding: 10px 14px; border-radius: 8px;">
+            Xem hồ sơ cá nhân chi tiết &rarr;
+          </a>
         </article>
 
-        <!-- Thành viên 3 -->
-        <article class="the-thanh-vien">
-          <figure>
-            <img src="images/sauphasith-avatar.png" alt="Ảnh chân dung sinh viên Vongsena Sauphasith" width="120" height="120" loading="lazy">
-            <figcaption><strong>Vongsena Sauphasith</strong><br><small>MSV: 3120224186</small></figcaption>
-          </figure>
-          <p><span class="huy-hieu huy-hieu--thanh-cong">Thành viên</span></p>
-          <p><strong>GitHub:</strong> <a href="https://github.com/happy2072005-prog" target="_blank" rel="noopener noreferrer">@happy2072005-prog</a></p>
-          <p class="the__mo-ta"><strong>Nhiệm vụ báo cáo:</strong> Biện pháp 4 (Bảo vệ bí mật .env với vlucas/phpdotenv, composer audit), Biện pháp 6 (Tài khoản CSDL quyền tối thiểu nhom12_app 1142), Phần B và Thảo luận C.4.</p>
-          <a href="thanhvien/3120224186_sauphasith/gioithieu.php" class="nut nut--chinh">Xem hồ sơ cá nhân chi tiết &rarr;</a>
+        <!-- Thành viên 3: Vongsena Sauphasith -->
+        <article class="the-thanh-vien" style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 22px; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05); transition: transform 0.25s ease, box-shadow 0.25s ease;">
+          <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+            <img src="images/sauphasith-avatar.png" alt="Ảnh chân dung sinh viên Vongsena Sauphasith" width="90" height="90" loading="lazy" style="border-radius: 50%; object-fit: cover; border: 3px solid #0284c7; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.2);">
+            <div>
+              <h3 style="margin: 0; color: #0f2b5c; font-size: 1.25rem; font-weight: 800;">Vongsena Sauphasith</h3>
+              <p style="margin: 3px 0; font-size: 0.85rem; color: #64748b;">MSSV: <strong>3120224186</strong></p>
+              <span class="huy-hieu huy-hieu--thanh-cong" style="font-size: 0.72rem; padding: 3px 8px;">Thành viên</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 14px; font-size: 0.9rem;">
+            <div style="margin: 6px 0;">
+              <a href="https://github.com/happy2072005-prog" target="_blank" rel="noopener noreferrer" class="github-pill" style="display: inline-flex; align-items: center; gap: 6px; background: #0f172a; color: #ffffff; padding: 4px 12px; border-radius: 9999px; font-size: 0.8rem; text-decoration: none; font-weight: 600;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <span>happy2072005-prog</span>
+              </a>
+            </div>
+            <p style="margin: 6px 0; color: #475569; font-size: 0.85rem;">
+              <strong>Vai trò:</strong> Thiết kế biểu mẫu <code>lien-he.html</code>, tối ưu hóa Accessibility a11y, phân tích Lighthouse và giao tiếp người dùng.
+            </p>
+          </div>
+
+          <!-- Khối nhiệm vụ làm báo cáo -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 10px; font-size: 0.85rem; line-height: 1.5; color: #334155; margin-bottom: 18px; flex-grow: 1;">
+            <strong style="color: #0f2b5c; display: block; margin-bottom: 6px; font-size: 0.9rem;">📋 Nhiệm vụ làm báo cáo Bài tập 7:</strong>
+            <ul style="margin: 0; padding-left: 18px;">
+              <li><strong>Biện pháp 4:</strong> Bảo vệ bí mật qua <code>.env</code> với <code>vlucas/phpdotenv</code>, kiểm toán <code>composer audit</code>.</li>
+              <li><strong>Biện pháp 6:</strong> Phân quyền CSDL đặc quyền tối thiểu <code>nhom12_app</code> (chặn DELETE/DROP mã 1142).</li>
+              <li>Báo cáo Phần B (CSDL MySQL &amp; PDO) &amp; Thảo luận C.4 (Least Privilege).</li>
+              <li>Thực nghiệm kiểm tra tấn công quyền xóa bảng bị chặn thành công.</li>
+            </ul>
+          </div>
+
+          <a href="thanhvien/3120224186_sauphasith/gioithieu.html" class="nut nut--chinh" style="width: 100%; text-align: center; justify-content: center; font-size: 0.9rem; padding: 10px 14px; border-radius: 8px;">
+            Xem hồ sơ cá nhân chi tiết &rarr;
+          </a>
         </article>
 
-        <!-- Thành viên 4 -->
-        <article class="the-thanh-vien">
-          <figure>
-            <img src="images/sinh-avatar.png" alt="Ảnh chân dung sinh viên Nguyễn Thị Sinh" width="120" height="120" loading="lazy">
-            <figcaption><strong>Nguyễn Thị Sinh</strong><br><small>MSV: 3120223169</small></figcaption>
-          </figure>
-          <p><span class="huy-hieu huy-hieu--thanh-cong">Thành viên</span></p>
-          <p><strong>GitHub:</strong> <a href="https://github.com/chingg2005" target="_blank" rel="noopener noreferrer">@chingg2005</a></p>
-          <p class="the__mo-ta"><strong>Nhiệm vụ báo cáo:</strong> Biện pháp 2 (Bảo vệ phiên HttpOnly, SameSite=Lax, hủy 30 phút, chống Fixation), Biện pháp 3 (Security Headers &amp; CSP), Phần B và Thảo luận C.2.</p>
-          <a href="thanhvien/3120223169_sinh/gioithieu.php" class="nut nut--chinh">Xem hồ sơ cá nhân chi tiết &rarr;</a>
+        <!-- Thành viên 4: Nguyễn Thị Sinh -->
+        <article class="the-thanh-vien" style="display: flex; flex-direction: column; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 22px; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05); transition: transform 0.25s ease, box-shadow 0.25s ease;">
+          <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 16px;">
+            <img src="images/sinh-avatar.png" alt="Ảnh chân dung sinh viên Nguyễn Thị Sinh" width="90" height="90" loading="lazy" style="border-radius: 50%; object-fit: cover; border: 3px solid #0284c7; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.2);">
+            <div>
+              <h3 style="margin: 0; color: #0f2b5c; font-size: 1.25rem; font-weight: 800;">Nguyễn Thị Sinh</h3>
+              <p style="margin: 3px 0; font-size: 0.85rem; color: #64748b;">MSSV: <strong>3120223169</strong></p>
+              <span class="huy-hieu huy-hieu--thanh-cong" style="font-size: 0.72rem; padding: 3px 8px;">Thành viên</span>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 14px; font-size: 0.9rem;">
+            <div style="margin: 6px 0;">
+              <a href="https://github.com/chingg2005" target="_blank" rel="noopener noreferrer" class="github-pill" style="display: inline-flex; align-items: center; gap: 6px; background: #0f172a; color: #ffffff; padding: 4px 12px; border-radius: 9999px; font-size: 0.8rem; text-decoration: none; font-weight: 600;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <span>chingg2005</span>
+              </a>
+            </div>
+            <p style="margin: 6px 0; color: #475569; font-size: 0.85rem;">
+              <strong>Vai trò:</strong> Thiết kế trang chi tiết <code>chi-tiet.html</code>, tính năng sách yêu thích, đánh giá sao và kiểm thử responsive.
+            </p>
+          </div>
+
+          <!-- Khối nhiệm vụ làm báo cáo -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 10px; font-size: 0.85rem; line-height: 1.5; color: #334155; margin-bottom: 18px; flex-grow: 1;">
+            <strong style="color: #0f2b5c; display: block; margin-bottom: 6px; font-size: 0.9rem;">📋 Nhiệm vụ làm báo cáo Bài tập 7:</strong>
+            <ul style="margin: 0; padding-left: 18px;">
+              <li><strong>Biện pháp 2:</strong> Bảo vệ phiên làm việc (Session Security): HttpOnly, SameSite=Lax, hủy 30 phút, chống Fixation.</li>
+              <li><strong>Biện pháp 3:</strong> Bộ tiêu đề an ninh HTTP chuẩn OWASP: CSP <code>script-src 'self'</code>, nosniff, gỡ bỏ X-Powered-By.</li>
+              <li>Báo cáo Phần B (Sách yêu thích &amp; chi tiết) &amp; Thảo luận C.2 (HttpOnly vs XSS).</li>
+              <li>Chụp ảnh minh chứng Hình 2 (Headers) và Hình 3 (Cookies).</li>
+            </ul>
+          </div>
+
+          <a href="thanhvien/3120223169_sinh/gioithieu.html" class="nut nut--chinh" style="width: 100%; text-align: center; justify-content: center; font-size: 0.9rem; padding: 10px 14px; border-radius: 8px;">
+            Xem hồ sơ cá nhân chi tiết &rarr;
+          </a>
         </article>
 
       </div>
     </section>
 
-    <!-- 3. Quy trình phát triển -->
-    <section>
-      <h2>Quy trình phát triển và cộng tác mã nguồn</h2>
-      <p class="doan-van-dai">Nhóm thực hiện quy trình phát triển chuyên nghiệp theo mô hình phân nhánh và commit định danh cá nhân trên nền tảng GitHub:</p>
-      <ul class="doan-van-dai">
-        <li>Kho mã nguồn công khai: <code>ltweb-doan-nhom12</code></li>
+    <!-- 3. Quy trình phát triển và cộng tác Git -->
+    <section style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04);">
+      <h2 style="color: #0f2b5c; font-size: 1.45rem; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;">
+        ⚙️ Quy trình phát triển và cộng tác mã nguồn
+      </h2>
+      <p class="doan-van-dai" style="line-height: 1.7; color: #334155;">
+        Nhóm thực hiện quy trình phát triển chuyên nghiệp theo mô hình phân nhánh và commit định danh cá nhân trên nền tảng GitHub:
+      </p>
+      <ul class="doan-van-dai" style="line-height: 1.8; color: #334155;">
+        <li>Kho mã nguồn GitHub: <code>https://github.com/xys-3y7/ltweb-doan-nhom12</code></li>
         <li>Bản phát hành giao diện tĩnh chạy thực tế trên dịch vụ GitHub Pages.</li>
-        <li>Mỗi thành viên chủ động cập nhật phần việc cá nhân và cam kết mã nguồn độc lập từ tài khoản của mình.</li>
+        <li>Mỗi thành viên chủ động cập nhật phần việc cá nhân và cam kết mã nguồn độc lập từ tài khoản của mình theo bảng phân công Chapter 7.</li>
       </ul>
-      <p>Mọi thắc mắc hoặc yêu cầu đóng góp ý kiến cho dự án xin vui lòng gửi về qua <a href="lien-he.html" class="nut nut--vien">Trang liên hệ trực tuyến</a>.</p>
+      <div style="margin-top: 20px;">
+        <a href="lien-he.html" class="nut nut--chinh" style="font-size: 0.95rem; padding: 10px 22px;">✉️ Liên hệ trực tuyến với Nhóm 12 &rarr;</a>
+      </div>
     </section>
   </main>
 
+  <!-- 4. Footer đa cột hiện đại -->
   <footer class="phan-chan">
-    <div class="khung-chua">
-      <hr>
-      <p>&copy; 2026 Nhóm 12 (Lớp 24CNTT3) &mdash; Khoa Toán &ndash; Tin, Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.</p>
-      <p>Dự án phục vụ học phần Thiết kế và Lập trình web. Địa chỉ liên hệ: 459 Tôn Đức Thắng, Quận Liên Chiểu, TP. Đà Nẵng.</p>
+    <div class="khung-chua phan-chan__grid">
+      <!-- Cột 1: Thông tin thương hiệu -->
+      <div class="phan-chan__col phan-chan__col--brand">
+        <div class="phan-chan__logo" style="margin-bottom: 12px;">
+          <img src="images/logo-booknest.png" alt="Logo BookNest" width="180" height="55" class="footer-logo-img">
+        </div>
+        <p class="phan-chan__desc">
+          <strong>BookNest</strong> là hệ sinh thái nhà sách trực tuyến trợ giá giáo trình chuẩn đại học dành riêng cho sinh viên Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.
+        </p>
+        <div class="phan-chan__badges">
+          <span class="badge-chip">🎓 UED Đà Nẵng</span>
+          <span class="badge-chip">🔒 OWASP Security</span>
+          <span class="badge-chip">⚡ 24h KTX Delivery</span>
+        </div>
+      </div>
+
+      <!-- Cột 2: Điều hướng nhanh -->
+      <div class="phan-chan__col">
+        <h4 class="phan-chan__tieu-de">Khám phá sách</h4>
+        <ul class="phan-chan__links">
+          <li><a href="index.html">&rarr; Trang chủ</a></li>
+          <li><a href="danh-sach.html">&rarr; Danh mục toàn bộ giáo trình</a></li>
+          <li><a href="chi-tiet.html">&rarr; Sách tiêu biểu</a></li>
+          <li><a href="gioi-thieu.html">&rarr; Giới thiệu nhóm</a></li>
+          <li><a href="lien-he.html">&rarr; Liên hệ đặt sách</a></li>
+        </ul>
+      </div>
+
+      <!-- Cột 3: Hỗ trợ sinh viên -->
+      <div class="phan-chan__col">
+        <h4 class="phan-chan__tieu-de">Hỗ trợ sinh viên</h4>
+        <ul class="phan-chan__links">
+          <li><a href="lien-he.html">&rarr; Hướng dẫn đặt mua giáo trình</a></li>
+          <li><a href="lien-he.html">&rarr; Điểm giao nhận tại Ký túc xá</a></li>
+          <li><a href="lien-he.html">&rarr; Chính sách đổi trả trong 7 ngày</a></li>
+          <li><a href="gioi-thieu.html">&rarr; Đồ án môn học Nhóm 12</a></li>
+          <li><a href="lien-he.html">&rarr; Liên hệ &amp; Góp ý</a></li>
+        </ul>
+      </div>
+
+      <!-- Cột 4: Thông tin đồ án & Bảo mật -->
+      <div class="phan-chan__col phan-chan__col--security">
+        <h4 class="phan-chan__tieu-de">Bảo mật &amp; Nhóm tác giả</h4>
+        <div class="phan-chan__security-box">
+          <div class="security-status">
+            <span class="status-indicator"></span>
+            <strong>Hệ thống bảo vệ Chapter 7</strong>
+          </div>
+          <p class="security-note">
+            Đạt chuẩn 7 biện pháp an toàn ứng dụng web: CSRF Token 100% biểu mẫu, HttpOnly/SameSite Session, CSP Script-src 'self', Apache .htaccess, Least Privilege CSDL.
+          </p>
+          <div class="phan-chan__author-info">
+            Thực hiện: <strong>Nhóm 12 (Lớp 24CNTT3)</strong><br>
+            Khoa Toán &ndash; Tin, Trường ĐH Sư phạm &ndash; ĐH Đà Nẵng
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thanh chân bản quyền dưới cùng -->
+    <div class="phan-chan__day">
+      <div class="khung-chua phan-chan__day-khung">
+        <p>&copy; 2026 <strong>BookNest &ndash; Nhóm 12</strong> (Lớp 24CNTT3, Khoa Toán &ndash; Tin, Trường ĐH Sư phạm &ndash; ĐH Đà Nẵng). All rights reserved.</p>
+        <p>Học phần Thiết kế và Lập trình Web &bull; Địa chỉ: 459 Tôn Đức Thắng, Q. Liên Chiểu, TP. Đà Nẵng.</p>
+      </div>
     </div>
   </footer>
 

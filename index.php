@@ -97,24 +97,51 @@ require __DIR__ . '/inc/header.php';
       </div>
     </div>
 
-    <!-- Cột hiển thị hình ảnh minh họa nổi bật -->
+    <!-- Cột hiển thị hình ảnh minh họa nổi bật (3D Book Showcase) -->
     <div class="hero-modern__visual">
-      <div class="hero-visual-card">
-        <div class="hero-visual-badge">🔥 Ưu đãi học kỳ mới 2026&ndash;2027</div>
-        <img src="images/banner-khuyenmai.png" alt="Banner chương trình trợ giá 20% giáo trình CNTT và Toán học cho sinh viên" class="hero-banner-img" width="800" height="250">
-        <div class="hero-visual-info">
-          <div class="hero-visual-tag">Giảm 20% toàn bộ giáo trình chuyên ngành</div>
-          <p class="hero-visual-sub">Áp dụng cho sinh viên khoa Toán - Tin và toàn trường ĐH Sư phạm</p>
+      <div class="hero-showcase-card">
+        <div class="hero-showcase-glow"></div>
+        <div class="hero-showcase-badge">🔥 BÁN CHẠY NHẤT HỌC KỲ</div>
+        
+        <div class="hero-book-stage">
+          <div class="hero-3d-book">
+            <img src="images/sach-laptrinh-web.png" alt="Bìa sách Lập trình Web hiện đại" class="hero-3d-book__cover" width="135" height="185">
+          </div>
+          
+          <div class="hero-showcase-details">
+            <span class="hero-book-chuyen-nganh">KHOA TOÁN - TIN</span>
+            <h3 class="hero-book-title">Lập trình Web hiện đại với HTML5, CSS3 &amp; PHP</h3>
+            <p class="hero-book-author">✍️ ThS. Nguyễn Văn A &bull; ĐH Sư phạm</p>
+            <div class="hero-book-rating">
+              <span class="stars">★★★★★</span>
+              <span class="rating-text">5.0 (48 SV đánh giá)</span>
+            </div>
+            <div class="hero-book-price-row">
+              <span class="hero-book-price">96.000 VNĐ</span>
+              <span class="hero-book-old">120.000 VNĐ</span>
+              <span class="hero-book-badge-sale">-20% Trợ giá</span>
+            </div>
+            <div class="hero-book-cta-row">
+              <a href="dat-hang.php?id=1" class="hero-book-btn-buy">
+                <span>⚡ Mua ngay</span>
+              </a>
+              <a href="chi-tiet.php?id=1" class="hero-book-btn-detail">
+                <span>🔍 Chi tiết</span>
+              </a>
+            </div>
+          </div>
         </div>
+
+        <!-- 2 huy hiệu nổi bật góc -->
         <div class="hero-float-badge hero-float-badge--top">
-          <span style="font-size: 1.2rem;">🎓</span>
+          <span class="hero-float-icon">🎓</span>
           <div>
             <strong>Chính hãng UED</strong>
             <small>Giảng viên thẩm định</small>
           </div>
         </div>
         <div class="hero-float-badge hero-float-badge--bottom">
-          <span style="font-size: 1.2rem;">⚡</span>
+          <span class="hero-float-icon">⚡</span>
           <div>
             <strong>Giao nhanh 24h</strong>
             <small>Miễn phí tại KTX</small>

@@ -94,28 +94,47 @@ function taoTheSanPham(sp) {
   }
   than.appendChild(pGia);
 
-  // 3. Chân thẻ: nút Chi tiết và nút Yêu thích
+  // 3. Chân thẻ: 4 nút hành động theo yêu cầu (Mua ngay, Thêm giỏ, Yêu thích, Chi tiết)
   const chan = document.createElement('div');
   chan.className = 'the__chan';
 
-  const linkChiTiet = document.createElement('a');
-  linkChiTiet.href = `chi-tiet.html?id=${sp.id}`;
-  linkChiTiet.className = 'nut nut--chinh';
-  linkChiTiet.textContent = 'Chi tiết';
-  chan.appendChild(linkChiTiet);
+  // Nút 1: Mua ngay (⚡ Mua ngay) -> dat-hang.html?id=...
+  const linkMua = document.createElement('a');
+  linkMua.href = `dat-hang.html?id=${sp.id}`;
+  linkMua.className = 'nut nut--nhan btn-mua-ngay';
+  linkMua.textContent = '⚡ Mua ngay';
+  linkMua.title = 'Đặt mua sách ngay';
+  chan.appendChild(linkMua);
 
+  // Nút 2: Thêm giỏ (🛒 Thêm giỏ)
+  const nutThemGio = document.createElement('button');
+  nutThemGio.type = 'button';
+  nutThemGio.className = 'nut nut--chinh btn-them-nhanh nut-bam-them-gio';
+  nutThemGio.dataset.id = String(sp.id);
+  nutThemGio.textContent = '🛒 Thêm giỏ';
+  nutThemGio.title = 'Thêm vào giỏ hàng';
+  chan.appendChild(nutThemGio);
+
+  // Nút 3: Yêu thích (❤️ Yêu thích / ❤️ Đã thích)
+  const daThich = kiemTraYeuThich(sp.id);
   const nutYeuThich = document.createElement('button');
   nutYeuThich.type = 'button';
-  nutYeuThich.className = 'nut nut--vien nut-bam-yeu-thich';
+  nutYeuThich.className = `nut nut--vien btn-yeu-thich nut-bam-yeu-thich ${daThich ? 'da-thich' : ''}`;
   nutYeuThich.dataset.id = String(sp.id);
-
-  const daThich = kiemTraYeuThich(sp.id);
   nutYeuThich.textContent = daThich ? '❤️ Đã thích' : '🤍 Yêu thích';
   nutYeuThich.setAttribute('aria-pressed', String(daThich));
   nutYeuThich.setAttribute('aria-label', `${daThich ? 'Bỏ thích' : 'Thêm vào yêu thích'} ${sp.ten}`);
-  if (daThich) nutYeuThich.classList.add('da-thich');
-
+  nutYeuThich.title = daThich ? 'Bỏ thích' : 'Thêm vào danh sách yêu thích';
   chan.appendChild(nutYeuThich);
+
+  // Nút 4: Chi tiết (🔍 Chi tiết) -> chi-tiet.html?id=...
+  const linkChiTiet = document.createElement('a');
+  linkChiTiet.href = `chi-tiet.html?id=${sp.id}`;
+  linkChiTiet.className = 'nut nut--vien';
+  linkChiTiet.textContent = '🔍 Chi tiết';
+  linkChiTiet.title = 'Xem chi tiết nội dung cuốn sách';
+  chan.appendChild(linkChiTiet);
+
   than.appendChild(chan);
   the.appendChild(than);
 
@@ -256,6 +275,25 @@ function dangKySuKien() {
   // Chức năng 6: Ủy quyền sự kiện (Event Delegation) ở phần tử cha KHUNG_CHUA_LUOI
   if (KHUNG_CHUA_LUOI) {
     KHUNG_CHUA_LUOI.addEventListener('click', (suKien) => {
+      // 1. Xử lý nút Thêm giỏ hàng
+      const nutThemGio = suKien.target.closest('.nut-bam-them-gio');
+      if (nutThemGio) {
+        const banDau = nutThemGio.textContent;
+        nutThemGio.disabled = true;
+        nutThemGio.textContent = '✓ Đã thêm';
+        // Cập nhật số lượng giỏ hàng trên header
+        document.querySelectorAll('.so-luong-gio').forEach((badge) => {
+          const sl = parseInt(badge.textContent || '0', 10) + 1;
+          badge.textContent = String(sl);
+        });
+        setTimeout(() => {
+          nutThemGio.textContent = banDau;
+          nutThemGio.disabled = false;
+        }, 1200);
+        return;
+      }
+
+      // 2. Xử lý nút Yêu thích
       const nutYeuThich = suKien.target.closest('.nut-bam-yeu-thich');
       if (!nutYeuThich) return;
 

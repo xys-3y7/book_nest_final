@@ -11,7 +11,7 @@ $goc ??= '';
       <!-- Cột 1: Thông tin thương hiệu -->
       <div class="phan-chan__col phan-chan__col--brand">
         <div class="phan-chan__logo" style="margin-bottom: 12px;">
-          <img src="<?= $goc ?>images/logo-booknest.png" alt="Logo BookNest" width="180" height="60" style="filter: brightness(0) invert(1);">
+          <img src="<?= $goc ?>images/logo-booknest.png" alt="Logo BookNest" width="180" height="55" class="footer-logo-img">
         </div>
         <p class="phan-chan__desc">
           <strong>BookNest</strong> là hệ sinh thái nhà sách trực tuyến trợ giá giáo trình chuẩn đại học dành riêng cho sinh viên Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.

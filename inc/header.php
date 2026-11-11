@@ -24,23 +24,23 @@ $u = nguoiDung();
 </head>
 <body class="trang-grid">
 
-  <!-- 1. Thanh thông báo ưu đãi sinh viên đầu trang -->
-  <div class="thanh-thong-bao-top">
-    <div class="khung-chua thanh-thong-bao-top__khung">
-      <div class="thong-bao-item">
-        <span class="thong-bao-badge">🔥 ƯU ĐÃI HỌC KỲ</span>
-        <span>Trợ giá sinh viên UED đến <strong>25%</strong> cho toàn bộ giáo trình chuyên ngành</span>
-      </div>
-      <div class="thong-bao-item thong-bao-item--phu">
-        <span>📍 459 Tôn Đức Thắng, Đà Nẵng</span>
-        <span class="phoi-phan-cach">&bull;</span>
-        <span>⚡ Giao nhanh 24h tại Ký túc xá</span>
+  <!-- Header chính BookNest -->
+  <header class="phan-dau">
+    <!-- 1. Thanh thông báo ưu đãi sinh viên đầu trang -->
+    <div class="thanh-thong-bao-top">
+      <div class="khung-chua thanh-thong-bao-top__khung">
+        <div class="thong-bao-item">
+          <span class="thong-bao-badge">🔥 ƯU ĐÃI HỌC KỲ</span>
+          <span>Trợ giá sinh viên UED đến <strong>25%</strong> cho toàn bộ giáo trình chuyên ngành</span>
+        </div>
+        <div class="thong-bao-item thong-bao-item--phu">
+          <span>📍 459 Tôn Đức Thắng, Đà Nẵng</span>
+          <span class="phoi-phan-cach">&bull;</span>
+          <span>⚡ Giao nhanh 24h tại Ký túc xá</span>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- 2. Header chính BookNest -->
-  <header class="phan-dau">
     <div class="khung-chua phan-dau__khung">
       <!-- Logo thương hiệu -->
       <div class="phan-dau__logo-nhom">

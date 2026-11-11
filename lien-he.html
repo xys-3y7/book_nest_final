@@ -9,28 +9,79 @@
 </head>
 <body class="trang-grid">
 
+  <!-- Header chính BookNest -->
   <header class="phan-dau">
-    <div class="khung-chua phan-dau__khung">
-      <div class="phan-dau__logo">
-        <a href="index.html">
-          <img src="images/logo-booknest.png" alt="Logo BookNest - Nhà sách trực tuyến UED" width="250" height="80">
-        </a>
+    <!-- 1. Thanh thông báo ưu đãi sinh viên đầu trang -->
+    <div class="thanh-thong-bao-top">
+      <div class="khung-chua thanh-thong-bao-top__khung">
+        <div class="thong-bao-item">
+          <span class="thong-bao-badge">🔥 ƯU ĐÃI HỌC KỲ</span>
+          <span>Trợ giá sinh viên UED đến <strong>25%</strong> cho toàn bộ giáo trình chuyên ngành</span>
+        </div>
+        <div class="thong-bao-item thong-bao-item--phu">
+          <span>📍 459 Tôn Đức Thắng, Đà Nẵng</span>
+          <span class="phoi-phan-cach">&bull;</span>
+          <span>⚡ Giao nhanh 24h tại Ký túc xá</span>
+        </div>
       </div>
-      <p class="phan-dau__khau-hieu"><strong>BookNest</strong> &mdash; Tri thức nâng bước tương lai, người bạn đồng hành của sinh viên Sư phạm</p>
+    </div>
+
+    <div class="khung-chua phan-dau__khung">
+      <!-- Logo thương hiệu -->
+      <div class="phan-dau__logo-nhom">
+        <a href="index.html" class="logo-link">
+          <img src="images/logo-booknest.png" alt="Logo BookNest - Nhà sách trực tuyến UED" width="210" height="65">
+        </a>
+        <div class="phan-dau__sub-badge">
+          <span class="sub-badge-truong">ĐH SƯ PHẠM ĐÀ NẴNG</span>
+          <span class="sub-badge-khoa">KHOA TOÁN - TIN</span>
+        </div>
+      </div>
+
+      <!-- Ô tìm kiếm thông minh -->
+      <form class="phan-dau__tim-kiem" action="danh-sach.html" method="GET" role="search">
+        <div class="tim-kiem-hop">
+          <span class="icon-tim-kiem" aria-hidden="true">🔍</span>
+          <input type="search" name="q" placeholder="Tìm kiếm giáo trình, môn học, tác giả..." autocomplete="off" aria-label="Tìm kiếm sách">
+          <button type="submit" class="nut-tim-kiem-header">
+            <span>Tìm sách</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Cụm tiện ích: Yêu thích, Giỏ hàng, Tài khoản -->
+      <div class="phan-dau__tien-ich">
+        <a href="danh-sach.html" class="tien-ich-pill" title="Danh sách sách yêu thích">
+          <span class="tien-ich-icon">❤️</span>
+          <span class="tien-ich-label">Yêu thích</span>
+          <span class="so-luong-yeu-thich">0</span>
+        </a>
+
+        <a href="danh-sach.html" class="tien-ich-pill tien-ich-pill--gio" title="Giỏ hàng của bạn">
+          <span class="tien-ich-icon">🛒</span>
+          <span class="tien-ich-label">Giỏ hàng</span>
+          <span class="so-luong-gio">0</span>
+        </a>
+
+        <div class="tien-ich-auth">
+          <a href="lien-he.html" class="nut nut--vien nut-auth-sm">Liên hệ</a>
+          <a href="gioi-thieu.html" class="nut nut--chinh nut-auth-sm">Nhóm 12</a>
+        </div>
+      </div>
     </div>
   </header>
 
+  <!-- Thanh điều hướng chính Sticky -->
   <nav class="thanh-dieu-huong" aria-label="Điều hướng chính">
-    <div class="khung-chua">
+    <div class="khung-chua thanh-dieu-huong__khung">
       <button class="nut-menu" id="nut-menu" aria-label="Mở menu điều hướng" aria-expanded="false">&#9776; Menu</button>
       <ul>
-        <li><a href="index.html">Trang chủ</a></li>
-        <li><a href="danh-sach.html">Danh mục sách</a></li>
-        <li><a href="chi-tiet.html">Sách tiêu biểu</a></li>
-        <li><a href="gioi-thieu.html">Giới thiệu nhóm</a></li>
-        <li><a href="lien-he.html" class="hien-tai" aria-current="page">Liên hệ đặt sách</a></li>
-        <li><a href="danh-sach-bootstrap.html">Bản Bootstrap 5</a></li>
-        <li><a href="danh-sach.html#yeu-thich" class="nut-yeu-thich-nav">❤️ Yêu thích (<span class="so-luong-yeu-thich">0</span>)</a></li>
+        <li><a href="index.html"><span>🏠</span> Trang chủ</a></li>
+        <li><a href="danh-sach.html"><span>📚</span> Danh mục sách</a></li>
+        <li><a href="chi-tiet.html"><span>⭐</span> Sách tiêu biểu</a></li>
+        <li><a href="gioi-thieu.html"><span>👥</span> Giới thiệu nhóm</a></li>
+        <li><a href="lien-he.html" class="hien-tai" aria-current="page"><span>✉️</span> Liên hệ đặt sách</a></li>
+        <li><a href="danh-sach-bootstrap.html"><span>🎨</span> Bản Bootstrap 5</a></li>
       </ul>
     </div>
   </nav>
@@ -140,11 +191,73 @@
     </section>
   </main>
 
+  <!-- 4. Footer đa cột hiện đại -->
   <footer class="phan-chan">
-    <div class="khung-chua">
-      <hr>
-      <p>&copy; 2026 Nhóm 12 (Lớp 24CNTT3) &mdash; Khoa Toán &ndash; Tin, Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.</p>
-      <p>Dự án phục vụ học phần Thiết kế và Lập trình web. Địa chỉ liên hệ: 459 Tôn Đức Thắng, Quận Liên Chiểu, TP. Đà Nẵng.</p>
+    <div class="khung-chua phan-chan__grid">
+      <!-- Cột 1: Thông tin thương hiệu -->
+      <div class="phan-chan__col phan-chan__col--brand">
+        <div class="phan-chan__logo" style="margin-bottom: 12px;">
+          <img src="images/logo-booknest.png" alt="Logo BookNest" width="180" height="55" class="footer-logo-img">
+        </div>
+        <p class="phan-chan__desc">
+          <strong>BookNest</strong> là hệ sinh thái nhà sách trực tuyến trợ giá giáo trình chuẩn đại học dành riêng cho sinh viên Trường Đại học Sư phạm &ndash; Đại học Đà Nẵng.
+        </p>
+        <div class="phan-chan__badges">
+          <span class="badge-chip">🎓 UED Đà Nẵng</span>
+          <span class="badge-chip">🔒 OWASP Security</span>
+          <span class="badge-chip">⚡ 24h KTX Delivery</span>
+        </div>
+      </div>
+
+      <!-- Cột 2: Điều hướng nhanh -->
+      <div class="phan-chan__col">
+        <h4 class="phan-chan__tieu-de">Khám phá sách</h4>
+        <ul class="phan-chan__links">
+          <li><a href="index.html">&rarr; Trang chủ</a></li>
+          <li><a href="danh-sach.html">&rarr; Danh mục toàn bộ giáo trình</a></li>
+          <li><a href="chi-tiet.html">&rarr; Sách tiêu biểu</a></li>
+          <li><a href="gioi-thieu.html">&rarr; Giới thiệu nhóm</a></li>
+          <li><a href="lien-he.html">&rarr; Liên hệ đặt sách</a></li>
+        </ul>
+      </div>
+
+      <!-- Cột 3: Hỗ trợ sinh viên -->
+      <div class="phan-chan__col">
+        <h4 class="phan-chan__tieu-de">Hỗ trợ sinh viên</h4>
+        <ul class="phan-chan__links">
+          <li><a href="lien-he.html">&rarr; Hướng dẫn đặt mua giáo trình</a></li>
+          <li><a href="lien-he.html">&rarr; Điểm giao nhận tại Ký túc xá</a></li>
+          <li><a href="lien-he.html">&rarr; Chính sách đổi trả trong 7 ngày</a></li>
+          <li><a href="gioi-thieu.html">&rarr; Đồ án môn học Nhóm 12</a></li>
+          <li><a href="lien-he.html">&rarr; Liên hệ &amp; Góp ý</a></li>
+        </ul>
+      </div>
+
+      <!-- Cột 4: Thông tin đồ án & Bảo mật -->
+      <div class="phan-chan__col phan-chan__col--security">
+        <h4 class="phan-chan__tieu-de">Bảo mật &amp; Nhóm tác giả</h4>
+        <div class="phan-chan__security-box">
+          <div class="security-status">
+            <span class="status-indicator"></span>
+            <strong>Hệ thống bảo vệ Chapter 7</strong>
+          </div>
+          <p class="security-note">
+            Đạt chuẩn 7 biện pháp an toàn ứng dụng web: CSRF Token 100% biểu mẫu, HttpOnly/SameSite Session, CSP Script-src 'self', Apache .htaccess, Least Privilege CSDL.
+          </p>
+          <div class="phan-chan__author-info">
+            Thực hiện: <strong>Nhóm 12 (Lớp 24CNTT3)</strong><br>
+            Khoa Toán &ndash; Tin, Trường ĐH Sư phạm &ndash; ĐH Đà Nẵng
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thanh chân bản quyền dưới cùng -->
+    <div class="phan-chan__day">
+      <div class="khung-chua phan-chan__day-khung">
+        <p>&copy; 2026 <strong>BookNest &ndash; Nhóm 12</strong> (Lớp 24CNTT3, Khoa Toán &ndash; Tin, Trường ĐH Sư phạm &ndash; ĐH Đà Nẵng). All rights reserved.</p>
+        <p>Học phần Thiết kế và Lập trình Web &bull; Địa chỉ: 459 Tôn Đức Thắng, Q. Liên Chiểu, TP. Đà Nẵng.</p>
+      </div>
     </div>
   </footer>
 
