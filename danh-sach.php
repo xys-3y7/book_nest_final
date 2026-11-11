@@ -31,7 +31,8 @@ if (!array_key_exists($sx, $kieuSx)) {
     $sx = 'moi';
 }
 
-$moiTrang = 8;
+// Mỗi trang 10 cuốn (vừa vặn 2 hàng x 5 cột = 10 cuốn đầy đủ, không bị khuyết ô)
+$moiTrang = 10;
 $tong = $kho->dem($loc);
 $soTrang = max(1, (int) ceil($tong / $moiTrang));
 
