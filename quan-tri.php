@@ -32,6 +32,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cap_nhat_don'])) {
     exit;
 }
 
+// Xử lý đổi vai trò người dùng (Admin quản lý người dùng & chủ sách)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['doi_vai_tro'])) {
+    $uid = filter_var($_POST['user_id'] ?? '', FILTER_VALIDATE_INT);
+    $vaiTroMoi = trim($_POST['vai_tro'] ?? '');
+    $hopLe = ['khach_hang', 'chu_sach', 'quan_tri'];
+
+    if ($uid && in_array($vaiTroMoi, $hopLe, true)) {
+        $st = $db->prepare('UPDATE nguoi_dung SET vai_tro = ? WHERE id = ?');
+        $st->execute([$vaiTroMoi, $uid]);
+        $_SESSION['flash'] = "Đã cập nhật vai trò người dùng #$uid thành công!";
+    }
+    header('Location: quan-tri.php#nguoi-dung');
+    exit;
+}
+
 // Phân trang danh sách sách quản trị
 $trangSp = filter_var($_GET['trang'] ?? 1, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'default' => 1]]);
 $moiTrang = 10;
@@ -52,6 +67,17 @@ $stDon = $db->query(
      LIMIT 15'
 );
 $dsDonHang = $stDon->fetchAll();
+
+// Đọc danh sách người dùng và chủ sách
+$stUsers = $db->query(
+    'SELECT nd.id, nd.email, nd.ho_ten, nd.vai_tro, nd.ngay_tao,
+            COUNT(sp.id) AS so_sach
+     FROM nguoi_dung nd
+     LEFT JOIN san_pham sp ON sp.chu_sach_id = nd.id
+     GROUP BY nd.id
+     ORDER BY nd.id ASC'
+);
+$dsNguoiDung = $stUsers->fetchAll();
 
 $thongBao = $_SESSION['flash'] ?? '';
 $thongBaoLoi = $_SESSION['flash_loi'] ?? '';
@@ -105,7 +131,8 @@ require __DIR__ . '/inc/header.php';
             <th style="padding: 10px 12px; width: 60px;">Mã ID</th>
             <th style="padding: 10px 12px; width: 70px;">Ảnh</th>
             <th style="padding: 10px 12px;">Tên giáo trình</th>
-            <th style="padding: 10px 12px; width: 150px;">Danh mục</th>
+            <th style="padding: 10px 12px; width: 130px;">Danh mục</th>
+            <th style="padding: 10px 12px; width: 140px;">Chủ sở hữu</th>
             <th style="padding: 10px 12px; width: 110px;">Đơn giá</th>
             <th style="padding: 10px 12px; width: 80px; text-align: center;">Tồn kho</th>
             <th style="padding: 10px 12px; width: 140px; text-align: center;">Hành động</th>
@@ -125,6 +152,17 @@ require __DIR__ . '/inc/header.php';
               </td>
               <td style="padding: 10px 12px; font-size: 0.85rem; color: #475569;">
                 <?= e($sp->tenDanhMuc ?? 'Chưa phân loại') ?>
+              </td>
+              <td style="padding: 10px 12px; font-size: 0.82rem;">
+                <?php if ($sp->chuSachId): ?>
+                  <span style="background: #fef3c7; color: #b45309; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block;">
+                    🏪 <?= e($sp->tenChuSach ?: ('Chủ #' . $sp->chuSachId)) ?>
+                  </span>
+                <?php else: ?>
+                  <span style="background: #eff6ff; color: #1d4ed8; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block;">
+                    👑 Admin sàn
+                  </span>
+                <?php endif; ?>
               </td>
               <td style="padding: 10px 12px; font-weight: bold; color: #dc2626;">
                 <?= vnd($sp->gia) ?>
@@ -245,6 +283,77 @@ require __DIR__ . '/inc/header.php';
                   </a>
                 <?php else: ?>
                   <span style="color: #94a3b8; font-size: 0.8rem;">Không</span>
+                <?php endif; ?>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4. QUẢN LÝ NGƯỜI DÙNG & CHỦ SÁCH (USERS & BOOK OWNERS) -->
+  <section id="nguoi-dung" style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 35px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+      <div>
+        <h2 style="margin: 0; color: #1e3b6d;">Quản lý Người dùng &amp; Chủ sách (Book Owners)</h2>
+        <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">Admin có toàn quyền kiểm soát danh sách người dùng, cấp quyền hoặc chuyển đổi vai trò Chủ sách (Book Owner).</p>
+      </div>
+      <span style="background: #f1f5f9; color: #475569; padding: 6px 14px; border-radius: 9999px; font-weight: 700; font-size: 0.85rem;">Tổng: <?= count($dsNguoiDung) ?> tài khoản</span>
+    </div>
+
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+          <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.9rem;">
+            <th style="padding: 10px 12px; width: 60px;">ID</th>
+            <th style="padding: 10px 12px;">Họ và tên</th>
+            <th style="padding: 10px 12px;">Email</th>
+            <th style="padding: 10px 12px; width: 170px; text-align: center;">Vai trò hiện tại</th>
+            <th style="padding: 10px 12px; width: 110px; text-align: center;">Sách đăng bán</th>
+            <th style="padding: 10px 12px; width: 200px; text-align: center;">Phân quyền vai trò</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($dsNguoiDung as $user): ?>
+            <tr style="border-bottom: 1px solid #e2e8f0; vertical-align: middle;">
+              <td style="padding: 10px 12px; font-weight: bold; color: #64748b;">#<?= $user['id'] ?></td>
+              <td style="padding: 10px 12px; font-weight: 700; color: #1e293b;">
+                <?= e($user['ho_ten']) ?>
+                <?php if ((int)$user['id'] === (int)$u['id']): ?>
+                  <span style="font-size: 0.72rem; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 4px;">Bạn</span>
+                <?php endif; ?>
+              </td>
+              <td style="padding: 10px 12px; font-size: 0.9rem; color: #475569;">
+                <code><?= e($user['email']) ?></code>
+              </td>
+              <td style="padding: 10px 12px; text-align: center;">
+                <?php if ($user['vai_tro'] === 'quan_tri'): ?>
+                  <span style="background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">👑 Quản trị viên (Admin)</span>
+                <?php elseif ($user['vai_tro'] === 'chu_sach'): ?>
+                  <span style="background: #fef3c7; color: #b45309; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">🏪 Chủ sách (Book Owner)</span>
+                <?php else: ?>
+                  <span style="background: #eff6ff; color: #1e40af; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">👤 Khách hàng (Customer)</span>
+                <?php endif; ?>
+              </td>
+              <td style="padding: 10px 12px; text-align: center; font-weight: bold; color: <?= $user['so_sach'] > 0 ? '#ea580c' : '#94a3b8' ?>;">
+                <?= $user['so_sach'] ?> cuốn
+              </td>
+              <td style="padding: 10px 12px; text-align: center;">
+                <?php if ((int)$user['id'] === (int)$u['id']): ?>
+                  <span style="color: #94a3b8; font-size: 0.8rem; font-style: italic;">Đang đăng nhập</span>
+                <?php else: ?>
+                  <form method="POST" action="quan-tri.php" style="display: flex; gap: 6px; justify-content: center; align-items: center; margin: 0;">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="doi_vai_tro" value="1">
+                    <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
+                    <select name="vai_tro" style="padding: 4px 6px; font-size: 0.82rem; border: 1px solid #cbd5e1; border-radius: 4px;">
+                      <option value="khach_hang" <?= $user['vai_tro'] === 'khach_hang' ? 'selected' : '' ?>>Khách hàng</option>
+                      <option value="chu_sach" <?= $user['vai_tro'] === 'chu_sach' ? 'selected' : '' ?>>Chủ sách</option>
+                      <option value="quan_tri" <?= $user['vai_tro'] === 'quan_tri' ? 'selected' : '' ?>>Quản trị viên</option>
+                    </select>
+                    <button type="submit" class="nut nut--vien" style="padding: 3px 8px; font-size: 0.78rem;">Đổi</button>
+                  </form>
                 <?php endif; ?>
               </td>
             </tr>

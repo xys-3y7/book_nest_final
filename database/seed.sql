@@ -28,7 +28,8 @@ INSERT INTO nguoi_dung (id, email, ho_ten, mat_khau, vai_tro) VALUES
   (4, 'yoi@ued.vn', 'Xaiyasith Yoi', '$2y$12$qHb8qF.xgsQsDEN5nvxo6OsTDLDQmDQmTnjDdlNCp7MqAzd4fkWBG', 'quan_tri'),
   (5, 'hatsady@ued.vn', 'Phommaket Hatsady', '$2y$12$qHb8qF.xgsQsDEN5nvxo6OsTDLDQmDQmTnjDdlNCp7MqAzd4fkWBG', 'khach_hang'),
   (6, 'sauphasith@ued.vn', 'Vongsena Sauphasith', '$2y$12$qHb8qF.xgsQsDEN5nvxo6OsTDLDQmDQmTnjDdlNCp7MqAzd4fkWBG', 'khach_hang'),
-  (7, 'sinh@ued.vn', 'Nguyễn Thị Sinh', '$2y$12$qHb8qF.xgsQsDEN5nvxo6OsTDLDQmDQmTnjDdlNCp7MqAzd4fkWBG', 'khach_hang');
+  (7, 'sinh@ued.vn', 'Nguyễn Thị Sinh', '$2y$12$qHb8qF.xgsQsDEN5nvxo6OsTDLDQmDQmTnjDdlNCp7MqAzd4fkWBG', 'khach_hang'),
+  (8, 'seller@ued.vn', 'Đặng Thùy Dương (Book Owner)', '$2y$12$qHb8qF.xgsQsDEN5nvxo6OsTDLDQmDQmTnjDdlNCp7MqAzd4fkWBG', 'chu_sach');
 
 -- 3. DỮ LIỆU SẢN PHẨM SÁCH (33 CUỐN SÁCH - ĐẠT YÊU CẦU >= 30 CUỐN)
 -- Có sách hết hàng (id=12 ton_kho=0)

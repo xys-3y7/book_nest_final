@@ -137,7 +137,13 @@ $khoDungChung = new \App\Data\KhoSanPham(db());
             <div class="header-user-badge">
               <div class="header-user-avatar"><?= mb_strtoupper(mb_substr($u['ho_ten'], 0, 1)) ?></div>
               <span style="font-weight:700;font-size:0.88rem;" class="chi-hien-tren-may-tinh"><?= e($u['ho_ten']) ?></span>
-              <a href="<?= $goc ?>don-hang.php" style="background:#eff6ff;color:#1d4ed8;font-size:0.75rem;font-weight:700;padding:3px 7px;border-radius:6px;border:1px solid #bfdbfe;text-decoration:none;display:inline-flex;align-items:center;gap:2px;" title="Xem lịch sử đơn mua">📦 Đơn</a>
+              <?php if ($u['vai_tro'] === 'quan_tri'): ?>
+                <a href="<?= $goc ?>quan-tri.php" style="background:#fef3c7;color:#b45309;font-size:0.75rem;font-weight:700;padding:3px 7px;border-radius:6px;border:1px solid #fde68a;text-decoration:none;display:inline-flex;align-items:center;gap:2px;" title="Quản trị hệ thống">⚙️ Quản trị</a>
+              <?php elseif ($u['vai_tro'] === 'chu_sach'): ?>
+                <a href="<?= $goc ?>chu-sach.php" style="background:#fef3c7;color:#b45309;font-size:0.75rem;font-weight:700;padding:3px 7px;border-radius:6px;border:1px solid #fde68a;text-decoration:none;display:inline-flex;align-items:center;gap:2px;" title="Kênh người bán">🏪 Quầy sách</a>
+              <?php else: ?>
+                <a href="<?= $goc ?>don-hang.php" style="background:#eff6ff;color:#1d4ed8;font-size:0.75rem;font-weight:700;padding:3px 7px;border-radius:6px;border:1px solid #bfdbfe;text-decoration:none;display:inline-flex;align-items:center;gap:2px;" title="Xem lịch sử đơn mua">📦 Đơn</a>
+              <?php endif; ?>
               <!-- Đăng xuất an toàn bằng POST + CSRF token theo chuẩn Chương 7 -->
               <form action="<?= $goc ?>dang-xuat.php" method="POST" style="margin:0;display:inline;">
                 <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
@@ -171,8 +177,11 @@ $khoDungChung = new \App\Data\KhoSanPham(db());
           <?php if ($u && $u['vai_tro'] === 'khach_hang'): ?>
             <li><a href="<?= $goc ?>don-hang.php" style="color:#1d4ed8;font-weight:700;" <?= $trang === 'don-hang' ? 'class="active"' : '' ?>>📦 Lịch sử đơn mua</a></li>
           <?php endif; ?>
+          <?php if ($u && $u['vai_tro'] === 'chu_sach'): ?>
+            <li><a href="<?= $goc ?>chu-sach.php" style="color:#d97706;font-weight:800;" <?= $trang === 'chu-sach' ? 'class="active"' : '' ?>>🏪 Kênh người bán (Book Owner)</a></li>
+          <?php endif; ?>
           <?php if ($u && $u['vai_tro'] === 'quan_tri'): ?>
-            <li><a href="<?= $goc ?>quan-tri.php" style="color:#d97706;font-weight:800;">⚙️ Quản trị kho</a></li>
+            <li><a href="<?= $goc ?>quan-tri.php" style="color:#d97706;font-weight:800;">⚙️ Quản trị hệ thống</a></li>
             <li><a href="<?= $goc ?>don-hang.php" style="color:#2563eb;font-weight:700;" <?= $trang === 'don-hang' ? 'class="active"' : '' ?>>📦 Quản lý mọi đơn</a></li>
           <?php endif; ?>
         </ul>

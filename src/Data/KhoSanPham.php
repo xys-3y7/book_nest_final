@@ -68,9 +68,10 @@ class KhoSanPham
             default    => 's.id DESC', // Mặc định: sách mới nhất
         };
 
-        $sql = "SELECT s.*, dm.ten AS ten_danh_muc
+        $sql = "SELECT s.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach
                 FROM san_pham s
                 JOIN danh_muc dm ON s.danh_muc_id = dm.id
+                LEFT JOIN nguoi_dung nd ON s.chu_sach_id = nd.id
                 $where
                 ORDER BY $orderBy
                 LIMIT ? OFFSET ?";
@@ -87,9 +88,10 @@ class KhoSanPham
     public function timTheoId(int $id): ?SanPham
     {
         $st = $this->db->prepare(
-            'SELECT s.*, dm.ten AS ten_danh_muc
+            'SELECT s.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach
              FROM san_pham s
              JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             LEFT JOIN nguoi_dung nd ON s.chu_sach_id = nd.id
              WHERE s.id = ?'
         );
         $st->execute([$id]);

@@ -40,9 +40,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $loi['mat_khau'] = 'Mật khẩu phải chứa ít nhất 8 ký tự';
     }
 
-    // BẢO MẬT: Bỏ qua hoàn toàn ô vai_tro nếu kẻ xấu cố tình truyền qua devtools/curl
-    // Tất cả tài khoản tự đăng ký luôn có vai_tro = 'khach_hang'
-    $vaiTro = 'khach_hang';
+    // BẢO MẬT: Whitelist vai_tro an toàn: chỉ cho phép 'khach_hang' (Customer) hoặc 'chu_sach' (Book Owner).
+    // Tuyệt đối cấm không cho tự nhận quyền Quản trị viên ('quan_tri')
+    $du['vai_tro'] = chuoi($_POST['vai_tro'] ?? 'khach_hang');
+    $vaiTro = ($du['vai_tro'] === 'chu_sach') ? 'chu_sach' : 'khach_hang';
 
     if (empty($loi)) {
         $db = db();
@@ -109,12 +110,27 @@ require __DIR__ . '/inc/header.php';
       </div>
 
       <!-- Mật khẩu -->
-      <div style="margin-bottom: 25px;">
+      <div style="margin-bottom: 22px;">
         <label for="mat_khau" style="display: block; font-weight: bold; margin-bottom: 6px;">Mật khẩu (Tối thiểu 8 ký tự) <span style="color:#dc2626;">*</span></label>
         <input type="password" id="mat_khau" name="mat_khau" placeholder="Nhập mật khẩu an toàn..." style="width: 100%; padding: 10px 12px; border: 1px solid <?= isset($loi['mat_khau']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 4px; box-sizing: border-box;">
         <?php if (isset($loi['mat_khau'])): ?>
           <p style="color: #dc2626; font-size: 0.85rem; margin: 4px 0 0 0;"><?= e($loi['mat_khau']) ?></p>
         <?php endif; ?>
+      </div>
+
+      <!-- Vai trò người dùng (3 Roles: Customer vs Book Owner) -->
+      <div style="margin-bottom: 25px; background: #f8fafc; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #1e3b6d; font-size: 0.95rem;">Mục đích tham gia hệ thống BookNest <span style="color:#dc2626;">*</span></label>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem;">
+            <input type="radio" name="vai_tro" value="khach_hang" <?= ($du['vai_tro'] ?? 'khach_hang') === 'khach_hang' ? 'checked' : '' ?>>
+            <span><strong>Customer (Khách hàng):</strong> Chọn mua sách</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem;">
+            <input type="radio" name="vai_tro" value="chu_sach" <?= ($du['vai_tro'] ?? '') === 'chu_sach' ? 'checked' : '' ?>>
+            <span><strong>Book Owner (Chủ sách):</strong> Đăng bán sách của tôi</span>
+          </label>
+        </div>
       </div>
 
       <button type="submit" class="nut nut--chinh" style="width: 100%; padding: 12px; font-size: 1rem;">

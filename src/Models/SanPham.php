@@ -19,7 +19,9 @@ class SanPham implements JsonSerializable
         public readonly ?string $anh = null,
         public readonly ?string $moTa = null,
         public readonly string $ngayTao = '',
-        public readonly ?string $tenDanhMuc = null
+        public readonly ?string $tenDanhMuc = null,
+        public readonly ?int $chuSachId = null,
+        public readonly ?string $tenChuSach = null
     ) {}
 
     /**
@@ -36,7 +38,9 @@ class SanPham implements JsonSerializable
             anh: !empty($d['anh']) ? (string)$d['anh'] : null,
             moTa: !empty($d['mo_ta']) ? (string)$d['mo_ta'] : null,
             ngayTao: (string)($d['ngay_tao'] ?? ''),
-            tenDanhMuc: isset($d['ten_danh_muc']) ? (string)$d['ten_danh_muc'] : null
+            tenDanhMuc: isset($d['ten_danh_muc']) ? (string)$d['ten_danh_muc'] : null,
+            chuSachId: isset($d['chu_sach_id']) ? (int)$d['chu_sach_id'] : null,
+            tenChuSach: isset($d['ten_chu_sach']) ? (string)$d['ten_chu_sach'] : null
         );
     }
 

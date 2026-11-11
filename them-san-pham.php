@@ -8,7 +8,16 @@
 require_once __DIR__ . '/inc/config.php';
 require_once __DIR__ . '/inc/kiem-tra.php';
 
-yeuCauQuyen('quan_tri');
+// Kiểm tra quyền Quản trị viên hoặc Chủ sách (Book Owner)
+$u = nguoiDung();
+if (!$u || ($u['vai_tro'] !== 'quan_tri' && $u['vai_tro'] !== 'chu_sach')) {
+    ghiLogBaoMat('cam_truy_cap', ['trang' => $_SERVER['REQUEST_URI']]);
+    http_response_code(403);
+    require __DIR__ . '/403.php';
+    exit;
+}
+
+$dichDen = ($u['vai_tro'] === 'chu_sach') ? 'chu-sach.php' : 'quan-tri.php';
 
 $db = db();
 $danhMucList = $db->query('SELECT id, ten FROM danh_muc ORDER BY ten')->fetchAll();
@@ -52,15 +61,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($loi)) {
         try {
+            $chuSachId = ($u['vai_tro'] === 'chu_sach') ? (int)$u['id'] : null;
             $st = $db->prepare(
-                'INSERT INTO san_pham (ten, gia, ton_kho, danh_muc_id, mo_ta, anh) 
-                 VALUES (:ten, :gia, :ton_kho, :danh_muc_id, :mo_ta, :anh)'
+                'INSERT INTO san_pham (ten, gia, ton_kho, danh_muc_id, chu_sach_id, mo_ta, anh) 
+                 VALUES (:ten, :gia, :ton_kho, :danh_muc_id, :chu_sach_id, :mo_ta, :anh)'
             );
-            $st->execute($du + ['anh' => $tenAnh]);
+            $st->execute($du + ['anh' => $tenAnh, 'chu_sach_id' => $chuSachId]);
             $idMoi = $db->lastInsertId();
 
             $_SESSION['flash'] = "Thêm sách mới #$idMoi thành công!";
-            header('Location: quan-tri.php');
+            header("Location: $dichDen");
             exit;
         } catch (PDOException $e) {
             if ($e->getCode() === '23000') {
@@ -73,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $tieuDe = 'Thêm sách mới';
-$trang = 'quan-tri';
+$trang = ($u['vai_tro'] === 'chu_sach') ? 'chu-sach' : 'quan-tri';
 
 require __DIR__ . '/inc/header.php';
 ?>
@@ -81,7 +91,7 @@ require __DIR__ . '/inc/header.php';
 <main class="noi-dung-chinh khung-chua" style="max-width: 800px; margin: 0 auto;">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
     <h1>Thêm đầu sách mới vào kho</h1>
-    <a href="quan-tri.php" class="nut nut--vien">&larr; Quay lại quản trị</a>
+    <a href="<?= $dichDen ?>" class="nut nut--vien">&larr; Quay lại danh sách</a>
   </div>
 
   <?php if (isset($loi['he_thong'])): ?>

@@ -43,7 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stUp->execute([$moiHash, $u['id']]);
             }
 
-            $dichDen = $_SESSION['redirect_sau_dang_nhap'] ?? ($u['vai_tro'] === 'quan_tri' ? 'quan-tri.php' : 'index.php');
+            $dichDen = $_SESSION['redirect_sau_dang_nhap'] ?? (
+                $u['vai_tro'] === 'quan_tri' ? 'quan-tri.php' : (
+                    $u['vai_tro'] === 'chu_sach' ? 'chu-sach.php' : 'index.php'
+                )
+            );
             unset($_SESSION['redirect_sau_dang_nhap']);
 
             header('Location: ' . $dichDen);
@@ -99,7 +103,7 @@ require __DIR__ . '/inc/header.php';
       <!-- Email -->
       <div style="margin-bottom: 18px;">
         <label for="email" style="display: block; font-weight: bold; margin-bottom: 6px;">Địa chỉ Email</label>
-        <input type="email" id="email" name="email" value="<?= e($email) ?>" placeholder="admin@ued.vn hoặc lan@ued.vn" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box;" required autofocus>
+        <input type="email" id="email" name="email" value="<?= e($email) ?>" placeholder="admin@ued.vn, seller@ued.vn hoặc lan@ued.vn" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box;" required autofocus>
       </div>
 
       <!-- Mật khẩu -->
@@ -113,10 +117,11 @@ require __DIR__ . '/inc/header.php';
       </button>
 
       <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #f1f5f9; font-size: 0.85rem; color: #64748b; line-height: 1.6;">
-        <p style="margin: 0 0 5px 0;"><strong>Tài khoản thử nghiệm sẵn có (Mật khẩu: <code>matkhau123</code>):</strong></p>
+        <p style="margin: 0 0 5px 0;"><strong>Tài khoản thử nghiệm sẵn có (Mật khẩu chung: <code>matkhau123</code>):</strong></p>
         <ul style="margin: 0; padding-left: 20px;">
-          <li>Quản trị viên: <code>admin@ued.vn</code> (vào được quan-tri.php)</li>
-          <li>Khách hàng: <code>lan@ued.vn</code> hoặc <code>an@ued.vn</code></li>
+          <li>👑 <strong>Quản trị viên (Admin):</strong> <code>admin@ued.vn</code> (toàn quyền quan-tri.php)</li>
+          <li>🏪 <strong>Chủ sách (Book Owner):</strong> <code>seller@ued.vn</code> (dashboard chu-sach.php, quản lý sách & doanh thu của riêng mình)</li>
+          <li>👤 <strong>Khách hàng (Customer):</strong> <code>lan@ued.vn</code> hoặc <code>an@ued.vn</code> (mua sắm & đặt hàng)</li>
         </ul>
       </div>
 

@@ -18,7 +18,20 @@ function db(): PDO
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
         ];
-        $pdo = new PDO($dsn, $user, $pass, $options);
+        try {
+            $pdo = new PDO($dsn, $user, $pass, $options);
+        } catch (PDOException $e) {
+            // Tương thích linh hoạt giữa môi trường XAMPP mặc định (mật khẩu rỗng) và môi trường có đặt mật khẩu 123456
+            if ($pass !== '') {
+                try {
+                    $pdo = new PDO($dsn, $user, '', $options);
+                } catch (PDOException) {
+                    throw $e;
+                }
+            } else {
+                throw $e;
+            }
+        }
     }
     return $pdo;
 }

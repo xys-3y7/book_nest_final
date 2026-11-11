@@ -8,7 +8,13 @@
 require_once __DIR__ . '/inc/config.php';
 require_once __DIR__ . '/inc/kiem-tra.php';
 
-yeuCauQuyen('quan_tri');
+$u = nguoiDung();
+if (!$u || ($u['vai_tro'] !== 'quan_tri' && $u['vai_tro'] !== 'chu_sach')) {
+    ghiLogBaoMat('cam_truy_cap', ['trang' => $_SERVER['REQUEST_URI']]);
+    http_response_code(403);
+    require __DIR__ . '/403.php';
+    exit;
+}
 
 $db = db();
 $id = filter_var($_GET['id'] ?? '', FILTER_VALIDATE_INT);
@@ -21,6 +27,14 @@ $cu = $st->fetch();
 if ($cu === false) {
     http_response_code(404);
     require __DIR__ . '/404.php';
+    exit;
+}
+
+// Book Owner chỉ được phép sửa sách do chính mình sở hữu
+if ($u['vai_tro'] === 'chu_sach' && (int)$cu['chu_sach_id'] !== (int)$u['id']) {
+    ghiLogBaoMat('cam_truy_cap', ['trang' => $_SERVER['REQUEST_URI'], 'loi' => 'sua_sach_khong_phai_cua_minh']);
+    http_response_code(403);
+    require __DIR__ . '/403.php';
     exit;
 }
 
@@ -65,16 +79,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $st->execute($du + ['anh' => $tenAnh, 'id' => $id]);
 
         $_SESSION['flash'] = "Đã cập nhật sách #$id thành công!";
-        header('Location: quan-tri.php');
+        $dichDen = ($u['vai_tro'] === 'chu_sach') ? 'chu-sach.php' : 'quan-tri.php';
+        header("Location: $dichDen");
         exit;
     }
 }
 
 // Điền lại form: nếu vừa gửi lỗi thì lấy $_POST, mới mở thì lấy dữ liệu cũ $cu
 $f = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $cu;
+$dichDen = ($u['vai_tro'] === 'chu_sach') ? 'chu-sach.php' : 'quan-tri.php';
 
 $tieuDe = 'Sửa sách #' . $id;
-$trang = 'quan-tri';
+$trang = ($u['vai_tro'] === 'chu_sach') ? 'chu-sach' : 'quan-tri';
 
 require __DIR__ . '/inc/header.php';
 ?>
@@ -82,7 +98,7 @@ require __DIR__ . '/inc/header.php';
 <main class="noi-dung-chinh khung-chua" style="max-width: 800px; margin: 0 auto;">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
     <h1>Chỉnh sửa thông tin sách #<?= $id ?></h1>
-    <a href="quan-tri.php" class="nut nut--vien">&larr; Quay lại quản trị</a>
+    <a href="<?= $dichDen ?>" class="nut nut--vien">&larr; Quay lại danh sách</a>
   </div>
 
   <div style="background: #ffffff; padding: 30px; border-radius: 8px; border: 1px solid #e2e8f0;">

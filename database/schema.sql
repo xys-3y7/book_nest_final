@@ -24,22 +24,23 @@ CREATE TABLE danh_muc (
   mo_ta     TEXT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. BẢNG NGƯỜI DÙNG (nguoi_dung)
+-- 2. BẢNG NGƯỜI DÙNG (nguoi_dung) - Hỗ trợ 3 Roles: Admin (quan_tri), Customer (khach_hang), Book Owner (chu_sach)
 CREATE TABLE nguoi_dung (
   id        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   email     VARCHAR(191) NOT NULL UNIQUE,
   ho_ten    VARCHAR(100) NOT NULL,
   mat_khau  VARCHAR(255) NOT NULL,
-  vai_tro   ENUM('quan_tri', 'khach_hang') NOT NULL DEFAULT 'khach_hang',
+  vai_tro   ENUM('quan_tri', 'khach_hang', 'chu_sach') NOT NULL DEFAULT 'khach_hang',
   ngay_tao  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 3. BẢNG SẢN PHẨM / SÁCH (san_pham)
 -- Chuẩn 3NF, ràng buộc CHECK giá >= 1000 đồng, tồn kho >= 0
--- Không ghi ON DELETE ở khóa ngoại danh_muc_id để MySQL cấm xóa danh mục còn sách (lỗi 1451)
+-- Hỗ trợ đa người bán (Multi-vendor): chu_sach_id liên kết với tài khoản Book Owner (chu_sach)
 CREATE TABLE san_pham (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   danh_muc_id INT UNSIGNED NOT NULL,
+  chu_sach_id INT UNSIGNED NULL,
   ten         VARCHAR(200) NOT NULL,
   gia         INT UNSIGNED NOT NULL CHECK (gia >= 1000),
   ton_kho     INT UNSIGNED NOT NULL DEFAULT 0,
@@ -47,7 +48,9 @@ CREATE TABLE san_pham (
   mo_ta       TEXT NULL,
   ngay_tao    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_dm_gia (danh_muc_id, gia),
-  CONSTRAINT fk_sanpham_danhmuc FOREIGN KEY (danh_muc_id) REFERENCES danh_muc(id)
+  INDEX idx_chu_sach (chu_sach_id),
+  CONSTRAINT fk_sanpham_danhmuc FOREIGN KEY (danh_muc_id) REFERENCES danh_muc(id),
+  CONSTRAINT fk_sanpham_chusach FOREIGN KEY (chu_sach_id) REFERENCES nguoi_dung(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. BẢNG ĐƠN HÀNG (don_hang)
