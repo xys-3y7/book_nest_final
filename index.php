@@ -11,8 +11,8 @@ use App\Data\KhoSanPham;
 
 $kho = new KhoSanPham(db());
 
-// Lấy 8 cuốn sách mới nhất từ MySQL qua KhoSanPham
-$sachMoi = $kho->sanPhamMoi(8);
+// Lấy 10 cuốn sách mới nhất từ MySQL qua KhoSanPham (vừa vặn 2 hàng x 5 cột = 10 cuốn đầy đủ)
+$sachMoi = $kho->sanPhamMoi(10);
 
 // Lấy 4 cuốn sách cho khối Flash Sale
 $sachFlashSale = array_slice($sachMoi, 0, 4);
