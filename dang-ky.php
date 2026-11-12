@@ -119,16 +119,22 @@ require __DIR__ . '/inc/header.php';
       </div>
 
       <!-- Vai trò người dùng (3 Roles: Customer vs Book Owner) -->
-      <div style="margin-bottom: 25px; background: #f8fafc; padding: 14px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
-        <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #1e3b6d; font-size: 0.95rem;">Mục đích tham gia hệ thống BookNest <span style="color:#dc2626;">*</span></label>
-        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem;">
-            <input type="radio" name="vai_tro" value="khach_hang" <?= ($du['vai_tro'] ?? 'khach_hang') === 'khach_hang' ? 'checked' : '' ?>>
-            <span><strong>Customer (Khách hàng):</strong> Chọn mua sách</span>
+      <div style="margin-bottom: 25px;">
+        <label style="display: block; font-weight: 700; margin-bottom: 8px; color: #1e293b; font-size: 0.95rem;">Bạn muốn đăng ký vai trò nào? <span style="color:#dc2626;">*</span></label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <label style="display: block; cursor: pointer; border: 2px solid <?= ($du['vai_tro'] ?? 'khach_hang') === 'khach_hang' ? '#10b981' : '#e2e8f0' ?>; background: <?= ($du['vai_tro'] ?? 'khach_hang') === 'khach_hang' ? '#f0fdf4' : '#ffffff' ?>; border-radius: 10px; padding: 14px 12px; transition: all 0.2s ease;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <input type="radio" name="vai_tro" value="khach_hang" <?= ($du['vai_tro'] ?? 'khach_hang') === 'khach_hang' ? 'checked' : '' ?> onchange="this.form.querySelectorAll('input[name=vai_tro]').forEach(r => { r.closest('label').style.borderColor = r.checked ? (r.value === 'khach_hang' ? '#10b981' : '#f59e0b') : '#e2e8f0'; r.closest('label').style.background = r.checked ? (r.value === 'khach_hang' ? '#f0fdf4' : '#fffbeb') : '#ffffff'; });">
+              <strong style="color: #065f46; font-size: 0.95rem;">👤 Customer</strong>
+            </div>
+            <div style="font-size: 0.8rem; color: #047857; margin-left: 22px;">Khách hàng &bull; Mua sách</div>
           </label>
-          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem;">
-            <input type="radio" name="vai_tro" value="chu_sach" <?= ($du['vai_tro'] ?? '') === 'chu_sach' ? 'checked' : '' ?>>
-            <span><strong>Book Owner (Chủ sách):</strong> Đăng bán sách của tôi</span>
+          <label style="display: block; cursor: pointer; border: 2px solid <?= ($du['vai_tro'] ?? '') === 'chu_sach' ? '#f59e0b' : '#e2e8f0' ?>; background: <?= ($du['vai_tro'] ?? '') === 'chu_sach' ? '#fffbeb' : '#ffffff' ?>; border-radius: 10px; padding: 14px 12px; transition: all 0.2s ease;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <input type="radio" name="vai_tro" value="chu_sach" <?= ($du['vai_tro'] ?? '') === 'chu_sach' ? 'checked' : '' ?> onchange="this.form.querySelectorAll('input[name=vai_tro]').forEach(r => { r.closest('label').style.borderColor = r.checked ? (r.value === 'khach_hang' ? '#10b981' : '#f59e0b') : '#e2e8f0'; r.closest('label').style.background = r.checked ? (r.value === 'khach_hang' ? '#f0fdf4' : '#fffbeb') : '#ffffff'; });">
+              <strong style="color: #92400e; font-size: 0.95rem;">🏪 Book Owner</strong>
+            </div>
+            <div style="font-size: 0.8rem; color: #b45309; margin-left: 22px;">Chủ sách &bull; Mở quầy bán</div>
           </label>
         </div>
       </div>

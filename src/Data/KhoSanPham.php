@@ -37,6 +37,11 @@ class KhoSanPham
             $ts[] = (int)$loc['giaToiDa'];
         }
 
+        if (!empty($loc['chuSachId'])) {
+            $dk[] = 's.chu_sach_id = ?';
+            $ts[] = (int)$loc['chuSachId'];
+        }
+
         $where = $dk ? 'WHERE ' . implode(' AND ', $dk) : '';
         return [$where, $ts];
     }
@@ -106,9 +111,10 @@ class KhoSanPham
     public function sanPhamLienQuan(int $danhMucId, int $idHienTai, int $soLuong = 4): array
     {
         $st = $this->db->prepare(
-            'SELECT s.*, dm.ten AS ten_danh_muc
+            'SELECT s.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach
              FROM san_pham s
              JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             LEFT JOIN nguoi_dung nd ON s.chu_sach_id = nd.id
              WHERE s.danh_muc_id = ? AND s.id != ?
              ORDER BY s.id DESC
              LIMIT ?'
@@ -124,9 +130,10 @@ class KhoSanPham
     public function sanPhamMoi(int $soLuong = 6): array
     {
         $st = $this->db->prepare(
-            'SELECT s.*, dm.ten AS ten_danh_muc
+            'SELECT s.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach
              FROM san_pham s
              JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             LEFT JOIN nguoi_dung nd ON s.chu_sach_id = nd.id
              ORDER BY s.id DESC
              LIMIT ?'
         );

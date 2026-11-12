@@ -116,13 +116,22 @@ require __DIR__ . '/inc/header.php';
         Đăng nhập
       </button>
 
-      <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #f1f5f9; font-size: 0.85rem; color: #64748b; line-height: 1.6;">
-        <p style="margin: 0 0 5px 0;"><strong>Tài khoản thử nghiệm sẵn có (Mật khẩu chung: <code>matkhau123</code>):</strong></p>
-        <ul style="margin: 0; padding-left: 20px;">
-          <li>👑 <strong>Quản trị viên (Admin):</strong> <code>admin@ued.vn</code> (toàn quyền quan-tri.php)</li>
-          <li>🏪 <strong>Chủ sách (Book Owner):</strong> <code>seller@ued.vn</code> (dashboard chu-sach.php, quản lý sách & doanh thu của riêng mình)</li>
-          <li>👤 <strong>Khách hàng (Customer):</strong> <code>lan@ued.vn</code> hoặc <code>an@ued.vn</code> (mua sắm & đặt hàng)</li>
-        </ul>
+      <div style="margin-top: 25px; padding-top: 18px; border-top: 1px solid #f1f5f9; font-size: 0.88rem; color: #64748b; line-height: 1.6;">
+        <p style="margin: 0 0 10px 0; font-weight: 700; color: #1e293b;">⚡ Chọn nhanh tài khoản thử nghiệm (Mật khẩu: <code>matkhau123</code>):</p>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button type="button" onclick="document.getElementById('email').value='admin@ued.vn';document.getElementById('password').value='matkhau123';" style="text-align: left; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span>👑 <strong>Admin:</strong> <code>admin@ued.vn</code></span>
+            <span style="font-size: 0.75rem; background: #dc2626; color: #ffffff; padding: 2px 8px; border-radius: 4px; font-weight: 700;">Điền ngay</span>
+          </button>
+          <button type="button" onclick="document.getElementById('email').value='seller@ued.vn';document.getElementById('password').value='matkhau123';" style="text-align: left; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span>🏪 <strong>Book Owner:</strong> <code>seller@ued.vn</code></span>
+            <span style="font-size: 0.75rem; background: #d97706; color: #ffffff; padding: 2px 8px; border-radius: 4px; font-weight: 700;">Điền ngay</span>
+          </button>
+          <button type="button" onclick="document.getElementById('email').value='lan@ued.vn';document.getElementById('password').value='matkhau123';" style="text-align: left; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span>👤 <strong>Customer:</strong> <code>lan@ued.vn</code></span>
+            <span style="font-size: 0.75rem; background: #16a34a; color: #ffffff; padding: 2px 8px; border-radius: 4px; font-weight: 700;">Điền ngay</span>
+          </button>
+        </div>
       </div>
 
       <p style="text-align: center; margin-top: 20px; font-size: 0.95rem; color: #475569;">

@@ -24,7 +24,7 @@ $khoDungChung = new \App\Data\KhoSanPham(db());
   <title><?= e($tieuDe) ?> | BookNest - Nhà sách sinh viên UED</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Cache-busting URL để trình duyệt luôn tải CSS mới nhất -->
   <link rel="stylesheet" href="<?= $goc ?>css/style.css?v=<?= time() ?>">
   <script>window.BOOKNEST_UID = <?= $u ? (int)$u['id'] : 0 ?>;</script>

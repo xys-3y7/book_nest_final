@@ -90,17 +90,27 @@ $trang = 'quan-tri';
 require __DIR__ . '/inc/header.php';
 ?>
 
-<main class="noi-dung-chinh khung-chua">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px;">
+<main class="noi-dung-chinh khung-chua" style="padding-top: 25px; padding-bottom: 50px;">
+  <!-- Admin Banner -->
+  <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: #ffffff; padding: 26px 30px; border-radius: 16px; margin-bottom: 28px; box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.35); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; border: 1px solid rgba(255,255,255,0.08);">
     <div>
-      <h1 style="margin: 0; font-size: 1.8rem; color: #0f172a;">Bảng điều khiển Quản trị viên</h1>
-      <p style="margin: 5px 0 0 0; color: #64748b;">
-        Xin chào, <strong><?= e($u['ho_ten']) ?></strong> (Vai trò: <code><?= e($u['vai_tro']) ?></code>)
+      <span style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);">
+        👑 SUPER ADMIN PORTAL
+      </span>
+      <h1 style="color: #ffffff; margin: 10px 0 4px 0; font-size: 1.85rem; font-weight: 800; font-family: 'Prompt', var(--font-family);">
+        Bảng điều khiển Quản trị viên
+      </h1>
+      <p style="margin: 0; color: #94a3b8; font-size: 0.95rem;">
+        Quản trị toàn bộ hệ thống sách, phân quyền chủ sách, kiểm soát mọi đơn hàng &amp; danh sách liên hệ.
       </p>
     </div>
-    <div style="display: flex; gap: 10px;">
-      <a href="them-san-pham.php" class="nut nut--chinh">+ Thêm sách mới</a>
-      <a href="dang-xuat.php" class="nut nut--vien" style="color: #dc2626; border-color: #fca5a5;">Đăng xuất</a>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <a href="them-san-pham.php" class="nut nut--chinh" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); font-weight: 700; padding: 10px 18px; border-radius: 8px; font-size: 0.92rem; border: none; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);">
+        ➕ Thêm sách mới
+      </a>
+      <a href="chu-sach.php" class="nut nut--vien" style="background: rgba(255,255,255,0.1); color: #ffffff; border-color: rgba(255,255,255,0.25); font-weight: 700; padding: 10px 16px; border-radius: 8px; font-size: 0.92rem;">
+        🏪 Kênh người bán
+      </a>
     </div>
   </div>
 

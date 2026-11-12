@@ -79,6 +79,38 @@ require __DIR__ . '/inc/header.php';
         <span style="background: #fdf2f2; color: #e02424; font-size: 0.8rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; border: 1px solid #f8b4b4; margin-left: 8px;">-25% SV</span>
       </div>
 
+      <!-- Khối thông tin Người bán / Chủ sách (Book Owner Card) -->
+      <div style="display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 12px 18px; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: <?= $sp->chuSachId ? '#fef3c7' : '#e0e7ff' ?>; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 1.5px solid <?= $sp->chuSachId ? '#fcd34d' : '#c7d2fe' ?>; flex-shrink: 0;">
+            <?= $sp->chuSachId ? '🏪' : '👑' ?>
+          </div>
+          <div>
+            <div style="font-size: 0.76rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; color: <?= $sp->chuSachId ? '#b45309' : '#4338ca' ?>;">
+              <?= $sp->chuSachId ? 'Chủ sách đối tác (Book Owner / Seller)' : 'Phân phối chính thức (Official Store)' ?>
+            </div>
+            <div style="font-size: 1.05rem; font-weight: 800; color: #0f172a;">
+              <?= e($sp->tenChuSach ?: 'Nhà sách sinh viên BookNest UED') ?>
+            </div>
+            <div style="font-size: 0.82rem; color: #64748b;">
+              <span>⭐ 4.9/5 (120+ lượt mua)</span> &bull; 
+              <span style="color: #10b981; font-weight: 600;">✓ Đã xác minh</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <?php if ($sp->chuSachId): ?>
+            <a href="danh-sach.php?chu_sach=<?= $sp->chuSachId ?>" style="background: #ffffff; color: #b45309; border: 1px solid #fcd34d; font-weight: 700; font-size: 0.82rem; padding: 7px 14px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+              <span>🏪</span> Xem quầy sách
+            </a>
+          <?php else: ?>
+            <span style="background: #e0e7ff; color: #3730a3; font-weight: 700; font-size: 0.82rem; padding: 7px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+              <span>🛡️</span> Gian hàng chuẩn UED
+            </span>
+          <?php endif; ?>
+        </div>
+      </div>
+
       <table class="bang-thong-so" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
         <tbody>
           <tr style="border-bottom: 1px solid #f1f5f9;">

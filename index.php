@@ -157,6 +157,13 @@ require __DIR__ . '/inc/header.php';
               <span>(4.9) &bull; Đã bán <?= rand(15, 80) ?></span>
             </div>
 
+            <div style="font-size: 0.76rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+              <span><?= $sp->chuSachId ? '🏪' : '👑' ?></span>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;" title="<?= e($sp->tenChuSach ?: 'BookNest UED') ?>">
+                <?= e($sp->tenChuSach ?: 'BookNest UED') ?>
+              </span>
+            </div>
+
             <!-- Giá tiền TMĐT -->
             <div class="the__gia-row">
               <span class="the__gia"><?= vnd($sp->gia) ?></span>
@@ -246,6 +253,13 @@ require __DIR__ . '/inc/header.php';
             <div class="rating-stars-tmdt">
               <span class="stars">★★★★★</span>
               <span>(4.8) &bull; Đã bán <?= rand(10, 65) ?></span>
+            </div>
+
+            <div style="font-size: 0.76rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+              <span><?= $sp->chuSachId ? '🏪' : '👑' ?></span>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;" title="<?= e($sp->tenChuSach ?: 'BookNest UED') ?>">
+                <?= e($sp->tenChuSach ?: 'BookNest UED') ?>
+              </span>
             </div>
 
             <div class="the__gia-row">

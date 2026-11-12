@@ -14,10 +14,18 @@ $duong = ['options' => ['min_range' => 1]];
 
 // Lọc dữ liệu an toàn từ $_GET
 $loc = [
-    'q'        => trim($_GET['q'] ?? $_GET['tu_khoa'] ?? ''),
-    'dm'       => filter_var($_GET['dm'] ?? '', FILTER_VALIDATE_INT, $duong),
-    'giaToiDa' => filter_var($_GET['gia'] ?? '', FILTER_VALIDATE_INT, $duong),
+    'q'         => trim($_GET['q'] ?? $_GET['tu_khoa'] ?? ''),
+    'dm'        => filter_var($_GET['dm'] ?? '', FILTER_VALIDATE_INT, $duong),
+    'giaToiDa'  => filter_var($_GET['gia'] ?? '', FILTER_VALIDATE_INT, $duong),
+    'chuSachId' => filter_var($_GET['chu_sach'] ?? '', FILTER_VALIDATE_INT, $duong),
 ];
+
+$tenChuSachLoc = null;
+if (!empty($loc['chuSachId'])) {
+    $stCs = db()->prepare('SELECT ho_ten FROM nguoi_dung WHERE id = ?');
+    $stCs->execute([$loc['chuSachId']]);
+    $tenChuSachLoc = $stCs->fetchColumn() ?: null;
+}
 
 $kieuSx = [
     'moi'      => 'Mới nhất',
@@ -181,6 +189,21 @@ require __DIR__ . '/inc/header.php';
   </section>
 
   <!-- Thanh thống kê kết quả -->
+  <?php if ($tenChuSachLoc): ?>
+    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%); border: 1.5px solid #fcd34d; border-radius: 12px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.6rem;">🏪</span>
+        <div>
+          <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 800; color: #b45309;">Quầy sách đối tác (Book Owner)</div>
+          <div style="font-size: 1.1rem; font-weight: 800; color: #78350f;"><?= e($tenChuSachLoc) ?></div>
+        </div>
+      </div>
+      <a href="danh-sach.php" style="background: #ffffff; color: #78350f; border: 1px solid #fcd34d; padding: 6px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; text-decoration: none;">
+        ✕ Xem tất cả sách
+      </a>
+    </div>
+  <?php endif; ?>
+
   <div class="thong-ke-tmdt">
     <div>
       Tìm thấy <strong style="color: #1a56db; font-size: 1rem;"><?= $tong ?></strong> đầu giáo trình phù hợp
@@ -225,6 +248,13 @@ require __DIR__ . '/inc/header.php';
             <div class="rating-stars-tmdt">
               <span class="stars">★★★★★</span>
               <span>(4.8) &bull; Đã bán <?= rand(12, 70) ?></span>
+            </div>
+
+            <div style="font-size: 0.76rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+              <span><?= $sp->chuSachId ? '🏪' : '👑' ?></span>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;" title="<?= e($sp->tenChuSach ?: 'BookNest UED') ?>">
+                <?= e($sp->tenChuSach ?: 'BookNest UED') ?>
+              </span>
             </div>
 
             <div class="the__gia-row">

@@ -34,11 +34,11 @@ require_once __DIR__ . '/csrf.php';
 
 // 5. Header bảo mật gửi kèm mọi phản hồi HTTP
 header("Content-Security-Policy: default-src 'self'; "
-     . "script-src 'self'; "
-     . "style-src 'self' https://cdn.jsdelivr.net; "
-     . "font-src 'self' https://cdn.jsdelivr.net; "
-     . "img-src 'self' data:; "
-     . "connect-src 'self'; "
+     . "script-src 'self' 'unsafe-inline'; "
+     . "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+     . "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
+     . "img-src 'self' data: https:; "
+     . "connect-src 'self' https://api.open-meteo.com; "
      . "object-src 'none'; base-uri 'self'; "
      . "form-action 'self'; frame-ancestors 'none'");
 header('X-Content-Type-Options: nosniff');
