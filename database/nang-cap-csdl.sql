@@ -6,7 +6,7 @@
 --         addresses, notifications, system_settings
 -- =====================================================================
 
-USE ltweb_nhom12;
+USE book_nest_final;
 
 -- 1. ENHANCE nguoi_dung (users)
 ALTER TABLE nguoi_dung

@@ -9,7 +9,7 @@ function db(): PDO
     static $pdo = null;
     if ($pdo === null) {
         $host   = $_ENV['DB_HOST'] ?? '127.0.0.1';
-        $dbname = $_ENV['DB_DATABASE'] ?? 'ltweb_nhom12';
+        $dbname = $_ENV['DB_DATABASE'] ?? 'book_nest_final';
         $user   = $_ENV['DB_USERNAME'] ?? 'root';
         $pass   = $_ENV['DB_PASSWORD'] ?? '';
         $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";

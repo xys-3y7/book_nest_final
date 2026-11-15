@@ -9,12 +9,12 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-DROP DATABASE IF EXISTS ltweb_nhom12;
-CREATE DATABASE ltweb_nhom12
+DROP DATABASE IF EXISTS book_nest_final;
+CREATE DATABASE book_nest_final
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE ltweb_nhom12;
+USE book_nest_final;
 
 -- 1. BẢNG DANH MỤC SÁCH (danh_muc)
 CREATE TABLE danh_muc (
