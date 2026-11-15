@@ -168,10 +168,10 @@ require __DIR__ . '/inc/header.php';
                 <input type="radio" name="phuong_thuc_tt" value="<?= e($pt['code']) ?>" <?= $isSel ? 'checked' : '' ?> style="margin-top: 3px;" onchange="this.form.querySelectorAll('input[name=phuong_thuc_tt]').forEach(r => { r.closest('label').style.borderColor = r.checked ? '#10b981' : '#e2e8f0'; r.closest('label').style.background = r.checked ? '#f0fdf4' : '#ffffff'; });">
                 <div>
                   <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">
-                    <?= e($pt['icon']) ?> <?= e($pt['name']) ?>
+                    <?= e($pt['icon']) ?> <?= e(laTiengAnh() && !empty($pt['name_en']) ? $pt['name_en'] : $pt['name']) ?>
                   </div>
                   <div style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">
-                    <?= e($pt['description']) ?>
+                    <?= e(laTiengAnh() && !empty($pt['description_en']) ? $pt['description_en'] : $pt['description']) ?>
                   </div>
                 </div>
               </label>
@@ -201,7 +201,7 @@ require __DIR__ . '/inc/header.php';
           ?>
             <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 0.9rem;">
               <div>
-                <strong><?= e($sp->ten) ?></strong><br>
+                <strong><?= e($sp->getTitle()) ?></strong><br>
                 <small style="color: #64748b;">Quantity: <strong><?= $item['soLuong'] ?></strong> x <?= vnd($sp->gia) ?></small><br>
                 <small style="color: <?= $sp->tonKho >= $item['soLuong'] ? '#059669' : '#dc2626' ?>; font-weight: 600;">
                   📦 Available stock: <?= $sp->tonKho ?>

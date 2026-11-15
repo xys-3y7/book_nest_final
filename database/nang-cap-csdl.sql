@@ -21,11 +21,19 @@ ALTER TABLE nguoi_dung
 
 -- 2. ENHANCE san_pham (books)
 ALTER TABLE san_pham
+  ADD COLUMN IF NOT EXISTS ten_en VARCHAR(255) NULL AFTER ten,
   ADD COLUMN IF NOT EXISTS tac_gia VARCHAR(150) NULL DEFAULT 'BookNest Editorial',
+  ADD COLUMN IF NOT EXISTS tac_gia_en VARCHAR(150) NULL AFTER tac_gia,
+  ADD COLUMN IF NOT EXISTS mo_ta_en TEXT NULL AFTER mo_ta,
   ADD COLUMN IF NOT EXISTS isbn VARCHAR(30) NULL,
   ADD COLUMN IF NOT EXISTS nam_xuat_ban SMALLINT UNSIGNED NULL DEFAULT 2026,
   ADD COLUMN IF NOT EXISTS trang_thai_duyet ENUM('approved', 'pending', 'rejected') NOT NULL DEFAULT 'approved',
   ADD COLUMN IF NOT EXISTS luot_xem INT UNSIGNED NOT NULL DEFAULT 0;
+
+-- 2.1 ENHANCE danh_muc (categories)
+ALTER TABLE danh_muc
+  ADD COLUMN IF NOT EXISTS ten_en VARCHAR(150) NULL AFTER ten,
+  ADD COLUMN IF NOT EXISTS mo_ta_en TEXT NULL AFTER mo_ta;
 
 -- 3. ENHANCE don_hang (orders)
 ALTER TABLE don_hang
@@ -62,17 +70,48 @@ CREATE TABLE IF NOT EXISTS danh_gia (
   CONSTRAINT fk_review_nd FOREIGN KEY (nguoi_dung_id) REFERENCES nguoi_dung(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 6. CREATE thanh_toan (payments)
-CREATE TABLE IF NOT EXISTS thanh_toan (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  don_hang_id INT UNSIGNED NOT NULL,
-  phuong_thuc VARCHAR(50) NOT NULL DEFAULT 'cod',
-  so_tien INT UNSIGNED NOT NULL,
-  ma_giao_dich VARCHAR(100) NULL,
-  trang_thai ENUM('thanh_cong', 'dang_cho', 'that_bai') NOT NULL DEFAULT 'thanh_cong',
-  ngay_tao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_tt_don (don_hang_id),
-  CONSTRAINT fk_tt_don FOREIGN KEY (don_hang_id) REFERENCES don_hang(id) ON DELETE CASCADE
+-- 6. CREATE payments AND payment_methods TABLES (Module 10)
+CREATE TABLE IF NOT EXISTS payment_methods (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  name_en VARCHAR(100) NULL,
+  description TEXT,
+  description_en TEXT NULL,
+  instructions TEXT,
+  instructions_en TEXT NULL,
+  icon VARCHAR(50) DEFAULT '💳',
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO payment_methods (code, name, name_en, description, description_en, instructions, instructions_en, icon, is_active, sort_order) VALUES
+  ('cod', 'Thanh toán khi nhận hàng (COD)', 'Cash on Delivery (COD)', 'Thanh toán tiền mặt khi nhận sách giáo trình tại Ký túc xá hoặc sảnh trường UED', 'Pay with cash upon textbook delivery at UED campus or dormitory', 'Vui lòng chuẩn bị đúng số tiền khi nhận sách từ shipper BookNest.', 'Please prepare the exact cash amount when receiving textbooks from our courier.', '💵', 1, 1),
+  ('bank_transfer', 'Chuyển khoản Ngân hàng', 'Bank Transfer', 'Chuyển khoản trực tiếp tới tài khoản ngân hàng chính thức của BookNest UED', 'Transfer directly to BookNest official student account via mobile banking', 'Ngân hàng: Vietcombank - CN Đà Nẵng\nSố tài khoản: 02363841323\nTên chủ tài khoản: BOOKNEST STORE UED\nNội dung: BN{ORDER_ID}', 'Bank: Vietcombank - Danang Branch\nAccount No: 02363841323\nAccount Name: BOOKNEST STORE UED\nTransfer memo: BN{ORDER_ID}', '🏦', 1, 2),
+  ('qr_code', 'Thanh toán mã QR', 'QR Code Payment', 'Quét mã QR động tiêu chuẩn VietQR / PromptPay để thanh toán tức thì', 'Scan dynamic QR code (PromptPay / VietQR standard) for instant settlement', 'Quét mã QR hiển thị trên màn hình đơn hàng bằng ứng dụng ngân hàng bất kỳ.', 'Scan the QR code displayed on the checkout or order screen using any banking or payment app.', '📱', 1, 3),
+  ('e_wallet', 'Ví điện tử MoMo', 'E-Wallet (MoMo / TrueMoney)', 'Thanh toán nhanh chóng và an toàn qua Ví điện tử sinh viên MoMo', 'Fast and secure checkout via MoMo or digital student e-wallets', 'Quét mã MoMo hoặc chuyển đến số 0905123456 (BookNest Admin).', 'Scan MoMo QR code or transfer to 0905123456 (BookNest Admin).', '👛', 1, 4)
+ON DUPLICATE KEY UPDATE name=VALUES(name), name_en=VALUES(name_en), description=VALUES(description), description_en=VALUES(description_en), instructions=VALUES(instructions), instructions_en=VALUES(instructions_en), icon=VALUES(icon);
+
+CREATE TABLE IF NOT EXISTS payments (
+  payment_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  payment_method VARCHAR(50) NOT NULL,
+  transaction_id VARCHAR(100) NULL,
+  amount INT UNSIGNED NOT NULL,
+  payment_status ENUM('pending', 'paid', 'failed', 'verifying', 'rejected', 'refunded') NOT NULL DEFAULT 'pending',
+  payment_proof VARCHAR(255) NULL,
+  payment_date DATETIME NULL,
+  admin_note TEXT NULL,
+  verified_by INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_order (order_id),
+  INDEX idx_user (user_id),
+  INDEX idx_status (payment_status),
+  INDEX idx_txn (transaction_id),
+  CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES don_hang(id) ON DELETE CASCADE,
+  CONSTRAINT fk_payments_user FOREIGN KEY (user_id) REFERENCES nguoi_dung(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 7. CREATE so_dia_chi (addresses)
@@ -131,14 +170,18 @@ CREATE OR REPLACE VIEW sellers AS
   WHERE vai_tro = 'chu_sach';
 
 CREATE OR REPLACE VIEW books AS 
-  SELECT id, danh_muc_id AS category_id, chu_sach_id AS seller_id, ten AS title,
-         tac_gia AS author, isbn, nam_xuat_ban AS publication_year, gia AS price,
-         ton_kho AS stock, anh AS cover_image, mo_ta AS description,
+  SELECT id, danh_muc_id AS category_id, chu_sach_id AS seller_id, 
+         COALESCE(ten_en, ten) AS title, ten AS title_vi, ten_en AS title_en,
+         COALESCE(tac_gia_en, tac_gia) AS author, tac_gia AS author_vi, tac_gia_en AS author_en,
+         isbn, nam_xuat_ban AS publication_year, gia AS price,
+         ton_kho AS stock, anh AS cover_image, 
+         COALESCE(mo_ta_en, mo_ta) AS description, mo_ta AS description_vi, mo_ta_en AS description_en,
          trang_thai_duyet AS approval_status, luot_xem AS views, ngay_tao AS created_at
   FROM san_pham;
 
 CREATE OR REPLACE VIEW categories AS 
-  SELECT id, ten AS name, slug, mo_ta AS description
+  SELECT id, COALESCE(ten_en, ten) AS name, ten AS name_vi, ten_en AS name_en,
+         slug, COALESCE(mo_ta_en, mo_ta) AS description, mo_ta AS description_vi, mo_ta_en AS description_en
   FROM danh_muc;
 
 CREATE OR REPLACE VIEW orders AS 
@@ -169,11 +212,6 @@ CREATE OR REPLACE VIEW reviews AS
   SELECT id, san_pham_id AS book_id, nguoi_dung_id AS user_id, so_sao AS rating,
          tieu_de AS title, noi_dung AS content, da_mua_hang AS is_verified_purchase, ngay_tao AS created_at
   FROM danh_gia;
-
-CREATE OR REPLACE VIEW payments AS 
-  SELECT id, don_hang_id AS order_id, phuong_thuc AS method, so_tien AS amount,
-         ma_giao_dich AS transaction_id, trang_thai AS status, ngay_tao AS created_at
-  FROM thanh_toan;
 
 CREATE OR REPLACE VIEW addresses AS 
   SELECT id, nguoi_dung_id AS user_id, ho_ten AS recipient_name,

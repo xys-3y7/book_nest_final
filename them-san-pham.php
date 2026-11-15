@@ -46,13 +46,16 @@ $biaMauList = [
 
 $du = [
     'ten'          => '',
+    'ten_en'       => '',
     'tac_gia'      => '',
+    'tac_gia_en'   => '',
     'isbn'         => '',
     'nam_xuat_ban' => date('Y'),
     'gia'          => '',
     'ton_kho'      => '15',
     'danh_muc_id'  => '1',
     'mo_ta'        => '',
+    'mo_ta_en'     => '',
 ];
 $loi = [];
 
@@ -123,12 +126,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $chuSachId = (int)$u['id'];
             $st = $db->prepare(
-                'INSERT INTO san_pham (ten, tac_gia, isbn, nam_xuat_ban, gia, ton_kho, danh_muc_id, chu_sach_id, mo_ta, anh, trang_thai_duyet, ngay_tao) 
-                 VALUES (:ten, :tac_gia, :isbn, :nam_xuat_ban, :gia, :ton_kho, :danh_muc_id, :chu_sach_id, :mo_ta, :anh, "approved", NOW())'
+                'INSERT INTO san_pham (ten, ten_en, tac_gia, tac_gia_en, isbn, nam_xuat_ban, gia, ton_kho, danh_muc_id, chu_sach_id, mo_ta, mo_ta_en, anh, trang_thai_duyet, ngay_tao) 
+                 VALUES (:ten, :ten_en, :tac_gia, :tac_gia_en, :isbn, :nam_xuat_ban, :gia, :ton_kho, :danh_muc_id, :chu_sach_id, :mo_ta, :mo_ta_en, :anh, "approved", NOW())'
             );
             $st->execute([
                 'ten'          => $du['ten'],
+                'ten_en'       => $du['ten_en'] ?: null,
                 'tac_gia'      => $du['tac_gia'] ?: 'UED Editorial Board',
+                'tac_gia_en'   => $du['tac_gia_en'] ?: null,
                 'isbn'         => $du['isbn'] ?: ('978-604-' . rand(100, 999) . '-' . rand(1000, 9999) . '-' . rand(1, 9)),
                 'nam_xuat_ban' => $du['nam_xuat_ban'] ?: (int)date('Y'),
                 'gia'          => $du['gia'],
@@ -136,6 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'danh_muc_id'  => $du['danh_muc_id'],
                 'chu_sach_id'  => $chuSachId,
                 'mo_ta'        => $du['mo_ta'],
+                'mo_ta_en'     => $du['mo_ta_en'] ?: null,
                 'anh'          => $tenAnh
             ]);
             $idMoi = $db->lastInsertId();
@@ -212,6 +218,17 @@ require __DIR__ . '/inc/header.php';
           <?php endif; ?>
         </div>
 
+        <!-- English Title (Optional) -->
+        <div style="margin-bottom: 20px;">
+          <label for="ten_en" style="display: block; font-weight: 700; margin-bottom: 6px; color: #1e293b; font-size: 0.95rem;">
+            English Title <span style="color:#64748b; font-weight: 400; font-size: 0.85rem;">(Optional - for English Subsystem)</span>
+          </label>
+          <input type="text" id="ten_en" name="ten_en" value="<?= e($du['ten_en']) ?>" placeholder="e.g. Advanced Python Programming in Practice" style="width: 100%; padding: 11px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem;">
+          <?php if (isset($loi['ten_en'])): ?>
+            <p style="color: #dc2626; font-size: 0.85rem; margin: 5px 0 0 0; font-weight: 600;">⚠ <?= e($loi['ten_en']) ?></p>
+          <?php endif; ?>
+        </div>
+
         <!-- Author and ISBN row -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
           <div>
@@ -221,11 +238,19 @@ require __DIR__ . '/inc/header.php';
             <input type="text" id="tac_gia" name="tac_gia" value="<?= e($du['tac_gia']) ?>" placeholder="e.g. Robert T. Kiyosaki, Dr. Alan Turing" style="width: 100%; padding: 11px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem;">
           </div>
           <div>
-            <label for="isbn" style="display: block; font-weight: 700; margin-bottom: 6px; color: #1e293b; font-size: 0.95rem;">
-              ISBN Number
+            <label for="tac_gia_en" style="display: block; font-weight: 700; margin-bottom: 6px; color: #1e293b; font-size: 0.95rem;">
+              Author (English) <span style="color:#64748b; font-weight: 400; font-size: 0.82rem;">(Optional)</span>
             </label>
-            <input type="text" id="isbn" name="isbn" value="<?= e($du['isbn']) ?>" placeholder="e.g. 978-604-0-12345-6" style="width: 100%; padding: 11px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem;">
+            <input type="text" id="tac_gia_en" name="tac_gia_en" value="<?= e($du['tac_gia_en']) ?>" placeholder="e.g. Robert Kiyosaki" style="width: 100%; padding: 11px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem;">
           </div>
+        </div>
+
+        <!-- ISBN row -->
+        <div style="margin-bottom: 20px;">
+          <label for="isbn" style="display: block; font-weight: 700; margin-bottom: 6px; color: #1e293b; font-size: 0.95rem;">
+            ISBN Number
+          </label>
+          <input type="text" id="isbn" name="isbn" value="<?= e($du['isbn']) ?>" placeholder="e.g. 978-604-0-12345-6" style="width: 100%; padding: 11px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem;">
         </div>
 
         <!-- Category & Publication Year -->
@@ -279,13 +304,24 @@ require __DIR__ . '/inc/header.php';
         </div>
 
         <!-- Description -->
-        <div style="margin-bottom: 10px;">
+        <div style="margin-bottom: 20px;">
           <label for="mo_ta" style="display: block; font-weight: 700; margin-bottom: 6px; color: #1e293b; font-size: 0.95rem;">
             Textbook Description
           </label>
-          <textarea id="mo_ta" name="mo_ta" rows="5" placeholder="Summary of main topics, target audience, knowledge acquired after reading..." style="width: 100%; padding: 12px 14px; border: 1.5px solid <?= isset($loi['mo_ta']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem; resize: vertical;"><?= e($du['mo_ta']) ?></textarea>
+          <textarea id="mo_ta" name="mo_ta" rows="4" placeholder="Summary of main topics, target audience, knowledge acquired after reading..." style="width: 100%; padding: 12px 14px; border: 1.5px solid <?= isset($loi['mo_ta']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem; resize: vertical;"><?= e($du['mo_ta']) ?></textarea>
           <?php if (isset($loi['mo_ta'])): ?>
             <p style="color: #dc2626; font-size: 0.85rem; margin: 5px 0 0 0; font-weight: 600;">⚠ <?= e($loi['mo_ta']) ?></p>
+          <?php endif; ?>
+        </div>
+
+        <!-- English Description (Optional) -->
+        <div style="margin-bottom: 10px;">
+          <label for="mo_ta_en" style="display: block; font-weight: 700; margin-bottom: 6px; color: #1e293b; font-size: 0.95rem;">
+            English Description <span style="color:#64748b; font-weight: 400; font-size: 0.85rem;">(Optional - for English Subsystem)</span>
+          </label>
+          <textarea id="mo_ta_en" name="mo_ta_en" rows="4" placeholder="English overview of syllabus, topics, and course knowledge..." style="width: 100%; padding: 12px 14px; border: 1.5px solid <?= isset($loi['mo_ta_en']) ? '#dc2626' : '#cbd5e1' ?>; border-radius: 8px; box-sizing: border-box; font-size: 0.95rem; resize: vertical;"><?= e($du['mo_ta_en']) ?></textarea>
+          <?php if (isset($loi['mo_ta_en'])): ?>
+            <p style="color: #dc2626; font-size: 0.85rem; margin: 5px 0 0 0; font-weight: 600;">⚠ <?= e($loi['mo_ta_en']) ?></p>
           <?php endif; ?>
         </div>
 

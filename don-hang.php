@@ -51,7 +51,7 @@ if ($idDon) {
     }
 
     $stItems = $db->prepare(
-        'SELECT ctd.*, sp.ten, sp.anh 
+        'SELECT ctd.*, sp.ten, sp.ten_en, sp.anh 
          FROM chi_tiet_don ctd 
          JOIN san_pham sp ON ctd.san_pham_id = sp.id 
          WHERE ctd.don_hang_id = ?'
@@ -160,7 +160,7 @@ if ($idDon) {
                 </td>
                 <td style="padding: 10px;">
                   <a href="chi-tiet.php?id=<?= $item['san_pham_id'] ?>" style="font-weight: bold; color: #1e40af; text-decoration: none;">
-                    <?= e($item['ten']) ?>
+                    <?= e(tieuDeSach($item)) ?>
                   </a>
                 </td>
                 <td style="padding: 10px;"><?= vnd($item['don_gia']) ?></td>

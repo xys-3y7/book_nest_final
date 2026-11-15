@@ -174,13 +174,13 @@ require __DIR__ . '/inc/header.php';
             ?>
               <tr style="border-bottom: 1px solid #e2e8f0;">
                 <td style="padding: 12px 15px; width: 80px;">
-                  <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->ten) ?>" width="60" height="75" style="border-radius: 4px; object-fit: cover;">
+                  <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->getTitle()) ?>" width="60" height="75" style="border-radius: 4px; object-fit: cover;">
                 </td>
                 <td style="padding: 12px 15px;">
                   <a href="chi-tiet.php?id=<?= $sp->id ?>" style="font-weight: bold; color: #1e40af; text-decoration: none;">
-                    <?= e($sp->ten) ?>
+                    <?= e($sp->getTitle()) ?>
                   </a>
-                  <div style="color: #64748b; font-size: 0.85rem; margin-top: 3px;">Category: <?= e(layTenDanhMucEn($sp->danhMucId, $sp->tenDanhMuc)) ?></div>
+                  <div style="color: #64748b; font-size: 0.85rem; margin-top: 3px;">Category: <?= e($sp->getCategoryName()) ?></div>
                 </td>
                 <td style="padding: 12px 15px; font-weight: 500;">
                   <?= vnd($sp->gia) ?>

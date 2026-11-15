@@ -169,16 +169,16 @@ require __DIR__ . '/inc/header.php';
         <article class="the" data-id="<?= $sp->id ?>">
           <figure class="the__hinh-anh">
             <span class="the__the-loai-badge">-25%</span>
-            <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button" aria-label="Save <?= e($sp->ten) ?>" title="<?= $daThich ? 'Remove favorite' : 'Add to favorites' ?>">
+            <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button" aria-label="Save <?= e($sp->getTitle()) ?>" title="<?= $daThich ? 'Remove favorite' : 'Add to favorites' ?>">
               <?= $daThich ? '❤️' : '🤍' ?>
             </button>
-            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->getTitle()) ?>" width="175" height="225" loading="lazy">
           </figure>
 
           <div class="the__than">
-            <span class="the__the-loai"><?= e(layTenDanhMucEn($sp->danhMucId ?? null, $sp->tenDanhMuc ?? 'Textbook')) ?></span>
+            <span class="the__the-loai"><?= e($sp->getCategoryName()) ?></span>
             <h3 class="the__tieu-de">
-              <a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->ten) ?></a>
+              <a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->getTitle()) ?></a>
             </h3>
 
             <!-- Đánh giá sao & lượt mua -->
@@ -281,17 +281,17 @@ require __DIR__ . '/inc/header.php';
       ?>
         <article class="the" data-id="<?= $sp->id ?>">
           <figure class="the__hinh-anh">
-            <span class="the__the-loai-badge" style="background:#1a56db;"><?= e(layTenDanhMucEn($sp->danhMucId ?? null, $sp->tenDanhMuc ?? 'Textbook')) ?></span>
-            <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button" aria-label="Save <?= e($sp->ten) ?>" title="<?= $daThich ? 'Remove favorite' : 'Add to favorites' ?>">
+            <span class="the__the-loai-badge" style="background:#1a56db;"><?= e($sp->getCategoryName()) ?></span>
+            <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button" aria-label="Save <?= e($sp->getTitle()) ?>" title="<?= $daThich ? 'Remove favorite' : 'Add to favorites' ?>">
               <?= $daThich ? '❤️' : '🤍' ?>
             </button>
-            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->getTitle()) ?>" width="175" height="225" loading="lazy">
           </figure>
 
           <div class="the__than">
-            <span class="the__the-loai"><?= e(layTenDanhMucEn($sp->danhMucId ?? null, $sp->tenDanhMuc ?? 'Category')) ?></span>
+            <span class="the__the-loai"><?= e($sp->getCategoryName()) ?></span>
             <h3 class="the__tieu-de">
-              <a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->ten) ?></a>
+              <a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->getTitle()) ?></a>
             </h3>
 
             <div class="rating-stars-tmdt">
@@ -376,11 +376,11 @@ require __DIR__ . '/inc/header.php';
               <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThichBc ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button">
                 <?= $daThichBc ? '❤️' : '🤍' ?>
               </button>
-              <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+              <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->getTitle()) ?>" width="175" height="225" loading="lazy">
             </figure>
             <div class="the__than">
-              <span class="the__the-loai"><?= e(layTenDanhMucEn($sp->danhMucId ?? null, $sp->tenDanhMuc ?? 'Textbook')) ?></span>
-              <h3 class="the__tieu-de"><a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->ten) ?></a></h3>
+              <span class="the__the-loai"><?= e($sp->getCategoryName()) ?></span>
+              <h3 class="the__tieu-de"><a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->getTitle()) ?></a></h3>
               <div class="rating-stars-tmdt"><span class="stars">★★★★★</span><span>(4.9) &bull; Popular</span></div>
               <div class="the__gia-row">
                 <span class="the__gia"><?= vnd($sp->gia) ?></span>
@@ -440,11 +440,11 @@ require __DIR__ . '/inc/header.php';
               <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThichDx ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button">
                 <?= $daThichDx ? '❤️' : '🤍' ?>
               </button>
-              <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+              <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->getTitle()) ?>" width="175" height="225" loading="lazy">
             </figure>
             <div class="the__than">
               <h3 class="the__tieu-de">
-                <a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->ten) ?></a>
+                <a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->getTitle()) ?></a>
               </h3>
               
               <div class="the__gia-row">

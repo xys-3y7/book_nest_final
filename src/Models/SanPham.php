@@ -26,8 +26,56 @@ class SanPham implements JsonSerializable
         public readonly ?string $isbn = null,
         public readonly ?int $namXuatBan = null,
         public readonly string $trangThaiDuyet = 'approved',
-        public readonly int $luotXem = 0
+        public readonly int $luotXem = 0,
+        public readonly ?string $tenEn = null,
+        public readonly ?string $tacGiaEn = null,
+        public readonly ?string $moTaEn = null,
+        public readonly ?string $tenDanhMucEn = null
     ) {}
+
+    /**
+     * Resolve English or native title based on active language
+     */
+    public function getTitle(): string
+    {
+        if (function_exists('laTiengAnh') && laTiengAnh() && !empty($this->tenEn)) {
+            return $this->tenEn;
+        }
+        return !empty($this->ten) ? $this->ten : ($this->tenEn ?: '');
+    }
+
+    /**
+     * Resolve English or native author based on active language
+     */
+    public function getAuthor(): string
+    {
+        if (function_exists('laTiengAnh') && laTiengAnh() && !empty($this->tacGiaEn)) {
+            return $this->tacGiaEn;
+        }
+        return !empty($this->tacGia) ? $this->tacGia : ($this->tacGiaEn ?: 'BookNest Editorial');
+    }
+
+    /**
+     * Resolve English or native description
+     */
+    public function getDescription(): string
+    {
+        if (function_exists('laTiengAnh') && laTiengAnh() && !empty($this->moTaEn)) {
+            return $this->moTaEn;
+        }
+        return !empty($this->moTa) ? $this->moTa : ($this->moTaEn ?: '');
+    }
+
+    /**
+     * Resolve English or native category name
+     */
+    public function getCategoryName(): string
+    {
+        if (function_exists('laTiengAnh') && laTiengAnh() && !empty($this->tenDanhMucEn)) {
+            return $this->tenDanhMucEn;
+        }
+        return !empty($this->tenDanhMuc) ? $this->tenDanhMuc : ($this->tenDanhMucEn ?: '');
+    }
 
     /**
      * Khởi tạo đối tượng SanPham từ một dòng dữ liệu CSDL MySQL qua PDO
@@ -50,7 +98,11 @@ class SanPham implements JsonSerializable
             isbn: !empty($d['isbn']) ? (string)$d['isbn'] : null,
             namXuatBan: isset($d['nam_xuat_ban']) && $d['nam_xuat_ban'] !== '' ? (int)$d['nam_xuat_ban'] : null,
             trangThaiDuyet: (string)($d['trang_thai_duyet'] ?? 'approved'),
-            luotXem: (int)($d['luot_xem'] ?? 0)
+            luotXem: (int)($d['luot_xem'] ?? 0),
+            tenEn: !empty($d['ten_en']) ? (string)$d['ten_en'] : null,
+            tacGiaEn: !empty($d['tac_gia_en']) ? (string)$d['tac_gia_en'] : null,
+            moTaEn: !empty($d['mo_ta_en']) ? (string)$d['mo_ta_en'] : null,
+            tenDanhMucEn: !empty($d['ten_danh_muc_en']) ? (string)$d['ten_danh_muc_en'] : null
         );
     }
 
@@ -63,13 +115,18 @@ class SanPham implements JsonSerializable
         return [
             'id'               => $this->id,
             'danh_muc_id'      => $this->danhMucId,
-            'ten'              => $this->ten,
+            'ten'              => $this->getTitle(),
+            'title'            => $this->getTitle(),
+            'ten_vi'           => $this->ten,
+            'ten_en'           => $this->tenEn,
             'gia'              => $this->gia,
             'ton_kho'          => $this->tonKho,
             'anh'              => $this->anh,
-            'mo_ta'            => $this->moTa,
-            'ten_danh_muc'     => $this->tenDanhMuc,
-            'tac_gia'          => $this->tacGia,
+            'mo_ta'            => $this->getDescription(),
+            'tac_gia'          => $this->getAuthor(),
+            'tac_gia_en'       => $this->tacGiaEn,
+            'ten_danh_muc'     => $this->getCategoryName(),
+            'ten_danh_muc_en'  => $this->tenDanhMucEn,
             'isbn'             => $this->isbn,
             'nam_xuat_ban'     => $this->namXuatBan,
             'trang_thai_duyet' => $this->trangThaiDuyet,

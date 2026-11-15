@@ -22,8 +22,10 @@ class KhoSanPham
         $ts = [];
 
         if (!empty($loc['q'])) {
-            $dk[] = '(s.ten LIKE ? OR s.tac_gia LIKE ? OR s.isbn LIKE ?)';
+            $dk[] = '(s.ten LIKE ? OR s.ten_en LIKE ? OR s.tac_gia LIKE ? OR s.tac_gia_en LIKE ? OR s.isbn LIKE ?)';
             $kw = '%' . addcslashes($loc['q'], '%_\\') . '%';
+            $ts[] = $kw;
+            $ts[] = $kw;
             $ts[] = $kw;
             $ts[] = $kw;
             $ts[] = $kw;
@@ -81,9 +83,9 @@ class KhoSanPham
             default      => 's.id DESC', // Mặc định: sách mới nhất
         };
 
-        $sql = "SELECT s.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach
+        $sql = "SELECT s.*, dm.ten AS ten_danh_muc, dm.ten_en AS ten_danh_muc_en, nd.ho_ten AS ten_chu_sach
                 FROM san_pham s
-                JOIN danh_muc dm ON s.danh_muc_id = dm.id
+                LEFT JOIN danh_muc dm ON s.danh_muc_id = dm.id
                 LEFT JOIN nguoi_dung nd ON s.chu_sach_id = nd.id
                 $where
                 ORDER BY $orderBy
@@ -101,9 +103,9 @@ class KhoSanPham
     public function timTheoId(int $id): ?SanPham
     {
         $st = $this->db->prepare(
-            'SELECT s.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach
+            'SELECT s.*, dm.ten AS ten_danh_muc, dm.ten_en AS ten_danh_muc_en, nd.ho_ten AS ten_chu_sach
              FROM san_pham s
-             JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             LEFT JOIN danh_muc dm ON s.danh_muc_id = dm.id
              LEFT JOIN nguoi_dung nd ON s.chu_sach_id = nd.id
              WHERE s.id = ?'
         );
@@ -119,9 +121,9 @@ class KhoSanPham
     public function sanPhamLienQuan(int $danhMucId, int $idHienTai, int $soLuong = 4): array
     {
         $st = $this->db->prepare(
-            'SELECT s.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach
+            'SELECT s.*, dm.ten AS ten_danh_muc, dm.ten_en AS ten_danh_muc_en, nd.ho_ten AS ten_chu_sach
              FROM san_pham s
-             JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             LEFT JOIN danh_muc dm ON s.danh_muc_id = dm.id
              LEFT JOIN nguoi_dung nd ON s.chu_sach_id = nd.id
              WHERE s.danh_muc_id = ? AND s.id != ?
              ORDER BY s.id DESC
@@ -138,9 +140,9 @@ class KhoSanPham
     public function sanPhamMoi(int $soLuong = 6): array
     {
         $st = $this->db->prepare(
-            'SELECT s.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach
+            'SELECT s.*, dm.ten AS ten_danh_muc, dm.ten_en AS ten_danh_muc_en, nd.ho_ten AS ten_chu_sach
              FROM san_pham s
-             JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             LEFT JOIN danh_muc dm ON s.danh_muc_id = dm.id
              LEFT JOIN nguoi_dung nd ON s.chu_sach_id = nd.id
              ORDER BY s.id DESC
              LIMIT ?'
@@ -156,10 +158,10 @@ class KhoSanPham
     public function sanPhamBanChay(int $soLuong = 6): array
     {
         $st = $this->db->prepare(
-            'SELECT s.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach,
+            'SELECT s.*, dm.ten AS ten_danh_muc, dm.ten_en AS ten_danh_muc_en, nd.ho_ten AS ten_chu_sach,
                     COALESCE(SUM(ct.so_luong), 0) AS da_ban
              FROM san_pham s
-             JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             LEFT JOIN danh_muc dm ON s.danh_muc_id = dm.id
              LEFT JOIN nguoi_dung nd ON s.chu_sach_id = nd.id
              LEFT JOIN chi_tiet_don ct ON ct.san_pham_id = s.id
              GROUP BY s.id
@@ -177,9 +179,9 @@ class KhoSanPham
     public function sanPhamNoiBat(int $soLuong = 6): array
     {
         $st = $this->db->prepare(
-            'SELECT s.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach
+            'SELECT s.*, dm.ten AS ten_danh_muc, dm.ten_en AS ten_danh_muc_en, nd.ho_ten AS ten_chu_sach
              FROM san_pham s
-             JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             LEFT JOIN danh_muc dm ON s.danh_muc_id = dm.id
              LEFT JOIN nguoi_dung nd ON s.chu_sach_id = nd.id
              WHERE s.ton_kho > 5
              ORDER BY s.id ASC
@@ -196,9 +198,9 @@ class KhoSanPham
     public function sanPhamGoiY(int $soLuong = 6): array
     {
         $st = $this->db->prepare(
-            'SELECT s.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach
+            'SELECT s.*, dm.ten AS ten_danh_muc, dm.ten_en AS ten_danh_muc_en, nd.ho_ten AS ten_chu_sach
              FROM san_pham s
-             JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             LEFT JOIN danh_muc dm ON s.danh_muc_id = dm.id
              LEFT JOIN nguoi_dung nd ON s.chu_sach_id = nd.id
              ORDER BY RAND()
              LIMIT ?'
@@ -225,9 +227,9 @@ class KhoSanPham
         }
 
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $sql = "SELECT s.*, dm.ten AS ten_danh_muc
+        $sql = "SELECT s.*, dm.ten AS ten_danh_muc, dm.ten_en AS ten_danh_muc_en
                 FROM san_pham s
-                JOIN danh_muc dm ON s.danh_muc_id = dm.id
+                LEFT JOIN danh_muc dm ON s.danh_muc_id = dm.id
                 WHERE s.id IN ($placeholders)";
 
         $st = $this->db->prepare($sql);
@@ -262,14 +264,15 @@ class KhoSanPham
         }
 
         $st = $this->db->prepare(
-            'SELECT s.*, dm.ten AS ten_danh_muc
+            'SELECT s.*, dm.ten AS ten_danh_muc, dm.ten_en AS ten_danh_muc_en
              FROM san_pham s
-             JOIN danh_muc dm ON s.danh_muc_id = dm.id
-             WHERE s.ten LIKE ?
+             LEFT JOIN danh_muc dm ON s.danh_muc_id = dm.id
+             WHERE s.ten LIKE ? OR s.ten_en LIKE ? OR s.tac_gia LIKE ? OR s.tac_gia_en LIKE ?
              ORDER BY s.id DESC
              LIMIT ?'
         );
-        $st->execute(['%' . addcslashes($tuKhoa, '%_\\') . '%', $gioiHan]);
+        $param = '%' . addcslashes($tuKhoa, '%_\\') . '%';
+        $st->execute([$param, $param, $param, $param, $gioiHan]);
         return array_map(fn($d) => SanPham::tuMang($d), $st->fetchAll());
     }
 }

@@ -31,6 +31,7 @@ require_once __DIR__ . '/ham.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/xac-thuc.php';
 require_once __DIR__ . '/csrf.php';
+require_once __DIR__ . '/ngon-ngu.php';
 
 // 5. Header bảo mật gửi kèm mọi phản hồi HTTP
 header("Content-Security-Policy: default-src 'self'; "

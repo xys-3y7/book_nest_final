@@ -56,7 +56,7 @@ $hienTai = min($hienTai, $soTrang); // ?trang=99999 -> tự động về trang c
 $ds = $kho->trang($loc, $sx, $moiTrang, ($hienTai - 1) * $moiTrang);
 
 // Danh mục lấy từ CSDL MySQL qua PDO
-$dsDanhMuc = db()->query('SELECT id, ten FROM danh_muc ORDER BY ten')->fetchAll();
+$dsDanhMuc = db()->query('SELECT id, ten, ten_en FROM danh_muc ORDER BY ten')->fetchAll();
 
 /**
  * Hàm tạo liên kết chuyển trang bảo toàn mọi tham số lọc hiện tại
@@ -102,7 +102,7 @@ require __DIR__ . '/inc/header.php';
     </a>
     <?php foreach ($dsDanhMuc as $dm): ?>
       <a href="danh-sach.php?dm=<?= $dm['id'] ?>" class="chip-danhmuc <?= $loc['dm'] === (int)$dm['id'] ? 'active' : '' ?>">
-        <span>📁</span> <?= e(layTenDanhMucEn($dm['id'], $dm['ten'])) ?>
+        <span>📁</span> <?= e(tenDanhMuc($dm)) ?>
       </a>
     <?php endforeach; ?>
   </div>
@@ -145,7 +145,7 @@ require __DIR__ . '/inc/header.php';
             <option value="">-- All Categories --</option>
             <?php foreach ($dsDanhMuc as $dm): ?>
               <option value="<?= $dm['id'] ?>" <?= $loc['dm'] === (int)$dm['id'] ? 'selected' : '' ?>>
-                <?= e(layTenDanhMucEn($dm['id'], $dm['ten'])) ?>
+                <?= e(tenDanhMuc($dm)) ?>
               </option>
             <?php endforeach; ?>
           </select>
@@ -236,20 +236,20 @@ require __DIR__ . '/inc/header.php';
       ?>
         <article class="the" data-id="<?= $sp->id ?>">
           <figure class="the__hinh-anh">
-            <span class="the__the-loai-badge" style="background:#1a56db;"><?= e(layTenDanhMucEn($sp->danhMucId ?? null, $sp->tenDanhMuc ?? 'Textbook')) ?></span>
-            <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button" aria-label="Favorite <?= e($sp->ten) ?>" title="<?= $daThich ? 'Remove favorite' : 'Add to favorites' ?>">
+            <span class="the__the-loai-badge" style="background:#1a56db;"><?= e($sp->getCategoryName()) ?></span>
+            <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button" aria-label="Favorite <?= e($sp->getTitle()) ?>" title="<?= $daThich ? 'Remove favorite' : 'Add to favorites' ?>">
               <?= $daThich ? '❤️' : '🤍' ?>
             </button>
-            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Book cover <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Book cover <?= e($sp->getTitle()) ?>" width="175" height="225" loading="lazy">
           </figure>
 
           <div class="the__than">
-            <span class="the__the-loai"><?= e(layTenDanhMucEn($sp->danhMucId ?? null, $sp->tenDanhMuc ?? 'Category')) ?></span>
+            <span class="the__the-loai"><?= e($sp->getCategoryName()) ?></span>
             <h3 class="the__tieu-de">
-              <a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->ten) ?></a>
+              <a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->getTitle()) ?></a>
             </h3>
             <div style="font-size: 0.76rem; color: #64748b; margin-top: -4px; margin-bottom: 4px;">
-              Author: <strong><?= e($sp->tacGia ?: 'UED Editorial Board') ?></strong>
+              Author: <strong><?= e($sp->getAuthor()) ?></strong>
             </div>
 
             <div class="rating-stars-tmdt">

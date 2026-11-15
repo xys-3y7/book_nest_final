@@ -91,7 +91,7 @@ if ($action === 'receipt' && $orderId) {
     $stPay->execute([$orderId]);
     $pay = $stPay->fetch();
 
-    $stItems = $db->prepare('SELECT ctd.*, sp.ten, sp.anh FROM chi_tiet_don ctd JOIN san_pham sp ON ctd.san_pham_id = sp.id WHERE ctd.don_hang_id = ?');
+    $stItems = $db->prepare('SELECT ctd.*, sp.ten, sp.ten_en, sp.anh FROM chi_tiet_don ctd JOIN san_pham sp ON ctd.san_pham_id = sp.id WHERE ctd.don_hang_id = ?');
     $stItems->execute([$orderId]);
     $items = $stItems->fetchAll();
 
@@ -186,7 +186,7 @@ if ($action === 'receipt' && $orderId) {
               <tr style="border-bottom: 1px solid #e2e8f0;">
                 <td style="padding: 10px 12px; text-align: center; color: #64748b;"><?= $stt++ ?></td>
                 <td style="padding: 10px 12px; font-weight: 600; color: #0f172a;">
-                  <?= e($item['ten']) ?>
+                  <?= e(tieuDeSach($item)) ?>
                 </td>
                 <td style="padding: 10px 12px; text-align: right; color: #475569;"><?= vnd($item['don_gia']) ?></td>
                 <td style="padding: 10px 12px; text-align: center; font-weight: bold;"><?= $item['so_luong'] ?></td>

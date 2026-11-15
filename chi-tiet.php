@@ -74,9 +74,9 @@ setcookie('da_xem', implode(',', array_slice($moi, 0, 4)), [
     'samesite' => 'Lax',
 ]);
 
-$tieuDe = $sp->ten;
+$tieuDe = $sp->getTitle();
 $trang = 'danh-sach';
-$moTaTrang = 'View detailed information of textbook ' . $sp->ten . ' at BookNest UED.';
+$moTaTrang = 'View detailed information of textbook ' . $sp->getTitle() . ' at BookNest UED.';
 
 // Lấy 4 đầu sách liên quan cùng danh mục qua KhoSanPham
 $sachLienQuan = $kho->sanPhamLienQuan($sp->danhMucId, $sp->id, 4);
@@ -95,7 +95,7 @@ require __DIR__ . '/inc/header.php';
     <span>&rsaquo;</span>
     <a href="danh-sach.php" style="color: #64748b; text-decoration: none;">Textbook Catalog</a>
     <span>&rsaquo;</span>
-    <span style="color: #0f172a; font-weight: 700;"><?= e($sp->ten) ?></span>
+    <span style="color: #0f172a; font-weight: 700;"><?= e($sp->getTitle()) ?></span>
   </nav>
 
   <!-- Chi tiết sách -->
@@ -104,18 +104,18 @@ require __DIR__ . '/inc/header.php';
     <!-- Ảnh bìa sách -->
     <div class="chi-tiet__cot-anh">
       <figure style="margin: 0; text-align: center;">
-        <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->ten) ?>" style="border-radius:12px;box-shadow:var(--shadow-card);">
+        <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->getTitle()) ?>" style="border-radius:12px;box-shadow:var(--shadow-card);">
       </figure>
       <div style="margin-top: 18px; text-align: center;">
         <span class="the__the-loai-badge" style="position: static; font-size: 0.85rem; padding: 6px 16px; background:#1a56db; color:#fff; border-radius:9999px;">
-          📂 <?= e(layTenDanhMucEn($sp->danhMucId, $sp->tenDanhMuc ?? 'Textbook')) ?>
+          📂 <?= e($sp->getCategoryName()) ?>
         </span>
       </div>
     </div>
 
     <!-- Thông tin và Đặt mua -->
     <div class="chi-tiet__cot-thong-tin">
-      <h1 style="font-size: 1.8rem; font-weight: 800; color: #111827; margin: 0 0 12px 0;"><?= e($sp->ten) ?></h1>
+      <h1 style="font-size: 1.8rem; font-weight: 800; color: #111827; margin: 0 0 12px 0;"><?= e($sp->getTitle()) ?></h1>
       
       <div class="chi-tiet__gia" style="font-size: 1.85rem; font-weight: 800; color: #e02424; margin-bottom: 16px;">
         <?= vnd($sp->gia) ?>
@@ -161,11 +161,11 @@ require __DIR__ . '/inc/header.php';
         <tbody>
           <tr style="border-bottom: 1px solid #f1f5f9;">
             <th style="text-align: left; padding: 8px 0; color: #64748b; font-weight: 600; width: 140px;">Author:</th>
-            <td style="padding: 8px 0; color: #111827; font-weight: 700;"><?= e($sp->tacGia ?: 'UED Editorial Board') ?></td>
+            <td style="padding: 8px 0; color: #111827; font-weight: 700;"><?= e($sp->getAuthor()) ?></td>
           </tr>
           <tr style="border-bottom: 1px solid #f1f5f9;">
             <th style="text-align: left; padding: 8px 0; color: #64748b; font-weight: 600;">Category:</th>
-            <td style="padding: 8px 0; color: #111827;"><?= e(layTenDanhMucEn($sp->danhMucId, $sp->tenDanhMuc ?? 'Textbook')) ?></td>
+            <td style="padding: 8px 0; color: #111827;"><?= e($sp->getCategoryName()) ?></td>
           </tr>
           <tr style="border-bottom: 1px solid #f1f5f9;">
             <th style="text-align: left; padding: 8px 0; color: #64748b; font-weight: 600;">ISBN / Catalog:</th>
@@ -234,7 +234,7 @@ require __DIR__ . '/inc/header.php';
                data-id="<?= $sp->id ?>" 
                data-dang-chi-tiet="1" 
                role="button" 
-               aria-label="<?= $daThich ? 'Remove from wishlist' : 'Save to wishlist' ?> <?= e($sp->ten) ?>" 
+               aria-label="<?= $daThich ? 'Remove from wishlist' : 'Save to wishlist' ?> <?= e($sp->getTitle()) ?>" 
                style="padding: 11px 20px; font-size: 0.95rem; text-decoration: none; border-radius: 10px;">
               <?= $daThich ? '❤️ Saved to Wishlist' : '🤍 Save to Wishlist' ?>
             </a>
@@ -260,7 +260,7 @@ require __DIR__ . '/inc/header.php';
       <!-- Nội dung giới thiệu tóm tắt giáo trình -->
       <h2 style="font-size: 1.25rem; font-weight: 800; color: #111827; margin: 24px 0 10px 0;">📖 Textbook Description</h2>
       <p style="line-height: 1.75; color: #4b5563; font-size: 1rem; margin: 0;">
-        <?= nl2br(e($sp->moTa ?? 'No detailed description available for this textbook.')) ?>
+        <?= nl2br(e($sp->getDescription() ?: 'No detailed description available for this textbook.')) ?>
       </p>
     </div>
   </article>
@@ -420,14 +420,14 @@ require __DIR__ . '/inc/header.php';
         ?>
           <article class="the" data-id="<?= $lq->id ?>">
             <figure class="the__hinh-anh">
-              <span class="the__the-loai-badge" style="background:#1a56db;"><?= e(layTenDanhMucEn($lq->danhMucId, $lq->tenDanhMuc ?? 'Textbook')) ?></span>
+              <span class="the__the-loai-badge" style="background:#1a56db;"><?= e($lq->getCategoryName()) ?></span>
               <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThichLq ? 'da-thich' : '' ?>" data-id="<?= $lq->id ?>" role="button">
                 <?= $daThichLq ? '❤️' : '🤍' ?>
               </button>
-              <img src="<?= e(anhSach($lq->anh)) ?>" alt="Cover <?= e($lq->ten) ?>" width="175" height="225" loading="lazy">
+              <img src="<?= e(anhSach($lq->anh)) ?>" alt="Cover <?= e($lq->getTitle()) ?>" width="175" height="225" loading="lazy">
             </figure>
             <div class="the__than">
-              <h3 class="the__tieu-de"><a href="chi-tiet.php?id=<?= $lq->id ?>"><?= e($lq->ten) ?></a></h3>
+              <h3 class="the__tieu-de"><a href="chi-tiet.php?id=<?= $lq->id ?>"><?= e($lq->getTitle()) ?></a></h3>
               <div class="the__gia-row">
                 <span class="the__gia"><?= vnd($lq->gia) ?></span>
                 <span class="the__gia-goc"><?= vnd($giaGocLq) ?></span>

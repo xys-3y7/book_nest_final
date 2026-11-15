@@ -50,6 +50,10 @@ $khoDungChung = new \App\Data\KhoSanPham(db());
         <a href="<?= $goc ?>lien-he.php" class="top-bar-tmdt__link">💬 Student Support</a>
         <span>|</span>
         <span class="top-bar-tmdt__link">📍 UED - University of Da Nang</span>
+        <span>|</span>
+        <a href="?lang=en" class="top-bar-tmdt__link" style="font-weight: <?= laTiengAnh() ? '800;color:#ea580c' : '500' ?>;" title="Switch to English">🇬🇧 EN</a>
+        <span>/</span>
+        <a href="?lang=vi" class="top-bar-tmdt__link" style="font-weight: <?= !laTiengAnh() ? '800;color:#ea580c' : '500' ?>;" title="Chuyển sang Tiếng Việt">🇻🇳 VI</a>
       </div>
     </div>
   </div>
