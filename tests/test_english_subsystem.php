@@ -74,6 +74,32 @@ foreach ($views as $view) {
     assertCondition($vCount !== false, "View '$view' exists and is readable (rows: $vCount)");
 }
 
+// 4.1 Test the 16 exact Sub English Views requested by user
+echo "\n4.1 Testing the 16 exact Sub English Views...\n";
+$exactViews = [
+    'Books & Textbooks',
+    'Textbook Categories',
+    'Orders',
+    'Order Items / Details',
+    'Users & Accounts',
+    'Payments & Transactions',
+    'Payment Methods',
+    'User Roles',
+    'Shopping Cart',
+    'Book Reviews & Ratings',
+    'Shipping Addresses',
+    'Notifications',
+    'Contact Inquiries',
+    'System Settings',
+    'Failed Login Attempts',
+    'Wishlist / Saved Books'
+];
+
+foreach ($exactViews as $ev) {
+    $evCount = $db->query("SELECT COUNT(*) FROM `$ev`")->fetchColumn();
+    assertCondition($evCount !== false, "Sub English View '`$ev`' exists and returns $evCount rows");
+}
+
 // 5. Test Model SanPham bilingual methods
 echo "\n5. Testing Model SanPham Bilingual Getters...\n";
 $mockData = [
