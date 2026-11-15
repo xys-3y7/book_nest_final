@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/inc/config.php';
 require_once __DIR__ . '/inc/don-hang.php';
+require_once __DIR__ . '/inc/thanh-toan.php';
 
 // Authentication required
 yeuCauDangNhap();
@@ -58,6 +59,13 @@ if ($idDon) {
     $stItems->execute([$idDon]);
     $items = $stItems->fetchAll();
 
+    $stPay = $db->prepare('SELECT * FROM payments WHERE order_id = ? ORDER BY payment_id DESC LIMIT 1');
+    $stPay->execute([$idDon]);
+    $payInfo = $stPay->fetch();
+    if (!$payInfo) {
+        $payInfo = taoHoacLayThanhToan($idDon, (int)$don['nguoi_dung_id'], $don['phuong_thuc_tt'], (int)$don['tong_tien']);
+    }
+
     $tieuDe = 'Order Details #' . $idDon;
     $trang = 'don-hang';
     require __DIR__ . '/inc/header.php';
@@ -99,22 +107,37 @@ if ($idDon) {
               ?>
             </p>
             <p style="margin: 3px 0; color: #475569; font-size: 0.88rem;">
-              <strong>Payment:</strong> <?= e($don['phuong_thuc_tt'] ?? 'COD') ?> (<?= $don['trang_thai_tt'] === 'da_thanh_toan' ? 'Paid' : 'Unpaid' ?>)
+              <strong>Payment Method:</strong> <?= nhanPhuongThucTT($payInfo['payment_method'] ?? $don['phuong_thuc_tt']) ?><br>
+              <strong>Payment Status:</strong> <?= huyHieuTrangThaiTT($payInfo['payment_status'] ?? 'pending') ?><br>
+              <small>Ref: <code><?= e($payInfo['transaction_id'] ?? 'N/A') ?></code></small>
             </p>
             <p style="margin: 8px 0 0 0; font-size: 1.25rem; font-weight: bold; color: #dc2626;">
               Total: <?= vnd($don['tong_tien']) ?>
             </p>
-            <?php if ($don['trang_thai'] === 'cho_xu_ly'): ?>
-              <form method="POST" action="don-hang.php" onsubmit="return confirm('Are you sure you want to cancel this order? Stock will be restored.');" style="margin-top: 10px;">
-                <?= csrfField() ?>
-                <input type="hidden" name="action_huy_don" value="1">
-                <input type="hidden" name="don_id" value="<?= $don['id'] ?>">
-                <input type="hidden" name="redirect" value="don-hang.php?id=<?= $don['id'] ?>">
-                <button type="submit" class="nut" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:6px 14px;border-radius:6px;font-weight:bold;font-size:0.85rem;">
-                  Cancel Order
-                </button>
-              </form>
-            <?php endif; ?>
+
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end;">
+              <?php if (($payInfo['payment_status'] ?? '') === 'paid'): ?>
+                <a href="thanh-toan.php?action=receipt&order_id=<?= $don['id'] ?>" class="nut nut--chinh" style="padding: 6px 14px; font-size: 0.85rem;">
+                  🧾 View Digital Receipt
+                </a>
+              <?php else: ?>
+                <a href="thanh-toan.php?order_id=<?= $don['id'] ?>" class="nut nut--chinh" style="padding: 6px 14px; font-size: 0.85rem;">
+                  💳 Complete Payment / Proof &rarr;
+                </a>
+              <?php endif; ?>
+
+              <?php if ($don['trang_thai'] === 'cho_xu_ly'): ?>
+                <form method="POST" action="don-hang.php" onsubmit="return confirm('Are you sure you want to cancel this order? Stock will be restored.');" style="margin: 0;">
+                  <?= csrfField() ?>
+                  <input type="hidden" name="action_huy_don" value="1">
+                  <input type="hidden" name="don_id" value="<?= $don['id'] ?>">
+                  <input type="hidden" name="redirect" value="don-hang.php?id=<?= $don['id'] ?>">
+                  <button type="submit" class="nut" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:5px 12px;border-radius:6px;font-weight:bold;font-size:0.82rem;">
+                    Cancel Order
+                  </button>
+                </form>
+              <?php endif; ?>
+            </div>
           </div>
         </div>
 
@@ -161,16 +184,18 @@ $laQuanTri = $u['vai_tro'] === 'quan_tri';
 
 if ($laQuanTri) {
     $st = $db->query(
-        'SELECT dh.*, nd.ho_ten, nd.email 
+        'SELECT dh.*, nd.ho_ten, nd.email, p.payment_status, p.payment_id, p.payment_method, p.transaction_id
          FROM don_hang dh 
          JOIN nguoi_dung nd ON dh.nguoi_dung_id = nd.id 
+         LEFT JOIN payments p ON dh.id = p.order_id
          ORDER BY dh.ngay_tao DESC, dh.id DESC'
     );
 } else {
     $st = $db->prepare(
-        'SELECT dh.*, nd.ho_ten, nd.email 
+        'SELECT dh.*, nd.ho_ten, nd.email, p.payment_status, p.payment_id, p.payment_method, p.transaction_id
          FROM don_hang dh 
          JOIN nguoi_dung nd ON dh.nguoi_dung_id = nd.id 
+         LEFT JOIN payments p ON dh.id = p.order_id
          WHERE dh.nguoi_dung_id = ? 
          ORDER BY dh.ngay_tao DESC, dh.id DESC'
     );
@@ -213,9 +238,10 @@ require __DIR__ . '/inc/header.php';
               <th style="padding: 12px 15px;">Customer</th>
             <?php endif; ?>
             <th style="padding: 12px 15px;">Shipping Address</th>
-            <th style="padding: 12px 15px; width: 130px;">Total</th>
-            <th style="padding: 12px 15px; width: 130px;">Status</th>
-            <th style="padding: 12px 15px; width: 120px; text-align: center;">Action</th>
+            <th style="padding: 12px 15px; width: 120px;">Total</th>
+            <th style="padding: 12px 15px; width: 140px;">Payment</th>
+            <th style="padding: 12px 15px; width: 110px;">Order Status</th>
+            <th style="padding: 12px 15px; width: 150px; text-align: center;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -239,6 +265,14 @@ require __DIR__ . '/inc/header.php';
               <td style="padding: 12px 15px; font-weight: bold; color: #dc2626;">
                 <?= vnd($d['tong_tien']) ?>
               </td>
+              <td style="padding: 12px 15px; font-size: 0.85rem;">
+                <div style="font-weight: 600; color: #334155; margin-bottom: 4px;">
+                  <?= nhanPhuongThucTT($d['payment_method'] ?? $d['phuong_thuc_tt']) ?>
+                </div>
+                <div>
+                  <?= huyHieuTrangThaiTT($d['payment_status'] ?? 'pending') ?>
+                </div>
+              </td>
               <td style="padding: 12px 15px;">
                 <?php
                 $nhanTrangThai = [
@@ -251,9 +285,20 @@ require __DIR__ . '/inc/header.php';
                 ?>
               </td>
               <td style="padding: 12px 15px; text-align: center;">
-                <a href="don-hang.php?id=<?= $d['id'] ?>" class="nut nut--vien" style="padding: 5px 12px; font-size: 0.85rem;">
-                  Details &rarr;
-                </a>
+                <div style="display: inline-flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
+                  <a href="don-hang.php?id=<?= $d['id'] ?>" class="nut nut--vien" style="padding: 4px 8px; font-size: 0.8rem;">
+                    Details
+                  </a>
+                  <?php if (($d['payment_status'] ?? '') === 'paid'): ?>
+                    <a href="thanh-toan.php?action=receipt&order_id=<?= $d['id'] ?>" class="nut nut--vien" style="padding: 4px 8px; font-size: 0.8rem;" title="View Digital Receipt">
+                      🧾 Receipt
+                    </a>
+                  <?php else: ?>
+                    <a href="thanh-toan.php?order_id=<?= $d['id'] ?>" class="nut nut--chinh" style="padding: 4px 8px; font-size: 0.8rem;" title="Pay / Upload Proof">
+                      💳 Pay
+                    </a>
+                  <?php endif; ?>
+                </div>
               </td>
             </tr>
           <?php endforeach; ?>

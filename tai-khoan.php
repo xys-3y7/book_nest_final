@@ -7,6 +7,7 @@
 
 require_once __DIR__ . '/inc/config.php';
 require_once __DIR__ . '/inc/don-hang.php';
+require_once __DIR__ . '/inc/thanh-toan.php';
 
 // Authentication required
 $u = yeuCauDangNhap();
@@ -102,6 +103,22 @@ $tongYeuThich = (int)$stDemYeuThich->fetchColumn();
 $stDemReview = $db->prepare('SELECT COUNT(*) FROM danh_gia WHERE nguoi_dung_id = ?');
 $stDemReview->execute([$uid]);
 $tongReview = (int)$stDemReview->fetchColumn();
+
+// Fetch customer payments count
+$stPayCount = $db->prepare('SELECT COUNT(*) FROM payments WHERE user_id = ?');
+$stPayCount->execute([$uid]);
+$tongThanhToan = (int)$stPayCount->fetchColumn();
+
+// Fetch customer payments
+$stMyPayments = $db->prepare('
+    SELECT p.*, dh.tong_tien, dh.ngay_tao as order_date 
+    FROM payments p 
+    JOIN don_hang dh ON p.order_id = dh.id 
+    WHERE p.user_id = ? 
+    ORDER BY p.payment_id DESC
+');
+$stMyPayments->execute([$uid]);
+$dsThanhToan = $stMyPayments->fetchAll();
 
 // Fetch customer orders
 $stOrders = $db->prepare('SELECT * FROM don_hang WHERE nguoi_dung_id = ? ORDER BY ngay_tao DESC, id DESC');
@@ -230,6 +247,9 @@ require __DIR__ . '/inc/header.php';
         </a>
         <a href="tai-khoan.php?tab=orders" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.93rem; color: <?= $tabHienTai === 'orders' ? '#ea580c' : '#334155' ?>; background: <?= $tabHienTai === 'orders' ? '#fff7ed' : 'transparent' ?>;">
           <span>📦</span> My Orders (<?= $tongDon ?>)
+        </a>
+        <a href="tai-khoan.php?tab=payments" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.93rem; color: <?= $tabHienTai === 'payments' ? '#ea580c' : '#334155' ?>; background: <?= $tabHienTai === 'payments' ? '#fff7ed' : 'transparent' ?>;">
+          <span>💳</span> Payments &amp; Receipts (<?= $tongThanhToan ?>)
         </a>
         <a href="tai-khoan.php?tab=wishlist" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.93rem; color: <?= $tabHienTai === 'wishlist' ? '#ea580c' : '#334155' ?>; background: <?= $tabHienTai === 'wishlist' ? '#fff7ed' : 'transparent' ?>;">
           <span>❤️</span> Wishlist (<?= $tongYeuThich ?>)
@@ -379,6 +399,84 @@ require __DIR__ . '/inc/header.php';
                 </div>
               </div>
             <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+
+      <?php elseif ($tabHienTai === 'payments'): ?>
+        <!-- TAB: PAYMENTS & RECEIPTS -->
+        <h2 style="margin: 0 0 8px 0; font-size: 1.35rem; color: #0f172a; font-weight: 800;">
+          My Payment History &amp; Receipts (<?= count($dsThanhToan) ?>)
+        </h2>
+        <p style="color: #64748b; font-size: 0.92rem; margin: 0 0 20px 0;">
+          Track all payment transactions, check receipt verification status, and download official digital receipts.
+        </p>
+
+        <?php if (empty($dsThanhToan)): ?>
+          <div style="text-align: center; padding: 40px 20px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            <p style="font-size: 2.5rem; margin: 0 0 10px 0;">💳</p>
+            <h3 style="margin: 0 0 6px 0; color: #0f172a;">No payment transactions recorded</h3>
+            <p style="color: #64748b; margin-bottom: 15px; font-size: 0.9rem;">Your payment receipts and transaction records will appear here.</p>
+            <a href="danh-sach.php" class="nut nut--chinh">Shop Textbooks</a>
+          </div>
+        <?php else: ?>
+          <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+              <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+                  <th style="padding: 10px 12px;">Transaction ID</th>
+                  <th style="padding: 10px 12px; width: 80px;">Order</th>
+                  <th style="padding: 10px 12px; width: 140px;">Method</th>
+                  <th style="padding: 10px 12px; width: 110px; text-align: right;">Amount</th>
+                  <th style="padding: 10px 12px; width: 110px;">Status</th>
+                  <th style="padding: 10px 12px; width: 130px;">Date</th>
+                  <th style="padding: 10px 12px; text-align: center; width: 130px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($dsThanhToan as $pt): ?>
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 10px 12px;">
+                      <code style="font-weight: 700; color: #1e40af;"><?= e($pt['transaction_id'] ?: 'TXN-BN-' . $pt['payment_id']) ?></code>
+                      <?php if (!empty($pt['payment_proof'])): ?>
+                        <div style="margin-top: 3px;">
+                          <a href="uploads/receipts/<?= e($pt['payment_proof']) ?>" target="_blank" style="color: #0284c7; font-size: 0.78rem; text-decoration: underline;">
+                            📎 View Proof
+                          </a>
+                        </div>
+                      <?php endif; ?>
+                    </td>
+                    <td style="padding: 10px 12px; font-weight: 600;">
+                      <a href="don-hang.php?id=<?= $pt['order_id'] ?>" style="color: #0f172a; text-decoration: none;">
+                        #<?= $pt['order_id'] ?>
+                      </a>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <?= nhanPhuongThucTT($pt['payment_method']) ?>
+                    </td>
+                    <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #dc2626;">
+                      <?= vnd($pt['amount']) ?>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <?= huyHieuTrangThaiTT($pt['payment_status']) ?>
+                    </td>
+                    <td style="padding: 10px 12px; color: #64748b; font-size: 0.82rem;">
+                      <?= $pt['payment_date'] ? date('d/m/Y H:i', strtotime($pt['payment_date'])) : date('d/m/Y H:i', strtotime($pt['created_at'])) ?>
+                    </td>
+                    <td style="padding: 10px 12px; text-align: center;">
+                      <?php if ($pt['payment_status'] === 'paid'): ?>
+                        <a href="thanh-toan.php?action=receipt&order_id=<?= $pt['order_id'] ?>" class="nut nut--vien" style="padding: 4px 8px; font-size: 0.8rem;" title="Print Digital Receipt">
+                          🧾 Receipt
+                        </a>
+                      <?php else: ?>
+                        <a href="thanh-toan.php?order_id=<?= $pt['order_id'] ?>" class="nut nut--chinh" style="padding: 4px 8px; font-size: 0.8rem;" title="Pay or Upload Receipt">
+                          Pay / Proof &rarr;
+                        </a>
+                      <?php endif; ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
           </div>
         <?php endif; ?>
 

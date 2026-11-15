@@ -7,17 +7,46 @@
 
 require_once __DIR__ . '/inc/config.php';
 require_once __DIR__ . '/inc/don-hang.php';
+require_once __DIR__ . '/inc/thanh-toan.php';
 
 // Requires 'quan_tri' role
 yeuCauQuyen('quan_tri');
 
-use App\Data\KhoSanPham;
-use App\Data\KhoLienHe;
-
 $db = db();
-$khoSp = new KhoSanPham($db);
-$khoLh = new KhoLienHe($db);
 $u = nguoiDung();
+
+// Handle Payment Report CSV Export
+if (isset($_GET['export_payments_csv'])) {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="booknest_payments_' . date('Ymd_His') . '.csv"');
+    $output = fopen('php://output', 'w');
+    fputs($output, "\xEF\xBB\xBF"); // UTF-8 BOM
+    fputcsv($output, ['Payment ID', 'Transaction ID', 'Order ID', 'Customer Name', 'Customer Email', 'Payment Method', 'Amount (VND)', 'Status', 'Payment Date', 'Created At', 'Admin Note']);
+
+    $stExp = $db->query('
+        SELECT p.*, nd.ho_ten, nd.email 
+        FROM payments p 
+        JOIN nguoi_dung nd ON p.user_id = nd.id 
+        ORDER BY p.payment_id DESC
+    ');
+    while ($row = $stExp->fetch(PDO::FETCH_ASSOC)) {
+        fputcsv($output, [
+            $row['payment_id'],
+            $row['transaction_id'],
+            $row['order_id'],
+            $row['ho_ten'],
+            $row['email'],
+            $row['payment_method'],
+            $row['amount'],
+            $row['payment_status'],
+            $row['payment_date'],
+            $row['created_at'],
+            $row['admin_note']
+        ]);
+    }
+    fclose($output);
+    exit;
+}
 
 // -------------------------------------------------------------
 // POST HANDLERS FOR ADMIN OPERATIONS
@@ -193,12 +222,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_cap_nhat_don_a
             $st->execute([$trangThaiMoi, $donId]);
             if ($trangThaiMoi === 'da_giao') {
                 $db->prepare('UPDATE don_hang SET trang_thai_tt = "da_thanh_toan" WHERE id = ?')->execute([$donId]);
-                $db->prepare('UPDATE thanh_toan SET trang_thai = "completed" WHERE don_hang_id = ?')->execute([$donId]);
+                $db->prepare('UPDATE payments SET payment_status = "paid", payment_date = NOW() WHERE order_id = ? AND payment_status != "paid"')->execute([$donId]);
+                try {
+                    $db->prepare('UPDATE thanh_toan SET trang_thai = "completed" WHERE don_hang_id = ?')->execute([$donId]);
+                } catch (Throwable) {}
             }
             $_SESSION['flash'] = "Order status #$donId updated to '$trangThaiMoi'.";
         }
     }
     header('Location: quan-tri.php?tab=orders');
+    exit;
+}
+
+// 4.1 Admin Payment Verification & Approval
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_admin_duyet_tt'])) {
+    $paymentId = filter_var($_POST['payment_id'] ?? '', FILTER_VALIDATE_INT);
+    if ($paymentId) {
+        duyetThanhToan($paymentId, (int)$u['id'], 'Verified and approved by Super Admin');
+        $_SESSION['flash'] = "Payment #$paymentId approved and marked as Paid.";
+    }
+    header('Location: quan-tri.php?tab=payments');
+    exit;
+}
+
+// 4.2 Admin Payment Receipt Rejection
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_admin_tuchoi_tt'])) {
+    $paymentId = filter_var($_POST['payment_id'] ?? '', FILTER_VALIDATE_INT);
+    $reason = trim(chuoi($_POST['rejection_reason'] ?? 'Invalid payment receipt or mismatched amount.'));
+    if ($paymentId) {
+        tuChoiThanhToan($paymentId, (int)$u['id'], $reason);
+        $_SESSION['flash'] = "Payment receipt for #$paymentId has been rejected.";
+    }
+    header('Location: quan-tri.php?tab=payments');
+    exit;
+}
+
+// 4.3 Admin Process Refund
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_admin_hoan_tien'])) {
+    $paymentId = filter_var($_POST['payment_id'] ?? '', FILTER_VALIDATE_INT);
+    $reason = trim(chuoi($_POST['refund_reason'] ?? 'Customer cancellation or product refund.'));
+    if ($paymentId) {
+        hoanTienThanhToan($paymentId, (int)$u['id'], $reason);
+        $_SESSION['flash'] = "Payment #$paymentId has been refunded.";
+    }
+    header('Location: quan-tri.php?tab=payments');
+    exit;
+}
+
+// 4.4 Admin Manage Payment Methods
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_luu_phuong_thuc'])) {
+    $methodId = filter_var($_POST['method_id'] ?? '', FILTER_VALIDATE_INT);
+    $isActive = isset($_POST['is_active']) ? 1 : 0;
+    $instructions = trim(chuoi($_POST['instructions'] ?? ''));
+    $desc = trim(chuoi($_POST['description'] ?? ''));
+    if ($methodId) {
+        $stUp = $db->prepare('UPDATE payment_methods SET is_active = ?, instructions = ?, description = ? WHERE id = ?');
+        $stUp->execute([$isActive, $instructions, $desc, $methodId]);
+        $_SESSION['flash'] = 'Payment method configuration updated successfully!';
+    }
+    header('Location: quan-tri.php?tab=payments');
     exit;
 }
 
@@ -305,6 +387,60 @@ $dsTopPlatform = $stTopPlatform->fetchAll();
 // Settings
 $stSettings = $db->query('SELECT khoa, gia_tri FROM he_thong_cai_dat');
 $caiDatMap = $stSettings->fetchAll(PDO::FETCH_KEY_PAIR);
+
+// Payments Data for Admin Tab
+$locStatus = trim(chuoi($_GET['pay_status'] ?? 'all'));
+$locMethod = trim(chuoi($_GET['pay_method'] ?? 'all'));
+$searchQ = trim(chuoi($_GET['pay_q'] ?? ''));
+
+$sqlPayments = '
+    SELECT p.*, dh.tong_tien as don_tong_tien, dh.ngay_tao as order_date, dh.trang_thai as order_status,
+           nd.ho_ten as customer_name, nd.email as customer_email, nd.so_dien_thoai as customer_phone
+    FROM payments p
+    JOIN don_hang dh ON p.order_id = dh.id
+    JOIN nguoi_dung nd ON p.user_id = nd.id
+    WHERE 1=1
+';
+$payParams = [];
+
+if ($locStatus !== 'all' && in_array($locStatus, ['pending', 'verifying', 'paid', 'rejected', 'refunded', 'failed'], true)) {
+    $sqlPayments .= ' AND p.payment_status = ?';
+    $payParams[] = $locStatus;
+}
+if ($locMethod !== 'all') {
+    $sqlPayments .= ' AND p.payment_method = ?';
+    $payParams[] = $locMethod;
+}
+if ($searchQ !== '') {
+    $sqlPayments .= ' AND (p.transaction_id LIKE ? OR p.order_id LIKE ? OR nd.ho_ten LIKE ? OR nd.email LIKE ?)';
+    $searchTerm = "%$searchQ%";
+    $payParams[] = $searchTerm;
+    $payParams[] = $searchTerm;
+    $payParams[] = $searchTerm;
+    $payParams[] = $searchTerm;
+}
+$sqlPayments .= ' ORDER BY p.payment_id DESC';
+$stAllPayments = $db->prepare($sqlPayments);
+$stAllPayments->execute($payParams);
+$dsAllPayments = $stAllPayments->fetchAll();
+
+// Payment KPI Metrics
+$stPayMetrics = $db->query('
+    SELECT 
+        COALESCE(SUM(amount), 0) as total_volume,
+        COALESCE(SUM(CASE WHEN payment_status = "paid" THEN amount ELSE 0 END), 0) as paid_volume,
+        COALESCE(SUM(CASE WHEN payment_status = "verifying" THEN amount ELSE 0 END), 0) as verifying_volume,
+        COALESCE(SUM(CASE WHEN payment_status = "refunded" THEN amount ELSE 0 END), 0) as refunded_volume,
+        COUNT(CASE WHEN payment_status = "verifying" THEN 1 END) as verifying_count
+    FROM payments
+');
+$payMetrics = $stPayMetrics->fetch();
+
+// Check Suspicious Transactions
+$dsNghiVan = kiemTraGiaoDichNghiVan();
+
+// Payment Methods
+$dsAllMethods = layDanhSachPhuongThuc(false);
 
 $thongBao = $_SESSION['flash'] ?? '';
 $thongBaoLoi = $_SESSION['flash_loi'] ?? '';
@@ -413,6 +549,14 @@ require __DIR__ . '/inc/header.php';
         </a>
         <a href="quan-tri.php?tab=orders" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.92rem; color: <?= $tabHienTai === 'orders' ? '#dc2626' : '#334155' ?>; background: <?= $tabHienTai === 'orders' ? '#fef2f2' : 'transparent' ?>;">
           <span>📦</span> Orders (<?= count($dsDonHang) ?>)
+        </a>
+        <a href="quan-tri.php?tab=payments" style="display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.92rem; color: <?= $tabHienTai === 'payments' ? '#dc2626' : '#334155' ?>; background: <?= $tabHienTai === 'payments' ? '#fef2f2' : 'transparent' ?>;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span>💳</span> Payments &amp; Gateway
+          </div>
+          <?php if (($payMetrics['verifying_count'] ?? 0) > 0): ?>
+            <span style="background: #dc2626; color: #ffffff; padding: 2px 7px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;"><?= $payMetrics['verifying_count'] ?></span>
+          <?php endif; ?>
         </a>
         <a href="quan-tri.php?tab=sellers" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.92rem; color: <?= $tabHienTai === 'sellers' ? '#dc2626' : '#334155' ?>; background: <?= $tabHienTai === 'sellers' ? '#fef2f2' : 'transparent' ?>;">
           <span>🏪</span> Sellers (<?= count($dsSellers) ?>)
@@ -853,6 +997,298 @@ require __DIR__ . '/inc/header.php';
               <?php endforeach; ?>
             </tbody>
           </table>
+        </div>
+
+      <?php elseif ($tabHienTai === 'payments'): ?>
+        <!-- TAB: PAYMENTS & GATEWAY MANAGEMENT -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+          <div>
+            <h2 style="margin: 0 0 6px 0; font-size: 1.4rem; color: #0f172a; font-weight: 800;">
+              💳 Platform Payments &amp; Gateway Management
+            </h2>
+            <p style="color: #64748b; font-size: 0.92rem; margin: 0;">
+              Supervise all transactions, verify bank receipts, process refunds, audit suspicious payments, and manage payment methods.
+            </p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <a href="quan-tri.php?export_payments_csv=1" class="nut nut--chinh" style="padding: 9px 18px; font-size: 0.88rem; background: #059669; border-color: #059669;">
+              📥 Export CSV Report
+            </a>
+            <button onclick="window.print()" class="nut nut--vien" style="padding: 9px 16px; font-size: 0.88rem;">
+              🖨️ Print Summary
+            </button>
+          </div>
+        </div>
+
+        <!-- 1. Financial KPI Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 25px;">
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Gross Transaction Volume</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #1e3b6d; margin-top: 4px;"><?= vnd((int)$payMetrics['total_volume']) ?></div>
+            <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Total order payment value</div>
+          </div>
+
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #166534; text-transform: uppercase;">Cleared Paid Revenue</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #059669; margin-top: 4px;"><?= vnd((int)$payMetrics['paid_volume']) ?></div>
+            <div style="font-size: 0.78rem; color: #15803d; margin-top: 2px;">Settled &amp; verified funds</div>
+          </div>
+
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #1e40af; text-transform: uppercase;">Pending Verification</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #2563eb; margin-top: 4px;"><?= vnd((int)$payMetrics['verifying_volume']) ?></div>
+            <div style="font-size: 0.78rem; color: #3b82f6; margin-top: 2px;"><?= (int)$payMetrics['verifying_count'] ?> receipts submitted</div>
+          </div>
+
+          <div style="background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 10px; padding: 18px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #9d174d; text-transform: uppercase;">Total Refunded</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #be185d; margin-top: 4px;"><?= vnd((int)$payMetrics['refunded_volume']) ?></div>
+            <div style="font-size: 0.78rem; color: #db2777; margin-top: 2px;">Reversed payments</div>
+          </div>
+        </div>
+
+        <!-- 2. Suspicious Transactions / Fraud Monitor Panel -->
+        <div style="margin-bottom: 25px;">
+          <?php if (!empty($dsNghiVan)): ?>
+            <div style="background: #fff7ed; border: 1.5px solid #fdba74; border-radius: 10px; padding: 18px 20px;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <span style="font-size: 1.3rem;">⚠️</span>
+                <strong style="color: #9a3412; font-size: 1rem;">Payment Security Alert: <?= count($dsNghiVan) ?> Suspicious <?= count($dsNghiVan) > 1 ? 'Anomalies' : 'Anomaly' ?> Detected</strong>
+              </div>
+              <ul style="margin: 0; padding-left: 20px; font-size: 0.88rem; color: #7c2d12;">
+                <?php foreach ($dsNghiVan as $nv): ?>
+                  <li style="margin-bottom: 6px;">
+                    <strong><?= e($nv['title']) ?>:</strong> <?= e($nv['detail']) ?>
+                    <?php if (!empty($nv['payment_ids'])): ?>
+                      <span style="margin-left: 6px;">
+                        (Review IDs: 
+                        <?php foreach ($nv['payment_ids'] as $pid): ?>
+                          <a href="quan-tri.php?tab=payments&pay_q=<?= urlencode($pid) ?>" style="color: #c2410c; font-weight: bold; text-decoration: underline;">#<?= e($pid) ?></a>
+                        <?php endforeach; ?>
+                        )
+                      </span>
+                    <?php endif; ?>
+                  </li>
+                <?php endforeach; ?>
+              </ul>
+            </div>
+          <?php else: ?>
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 18px; display: flex; align-items: center; gap: 10px; color: #166534; font-size: 0.88rem;">
+              <span style="font-size: 1.2rem;">🛡️</span>
+              <span><strong>Security Audit Passed:</strong> No duplicate transaction references, amount discrepancies, or stale anomalies detected.</span>
+            </div>
+          <?php endif; ?>
+        </div>
+
+        <!-- 3. Filter & Search Bar -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+          <form method="GET" action="quan-tri.php" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+            <input type="hidden" name="tab" value="payments">
+
+            <div style="flex: 2; min-width: 200px;">
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Search Transactions</label>
+              <input type="text" name="pay_q" value="<?= e($searchQ) ?>" placeholder="Transaction ID, Order #, Customer..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem; box-sizing: border-box;">
+            </div>
+
+            <div style="flex: 1; min-width: 150px;">
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Payment Status</label>
+              <select name="pay_status" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem;">
+                <option value="all" <?= $locStatus === 'all' ? 'selected' : '' ?>>All Statuses</option>
+                <option value="verifying" <?= $locStatus === 'verifying' ? 'selected' : '' ?>>🔍 Verifying (Pending Check)</option>
+                <option value="pending" <?= $locStatus === 'pending' ? 'selected' : '' ?>>⏳ Pending</option>
+                <option value="paid" <?= $locStatus === 'paid' ? 'selected' : '' ?>>✓ Paid</option>
+                <option value="rejected" <?= $locStatus === 'rejected' ? 'selected' : '' ?>>✗ Rejected</option>
+                <option value="refunded" <?= $locStatus === 'refunded' ? 'selected' : '' ?>>↩ Refunded</option>
+                <option value="failed" <?= $locStatus === 'failed' ? 'selected' : '' ?>>⚠ Failed</option>
+              </select>
+            </div>
+
+            <div style="flex: 1; min-width: 150px;">
+              <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Payment Method</label>
+              <select name="pay_method" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem;">
+                <option value="all" <?= $locMethod === 'all' ? 'selected' : '' ?>>All Methods</option>
+                <option value="cod" <?= $locMethod === 'cod' ? 'selected' : '' ?>>💵 Cash on Delivery (COD)</option>
+                <option value="bank_transfer" <?= $locMethod === 'bank_transfer' ? 'selected' : '' ?>>🏦 Bank Transfer</option>
+                <option value="qr_code" <?= $locMethod === 'qr_code' ? 'selected' : '' ?>>📱 QR Code</option>
+                <option value="e_wallet" <?= $locMethod === 'e_wallet' ? 'selected' : '' ?>>👛 E-Wallet (MoMo)</option>
+              </select>
+            </div>
+
+            <div>
+              <button type="submit" class="nut nut--chinh" style="padding: 8px 18px; font-size: 0.88rem;">
+                Filter
+              </button>
+              <?php if ($searchQ !== '' || $locStatus !== 'all' || $locMethod !== 'all'): ?>
+                <a href="quan-tri.php?tab=payments" class="nut nut--vien" style="padding: 8px 12px; font-size: 0.88rem; margin-left: 4px;">Reset</a>
+              <?php endif; ?>
+            </div>
+          </form>
+        </div>
+
+        <!-- 4. Transactions Ledger Table -->
+        <div style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; overflow-x: auto; margin-bottom: 35px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #475569;">
+                <th style="padding: 10px 12px; width: 60px;">ID</th>
+                <th style="padding: 10px 12px;">Transaction Ref</th>
+                <th style="padding: 10px 12px; width: 70px;">Order</th>
+                <th style="padding: 10px 12px;">Customer</th>
+                <th style="padding: 10px 12px; width: 130px;">Method</th>
+                <th style="padding: 10px 12px; width: 110px; text-align: right;">Amount</th>
+                <th style="padding: 10px 12px; width: 110px;">Status</th>
+                <th style="padding: 10px 12px; width: 100px;">Receipt Proof</th>
+                <th style="padding: 10px 12px; text-align: center; width: 180px;">Admin Operations</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (empty($dsAllPayments)): ?>
+                <tr>
+                  <td colspan="9" style="padding: 30px; text-align: center; color: #64748b;">
+                    No payment transactions found matching the filter criteria.
+                  </td>
+                </tr>
+              <?php else: ?>
+                <?php foreach ($dsAllPayments as $p): ?>
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 10px 12px; color: #64748b; font-weight: 700;">
+                      #<?= $p['payment_id'] ?>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <code style="font-weight: 700; color: #1e40af;"><?= e($p['transaction_id'] ?: 'TXN-BN-' . $p['payment_id']) ?></code>
+                      <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">
+                        <?= $p['payment_date'] ? date('d/m/Y H:i', strtotime($p['payment_date'])) : date('d/m/Y H:i', strtotime($p['created_at'])) ?>
+                      </div>
+                    </td>
+                    <td style="padding: 10px 12px; font-weight: 700;">
+                      <a href="don-hang.php?id=<?= $p['order_id'] ?>" style="color: #0284c7; text-decoration: none;">
+                        #<?= $p['order_id'] ?>
+                      </a>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <strong style="color: #0f172a;"><?= e($p['customer_name']) ?></strong><br>
+                      <small style="color: #64748b;"><?= e($p['customer_email']) ?></small>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <?= nhanPhuongThucTT($p['payment_method']) ?>
+                    </td>
+                    <td style="padding: 10px 12px; text-align: right; font-weight: 700; color: #dc2626;">
+                      <?= vnd($p['amount']) ?>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <?= huyHieuTrangThaiTT($p['payment_status']) ?>
+                      <?php if (!empty($p['admin_note'])): ?>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px; max-width: 140px; word-break: break-word;">
+                          <?= e($p['admin_note']) ?>
+                        </div>
+                      <?php endif; ?>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <?php if (!empty($p['payment_proof'])): ?>
+                        <a href="uploads/receipts/<?= e($p['payment_proof']) ?>" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; color: #1d4ed8; font-weight: 600; text-decoration: underline; font-size: 0.82rem;">
+                          📄 Proof
+                        </a>
+                      <?php else: ?>
+                        <span style="color: #94a3b8; font-size: 0.8rem;">—</span>
+                      <?php endif; ?>
+                    </td>
+                    <td style="padding: 10px 12px; text-align: center;">
+                      <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
+                        <?php if ($p['payment_status'] === 'verifying' || ($p['payment_status'] === 'pending' && !empty($p['payment_proof']))): ?>
+                          <!-- Approve Bank Transfer -->
+                          <form method="POST" action="quan-tri.php?tab=payments" style="margin: 0;" onsubmit="return confirm('Approve payment for Order #<?= $p['order_id'] ?>?');">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action_admin_duyet_tt" value="1">
+                            <input type="hidden" name="payment_id" value="<?= $p['payment_id'] ?>">
+                            <button type="submit" class="nut nut--chinh" style="padding: 4px 8px; font-size: 0.78rem; background: #059669; border-color: #059669;" title="Approve Payment">
+                              ✓ Approve
+                            </button>
+                          </form>
+
+                          <!-- Reject Receipt with Reason -->
+                          <form method="POST" action="quan-tri.php?tab=payments" style="margin: 0;" onsubmit="var r = prompt('Reason for rejecting receipt:'); if(!r) return false; this.rejection_reason.value = r; return true;">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action_admin_tuchoi_tt" value="1">
+                            <input type="hidden" name="payment_id" value="<?= $p['payment_id'] ?>">
+                            <input type="hidden" name="rejection_reason" value="">
+                            <button type="submit" class="nut" style="padding: 4px 8px; font-size: 0.78rem; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;" title="Reject Receipt">
+                              ✗ Reject
+                            </button>
+                          </form>
+                        <?php elseif ($p['payment_status'] === 'paid'): ?>
+                          <a href="thanh-toan.php?action=receipt&order_id=<?= $p['order_id'] ?>" class="nut nut--vien" style="padding: 4px 8px; font-size: 0.78rem;" title="View Digital Receipt">
+                            🧾 Receipt
+                          </a>
+
+                          <!-- Refund Form -->
+                          <form method="POST" action="quan-tri.php?tab=payments" style="margin: 0;" onsubmit="var r = prompt('Reason for refund:'); if(!r) return false; this.refund_reason.value = r; return true;">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action_admin_hoan_tien" value="1">
+                            <input type="hidden" name="payment_id" value="<?= $p['payment_id'] ?>">
+                            <input type="hidden" name="refund_reason" value="">
+                            <button type="submit" class="nut" style="padding: 4px 8px; font-size: 0.78rem; background: #f5f3ff; color: #5b21b6; border: 1px solid #ddd6fe;" title="Process Refund">
+                              ↩ Refund
+                            </button>
+                          </form>
+                        <?php else: ?>
+                          <a href="don-hang.php?id=<?= $p['order_id'] ?>" class="nut nut--vien" style="padding: 4px 8px; font-size: 0.78rem;">
+                            Order
+                          </a>
+                        <?php endif; ?>
+                      </div>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 5. Manage Available Payment Methods Section -->
+        <div style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; padding: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a;">⚙️ Manage Available Payment Methods</h3>
+              <p style="margin: 3px 0 0 0; color: #64748b; font-size: 0.85rem;">Enable or disable payment options and update account instructions displayed to customers.</p>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <?php foreach ($dsAllMethods as $pm): ?>
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px;">
+                <form method="POST" action="quan-tri.php?tab=payments">
+                  <?= csrfField() ?>
+                  <input type="hidden" name="action_luu_phuong_thuc" value="1">
+                  <input type="hidden" name="method_id" value="<?= $pm['id'] ?>">
+
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="font-size: 1.4rem;"><?= e($pm['icon']) ?></span>
+                      <strong style="color: #0f172a; font-size: 0.95rem;"><?= e($pm['name']) ?></strong>
+                    </div>
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 700; color: <?= $pm['is_active'] ? '#059669' : '#94a3b8' ?>; cursor: pointer;">
+                      <input type="checkbox" name="is_active" value="1" <?= $pm['is_active'] ? 'checked' : '' ?>>
+                      <?= $pm['is_active'] ? 'Enabled' : 'Disabled' ?>
+                    </label>
+                  </div>
+
+                  <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 3px;">Description / Subtitle</label>
+                    <input type="text" name="description" value="<?= e($pm['description']) ?>" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.82rem; box-sizing: border-box;">
+                  </div>
+
+                  <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #64748b; margin-bottom: 3px;">Payment Instructions / Account Details</label>
+                    <textarea name="instructions" rows="3" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.82rem; box-sizing: border-box;"><?= e($pm['instructions']) ?></textarea>
+                  </div>
+
+                  <button type="submit" class="nut nut--vien" style="width: 100%; padding: 6px 0; font-size: 0.82rem; font-weight: 700;">
+                    Save Configuration
+                  </button>
+                </form>
+              </div>
+            <?php endforeach; ?>
+          </div>
         </div>
 
       <?php elseif ($tabHienTai === 'sellers'): ?>

@@ -6,6 +6,7 @@
  */
 
 require_once __DIR__ . '/inc/config.php';
+require_once __DIR__ . '/inc/thanh-toan.php';
 
 // Authentication and Seller role required
 $u = nguoiDung();
@@ -66,6 +67,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_cap_nhat_don']
         }
     }
     header('Location: chu-sach.php?tab=orders');
+    exit;
+}
+
+// Handle Seller Payment Receipt Verification
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_seller_duyet_tt'])) {
+    $paymentId = filter_var($_POST['payment_id'] ?? '', FILTER_VALIDATE_INT);
+    if ($paymentId) {
+        $stCheck = $db->prepare('SELECT p.order_id FROM payments p JOIN chi_tiet_don ct ON p.order_id = ct.don_hang_id JOIN san_pham sp ON ct.san_pham_id = sp.id WHERE p.payment_id = ? AND sp.chu_sach_id = ?');
+        $stCheck->execute([$paymentId, $chuSachId]);
+        if ($stCheck->fetchColumn()) {
+            duyetThanhToan($paymentId, (int)$chuSachId, 'Receipt verified and approved by Seller: ' . $u['ho_ten']);
+            $_SESSION['flash'] = "Payment #$paymentId has been verified and marked as Paid.";
+        } else {
+            $_SESSION['flash_loi'] = 'Permission denied. This order does not contain your textbooks.';
+        }
+    }
+    header('Location: chu-sach.php?tab=payments');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_seller_tuchoi_tt'])) {
+    $paymentId = filter_var($_POST['payment_id'] ?? '', FILTER_VALIDATE_INT);
+    $reason = trim(chuoi($_POST['rejection_reason'] ?? 'Invalid receipt or mismatched amount.'));
+    if ($paymentId) {
+        $stCheck = $db->prepare('SELECT p.order_id FROM payments p JOIN chi_tiet_don ct ON p.order_id = ct.don_hang_id JOIN san_pham sp ON ct.san_pham_id = sp.id WHERE p.payment_id = ? AND sp.chu_sach_id = ?');
+        $stCheck->execute([$paymentId, $chuSachId]);
+        if ($stCheck->fetchColumn()) {
+            tuChoiThanhToan($paymentId, (int)$chuSachId, $reason);
+            $_SESSION['flash'] = "Payment receipt for #$paymentId was rejected. Customer will be notified to re-upload.";
+        } else {
+            $_SESSION['flash_loi'] = 'Permission denied.';
+        }
+    }
+    header('Location: chu-sach.php?tab=payments');
     exit;
 }
 
@@ -141,6 +176,33 @@ $stTopBooks = $db->prepare(
 );
 $stTopBooks->execute([$chuSachId]);
 $dsTopBooks = $stTopBooks->fetchAll();
+
+// 5. Payment transactions for this seller's books
+$stSellerPayments = $db->prepare('
+    SELECT p.*, dh.tong_tien as don_tong_tien, dh.ngay_tao as order_date, dh.trang_thai as order_status,
+           nd.ho_ten as customer_name, nd.email as customer_email, nd.so_dien_thoai as customer_phone,
+           SUM(ct.so_luong * ct.don_gia) as seller_share
+    FROM payments p
+    JOIN don_hang dh ON p.order_id = dh.id
+    JOIN nguoi_dung nd ON dh.nguoi_dung_id = nd.id
+    JOIN chi_tiet_don ct ON dh.id = ct.don_hang_id
+    JOIN san_pham sp ON ct.san_pham_id = sp.id
+    WHERE sp.chu_sach_id = ?
+    GROUP BY p.payment_id
+    ORDER BY p.payment_id DESC
+');
+$stSellerPayments->execute([$chuSachId]);
+$dsSellerPayments = $stSellerPayments->fetchAll();
+
+$tongThuDaNhan = 0;
+$soGiaoDichVerifying = 0;
+foreach ($dsSellerPayments as $sp) {
+    if ($sp['payment_status'] === 'paid') {
+        $tongThuDaNhan += (int)$sp['seller_share'];
+    } elseif ($sp['payment_status'] === 'verifying') {
+        $soGiaoDichVerifying++;
+    }
+}
 
 $thongBao = $_SESSION['flash'] ?? '';
 $thongBaoLoi = $_SESSION['flash_loi'] ?? '';
@@ -241,6 +303,14 @@ require __DIR__ . '/inc/header.php';
         </a>
         <a href="chu-sach.php?tab=orders" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.93rem; color: <?= $tabHienTai === 'orders' ? '#ea580c' : '#334155' ?>; background: <?= $tabHienTai === 'orders' ? '#fff7ed' : 'transparent' ?>;">
           <span>📦</span> Orders &amp; Fulfillment (<?= count($dsDonHang) ?>)
+        </a>
+        <a href="chu-sach.php?tab=payments" style="display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.93rem; color: <?= $tabHienTai === 'payments' ? '#ea580c' : '#334155' ?>; background: <?= $tabHienTai === 'payments' ? '#fff7ed' : 'transparent' ?>;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span>💳</span> Payments &amp; Receipts
+          </div>
+          <?php if ($soGiaoDichVerifying > 0): ?>
+            <span style="background: #dc2626; color: #ffffff; padding: 2px 7px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;"><?= $soGiaoDichVerifying ?></span>
+          <?php endif; ?>
         </a>
         <a href="chu-sach.php?tab=sales" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.93rem; color: <?= $tabHienTai === 'sales' ? '#ea580c' : '#334155' ?>; background: <?= $tabHienTai === 'sales' ? '#fff7ed' : 'transparent' ?>;">
           <span>📈</span> Sales &amp; Best Sellers
@@ -565,6 +635,144 @@ require __DIR__ . '/inc/header.php';
             <?php endforeach; ?>
           </tbody>
         </table>
+
+      <?php elseif ($tabHienTai === 'payments'): ?>
+        <!-- TAB: SELLER PAYMENTS & RECEIPT VERIFICATION -->
+        <h2 style="margin: 0 0 8px 0; font-size: 1.35rem; color: #0f172a; font-weight: 800;">
+          Payment Transactions &amp; Receipt Verification
+        </h2>
+        <p style="color: #64748b; font-size: 0.92rem; margin: 0 0 20px 0;">
+          Review payments for orders containing your textbooks, verify customer transfer receipts, and monitor earnings.
+        </p>
+
+        <!-- KPI Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 25px;">
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Sales Volume</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #1e3b6d; margin-top: 4px;">
+              <?= vnd((int)$thongKeBan['tong_doanh_thu']) ?>
+            </div>
+            <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 2px;">All orders for your books</div>
+          </div>
+
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 18px;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: #166534; text-transform: uppercase;">Confirmed Paid Revenue</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #059669; margin-top: 4px;">
+              <?= vnd($tongThuDaNhan) ?>
+            </div>
+            <div style="font-size: 0.8rem; color: #15803d; margin-top: 2px;">Settled transactions</div>
+          </div>
+
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 18px;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: #1e40af; text-transform: uppercase;">Receipts Awaiting Check</div>
+            <div style="font-size: 1.6rem; font-weight: 800; color: #2563eb; margin-top: 4px;">
+              <?= $soGiaoDichVerifying ?>
+            </div>
+            <div style="font-size: 0.8rem; color: #3b82f6; margin-top: 2px;">Transfers to verify</div>
+          </div>
+        </div>
+
+        <?php if (empty($dsSellerPayments)): ?>
+          <div style="text-align: center; padding: 40px 20px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            <p style="font-size: 2.5rem; margin: 0 0 10px 0;">💳</p>
+            <h3>No payment transactions found</h3>
+            <p style="color: #64748b;">Transactions for your textbook orders will appear here.</p>
+          </div>
+        <?php else: ?>
+          <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left;">
+              <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+                  <th style="padding: 10px 12px;">Transaction Ref</th>
+                  <th style="padding: 10px 12px; width: 70px;">Order</th>
+                  <th style="padding: 10px 12px;">Customer</th>
+                  <th style="padding: 10px 12px; text-align: right;">Your Share</th>
+                  <th style="padding: 10px 12px;">Method</th>
+                  <th style="padding: 10px 12px;">Status</th>
+                  <th style="padding: 10px 12px;">Receipt Proof</th>
+                  <th style="padding: 10px 12px; text-align: center; width: 170px;">Verification Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($dsSellerPayments as $sp): ?>
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 10px 12px;">
+                      <code style="font-weight: 700; color: #1e40af;"><?= e($sp['transaction_id'] ?: 'TXN-BN-' . $sp['payment_id']) ?></code>
+                      <div style="color: #64748b; font-size: 0.78rem; margin-top: 2px;">
+                        <?= $sp['payment_date'] ? date('d/m/Y H:i', strtotime($sp['payment_date'])) : date('d/m/Y H:i', strtotime($sp['created_at'])) ?>
+                      </div>
+                    </td>
+                    <td style="padding: 10px 12px; font-weight: 700;">
+                      <a href="don-hang.php?id=<?= $sp['order_id'] ?>" style="color: #0284c7; text-decoration: none;">
+                        #<?= $sp['order_id'] ?>
+                      </a>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <strong><?= e($sp['customer_name']) ?></strong><br>
+                      <small style="color: #64748b;">📞 <?= e($sp['customer_phone']) ?></small>
+                    </td>
+                    <td style="padding: 10px 12px; text-align: right;">
+                      <strong style="color: #059669; font-size: 0.95rem;"><?= vnd((int)$sp['seller_share']) ?></strong><br>
+                      <small style="color: #64748b;">Total: <?= vnd($sp['don_tong_tien']) ?></small>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <?= nhanPhuongThucTT($sp['payment_method']) ?>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <?= huyHieuTrangThaiTT($sp['payment_status']) ?>
+                      <?php if (!empty($sp['admin_note'])): ?>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px; max-width: 140px;">
+                          <?= e($sp['admin_note']) ?>
+                        </div>
+                      <?php endif; ?>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <?php if (!empty($sp['payment_proof'])): ?>
+                        <a href="uploads/receipts/<?= e($sp['payment_proof']) ?>" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; color: #1d4ed8; text-decoration: underline; font-weight: 600; font-size: 0.82rem;">
+                          📄 View Receipt
+                        </a>
+                      <?php else: ?>
+                        <span style="color: #94a3b8; font-size: 0.8rem;">No upload</span>
+                      <?php endif; ?>
+                    </td>
+                    <td style="padding: 10px 12px; text-align: center;">
+                      <?php if ($sp['payment_status'] === 'verifying' || ($sp['payment_status'] === 'pending' && !empty($sp['payment_proof']))): ?>
+                        <div style="display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;">
+                          <!-- Approve Form -->
+                          <form method="POST" action="chu-sach.php?tab=payments" style="margin: 0;" onsubmit="return confirm('Approve bank transfer for Order #<?= $sp['order_id'] ?>?');">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action_seller_duyet_tt" value="1">
+                            <input type="hidden" name="payment_id" value="<?= $sp['payment_id'] ?>">
+                            <button type="submit" class="nut nut--chinh" style="padding: 4px 8px; font-size: 0.78rem; background: #059669; border-color: #059669;">
+                              ✓ Approve
+                            </button>
+                          </form>
+
+                          <!-- Reject Form -->
+                          <form method="POST" action="chu-sach.php?tab=payments" style="margin: 0;" onsubmit="var r = prompt('Reason for rejecting receipt:'); if(!r) return false; this.rejection_reason.value = r; return true;">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action_seller_tuchoi_tt" value="1">
+                            <input type="hidden" name="payment_id" value="<?= $sp['payment_id'] ?>">
+                            <input type="hidden" name="rejection_reason" value="">
+                            <button type="submit" class="nut" style="padding: 4px 8px; font-size: 0.78rem; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;">
+                              ✗ Reject
+                            </button>
+                          </form>
+                        </div>
+                      <?php elseif ($sp['payment_status'] === 'paid'): ?>
+                        <a href="thanh-toan.php?action=receipt&order_id=<?= $sp['order_id'] ?>" class="nut nut--vien" style="padding: 4px 8px; font-size: 0.78rem;">
+                          🧾 Receipt
+                        </a>
+                      <?php else: ?>
+                        <span style="color: #94a3b8; font-size: 0.8rem;">Waiting customer</span>
+                      <?php endif; ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php endif; ?>
 
       <?php elseif ($tabHienTai === 'profile'): ?>
         <!-- TAB 5: SELLER STORE PROFILE -->

@@ -64,7 +64,7 @@ function luuDonHang(int $nguoiDungId, array $gio, string $diaChi, string $soDien
         }
 
         // 3. Insert order record (don_hang)
-        $trangThaiTT = ($phuongThucTT === 'COD') ? 'chua_thanh_toan' : 'da_thanh_toan';
+        $trangThaiTT = 'chua_thanh_toan';
         $stDonHang = $db->prepare('INSERT INTO don_hang (nguoi_dung_id, tong_tien, dia_chi, so_dien_thoai, ghi_chu, phuong_thuc_tt, trang_thai_tt) VALUES (?, ?, ?, ?, ?, ?, ?)');
         $stDonHang->execute([$nguoiDungId, $tongTien, $diaChi, $soDienThoai, $ghiChu, $phuongThucTT, $trangThaiTT]);
         $donHangId = (int)$db->lastInsertId();
@@ -78,17 +78,24 @@ function luuDonHang(int $nguoiDungId, array $gio, string $diaChi, string $soDien
             $stChiTiet->execute([$donHangId, $spId, $sl, $donGia]);
         }
 
-        // 5. Record payment in thanh_toan table
-        $maGiaoDich = 'TXN-' . strtoupper(substr(md5(uniqid((string)mt_rand(), true)), 0, 10));
-        $stPayment = $db->prepare('INSERT INTO thanh_toan (don_hang_id, phuong_thuc, so_tien, trang_thai, ma_giao_dich, ghi_chu) VALUES (?, ?, ?, ?, ?, ?)');
+        // 5. Record payment in payments table
+        $maGiaoDich = 'TXN-BN-' . date('Ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
+        $stPayment = $db->prepare('INSERT INTO payments (order_id, user_id, payment_method, transaction_id, amount, payment_status, created_at) VALUES (?, ?, ?, ?, ?, "pending", NOW())');
         $stPayment->execute([
             $donHangId,
+            $nguoiDungId,
             $phuongThucTT,
-            $tongTien,
-            ($phuongThucTT === 'COD' ? 'pending' : 'completed'),
             $maGiaoDich,
-            "Payment for order #$donHangId via $phuongThucTT"
+            $tongTien
         ]);
+
+        // Keep legacy thanh_toan in sync if table exists
+        try {
+            $db->prepare('INSERT INTO thanh_toan (don_hang_id, phuong_thuc, so_tien, trang_thai, ma_giao_dich) VALUES (?, ?, ?, "dang_cho", ?)')
+               ->execute([$donHangId, $phuongThucTT, $tongTien, $maGiaoDich]);
+        } catch (Throwable) {
+            // Ignore legacy table errors
+        }
 
         // 6. Commit transaction
         $db->commit();
@@ -148,7 +155,10 @@ function huyDonHang(int $donHangId, int $nguoiDungId, bool $laAdmin = false): bo
         $stUpdate->execute([$donHangId]);
 
         // Update payment status if exists
-        $db->prepare('UPDATE thanh_toan SET trang_thai = "refunded" WHERE don_hang_id = ?')->execute([$donHangId]);
+        $db->prepare('UPDATE payments SET payment_status = "refunded", admin_note = "Order cancelled" WHERE order_id = ?')->execute([$donHangId]);
+        try {
+            $db->prepare('UPDATE thanh_toan SET trang_thai = "refunded" WHERE don_hang_id = ?')->execute([$donHangId]);
+        } catch (Throwable) {}
 
         $db->commit();
         return true;

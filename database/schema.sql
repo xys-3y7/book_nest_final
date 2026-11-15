@@ -179,4 +179,39 @@ CREATE TABLE gio_hang (
   CONSTRAINT fk_giohang_sanpham FOREIGN KEY (san_pham_id) REFERENCES san_pham(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 12. BẢNG PHƯƠNG THỨC THANH TOÁN (payment_methods)
+CREATE TABLE IF NOT EXISTS payment_methods (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  instructions TEXT,
+  icon VARCHAR(50) DEFAULT '💳',
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 13. BẢNG GIAO DỊCH THANH TOÁN (payments) - MODULE 10 PAYMENT SYSTEM
+CREATE TABLE IF NOT EXISTS payments (
+  payment_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  payment_method VARCHAR(50) NOT NULL,
+  transaction_id VARCHAR(100) NULL,
+  amount INT UNSIGNED NOT NULL,
+  payment_status ENUM('pending', 'paid', 'failed', 'verifying', 'rejected', 'refunded') NOT NULL DEFAULT 'pending',
+  payment_proof VARCHAR(255) NULL,
+  payment_date DATETIME NULL,
+  admin_note TEXT NULL,
+  verified_by INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_order (order_id),
+  INDEX idx_user (user_id),
+  INDEX idx_status (payment_status),
+  INDEX idx_txn (transaction_id),
+  CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES don_hang(id) ON DELETE CASCADE,
+  CONSTRAINT fk_payments_user FOREIGN KEY (user_id) REFERENCES nguoi_dung(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

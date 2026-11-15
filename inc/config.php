@@ -71,7 +71,7 @@ if (time() - ($_SESSION['hoat_dong'] ?? time()) > 30 * 60) {
 $_SESSION['hoat_dong'] = time();
 
 // 8. Kiểm tra mã bảo vệ CSRF tập trung cho toàn bộ request POST (Form và AJAX/fetch)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrfHopLe()) {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && !csrfHopLe()) {
     ghiLogBaoMat('csrf_sai', ['trang' => $_SERVER['REQUEST_URI'] ?? '/']);
     $loi = 'Trang đã hết hạn, hãy tải lại trang rồi gửi lại';
     if (str_contains($_SERVER['CONTENT_TYPE'] ?? '', 'json') || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'json')) {

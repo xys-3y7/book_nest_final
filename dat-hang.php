@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/inc/config.php';
 require_once __DIR__ . '/inc/don-hang.php';
+require_once __DIR__ . '/inc/thanh-toan.php';
 
 // Authentication required
 yeuCauDangNhap();
@@ -27,11 +28,14 @@ if ($soMon === 0) {
     exit;
 }
 
+$dsPhuongThuc = layDanhSachPhuongThuc(true);
+$cacMaHopLe = array_column($dsPhuongThuc, 'code');
+
 $du = [
     'dia_chi'        => $u['dia_chi'] ?? '',
     'so_dien_thoai'  => $u['so_dien_thoai'] ?? '',
     'ghi_chu'        => '',
-    'phuong_thuc_tt' => 'COD',
+    'phuong_thuc_tt' => $cacMaHopLe[0] ?? 'cod',
 ];
 $loi = [];
 
@@ -39,11 +43,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $du['dia_chi']        = trim(chuoi($_POST['dia_chi'] ?? ''));
     $du['so_dien_thoai']  = trim(chuoi($_POST['so_dien_thoai'] ?? ''));
     $du['ghi_chu']        = trim(chuoi($_POST['ghi_chu'] ?? ''));
-    $du['phuong_thuc_tt'] = trim(chuoi($_POST['phuong_thuc_tt'] ?? 'COD'));
+    $du['phuong_thuc_tt'] = trim(chuoi($_POST['phuong_thuc_tt'] ?? 'cod'));
 
-    $hopLeTT = ['COD', 'Bank Transfer', 'MoMo'];
-    if (!in_array($du['phuong_thuc_tt'], $hopLeTT, true)) {
-        $du['phuong_thuc_tt'] = 'COD';
+    if (!in_array($du['phuong_thuc_tt'], $cacMaHopLe, true)) {
+        $du['phuong_thuc_tt'] = 'cod';
     }
 
     if ($du['dia_chi'] === '' || mb_strlen($du['dia_chi']) < 5) {
@@ -79,8 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $gio->xoaHet();
 
-            $_SESSION['flash'] = "Congratulations! Your order #$donHangId has been placed successfully.";
-            header("Location: don-hang.php?id=$donHangId");
+            $_SESSION['flash'] = "Congratulations! Your order #$donHangId has been placed successfully. Please review your payment details below.";
+            header("Location: thanh-toan.php?order_id=$donHangId");
             exit;
 
         } catch (RuntimeException $e) {
@@ -158,29 +161,21 @@ require __DIR__ . '/inc/header.php';
           </label>
           
           <div style="display: flex; flex-direction: column; gap: 10px;">
-            <label style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1.5px solid <?= $du['phuong_thuc_tt'] === 'COD' ? '#10b981' : '#e2e8f0' ?>; background: <?= $du['phuong_thuc_tt'] === 'COD' ? '#f0fdf4' : '#ffffff' ?>; border-radius: 8px; cursor: pointer;">
-              <input type="radio" name="phuong_thuc_tt" value="COD" <?= $du['phuong_thuc_tt'] === 'COD' ? 'checked' : '' ?> onchange="this.form.querySelectorAll('input[name=phuong_thuc_tt]').forEach(r => { r.closest('label').style.borderColor = r.checked ? '#10b981' : '#e2e8f0'; r.closest('label').style.background = r.checked ? '#f0fdf4' : '#ffffff'; });">
-              <div>
-                <strong>💵 Cash on Delivery (COD)</strong>
-                <div style="font-size: 0.82rem; color: #64748b;">Pay upon receiving textbooks at UED campus or dormitory</div>
-              </div>
-            </label>
-
-            <label style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1.5px solid <?= $du['phuong_thuc_tt'] === 'Bank Transfer' ? '#10b981' : '#e2e8f0' ?>; background: <?= $du['phuong_thuc_tt'] === 'Bank Transfer' ? '#f0fdf4' : '#ffffff' ?>; border-radius: 8px; cursor: pointer;">
-              <input type="radio" name="phuong_thuc_tt" value="Bank Transfer" <?= $du['phuong_thuc_tt'] === 'Bank Transfer' ? 'checked' : '' ?> onchange="this.form.querySelectorAll('input[name=phuong_thuc_tt]').forEach(r => { r.closest('label').style.borderColor = r.checked ? '#10b981' : '#e2e8f0'; r.closest('label').style.background = r.checked ? '#f0fdf4' : '#ffffff'; });">
-              <div>
-                <strong>🏦 Bank Transfer / VietQR</strong>
-                <div style="font-size: 0.82rem; color: #64748b;">Fast transfer via Vietcombank/MB Bank (Account: 02363841323)</div>
-              </div>
-            </label>
-
-            <label style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1.5px solid <?= $du['phuong_thuc_tt'] === 'MoMo' ? '#10b981' : '#e2e8f0' ?>; background: <?= $du['phuong_thuc_tt'] === 'MoMo' ? '#f0fdf4' : '#ffffff' ?>; border-radius: 8px; cursor: pointer;">
-              <input type="radio" name="phuong_thuc_tt" value="MoMo" <?= $du['phuong_thuc_tt'] === 'MoMo' ? 'checked' : '' ?> onchange="this.form.querySelectorAll('input[name=phuong_thuc_tt]').forEach(r => { r.closest('label').style.borderColor = r.checked ? '#10b981' : '#e2e8f0'; r.closest('label').style.background = r.checked ? '#f0fdf4' : '#ffffff'; });">
-              <div>
-                <strong>📱 MoMo E-Wallet</strong>
-                <div style="font-size: 0.82rem; color: #64748b;">Scan QR code with MoMo app for instant student payment</div>
-              </div>
-            </label>
+            <?php foreach ($dsPhuongThuc as $pt): 
+              $isSel = ($du['phuong_thuc_tt'] === $pt['code']);
+            ?>
+              <label style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1.5px solid <?= $isSel ? '#10b981' : '#e2e8f0' ?>; background: <?= $isSel ? '#f0fdf4' : '#ffffff' ?>; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                <input type="radio" name="phuong_thuc_tt" value="<?= e($pt['code']) ?>" <?= $isSel ? 'checked' : '' ?> style="margin-top: 3px;" onchange="this.form.querySelectorAll('input[name=phuong_thuc_tt]').forEach(r => { r.closest('label').style.borderColor = r.checked ? '#10b981' : '#e2e8f0'; r.closest('label').style.background = r.checked ? '#f0fdf4' : '#ffffff'; });">
+                <div>
+                  <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">
+                    <?= e($pt['icon']) ?> <?= e($pt['name']) ?>
+                  </div>
+                  <div style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">
+                    <?= e($pt['description']) ?>
+                  </div>
+                </div>
+              </label>
+            <?php endforeach; ?>
           </div>
         </div>
 
