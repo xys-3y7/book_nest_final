@@ -16,10 +16,49 @@ class GioHang
         if (!isset($_SESSION['gio']) || !is_array($_SESSION['gio'])) {
             $_SESSION['gio'] = [];
         }
+
+        // Tự động nạp giỏ hàng từ CSDL MySQL nếu người dùng đã đăng nhập và phiên hiện tại rỗng
+        if (function_exists('nguoiDung') && function_exists('db')) {
+            $u = nguoiDung();
+            if ($u && empty($_SESSION['gio'])) {
+                try {
+                    $st = db()->prepare('SELECT san_pham_id, so_luong FROM gio_hang WHERE nguoi_dung_id = ?');
+                    $st->execute([(int)$u['id']]);
+                    $rows = $st->fetchAll(\PDO::FETCH_KEY_PAIR);
+                    if (!empty($rows)) {
+                        $_SESSION['gio'] = array_map('intval', $rows);
+                    }
+                } catch (\Throwable $e) {}
+            }
+        }
     }
 
     /**
-     * Thêm sản phẩm vào giỏ hàng
+     * Đồng bộ giỏ hàng với CSDL MySQL khi người dùng đã đăng nhập
+     */
+    protected function dongBoCsdl(?int $spId = null, ?int $soLuong = null, string $thaoTac = 'set'): void
+    {
+        if (function_exists('nguoiDung') && function_exists('db')) {
+            $u = nguoiDung();
+            if ($u) {
+                try {
+                    $db = db();
+                    $uid = (int)$u['id'];
+                    if ($thaoTac === 'xoa_het') {
+                        $db->prepare('DELETE FROM gio_hang WHERE nguoi_dung_id = ?')->execute([$uid]);
+                    } elseif ($thaoTac === 'xoa' && $spId) {
+                        $db->prepare('DELETE FROM gio_hang WHERE nguoi_dung_id = ? AND san_pham_id = ?')->execute([$uid, $spId]);
+                    } elseif ($spId && $soLuong !== null && $soLuong > 0) {
+                        $st = $db->prepare('INSERT INTO gio_hang (nguoi_dung_id, san_pham_id, so_luong) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE so_luong = VALUES(so_luong)');
+                        $st->execute([$uid, $spId, $soLuong]);
+                    }
+                } catch (\Throwable $e) {}
+            }
+        }
+    }
+
+    /**
+     * Thêm sản phẩm vào giỏ hàng (Đồng bộ CSDL MySQL)
      */
     public function them(int $id, int $soLuong, KhoSanPham $kho): bool
     {
@@ -28,21 +67,25 @@ class GioHang
             return false;
         }
 
-        // Kiểm tra ID sản phẩm có thực sự tồn tại trong CSDL không
+        // Kiểm tra ID sản phẩm có thực sự tồn tại và còn hàng trong CSDL không
         $sp = $kho->timTheoId($id);
-        if ($sp === null) {
+        if ($sp === null || $sp->tonKho <= 0) {
             return false;
         }
 
         $hienCo = $_SESSION['gio'][$id] ?? 0;
-        $tongMoi = min(99, $hienCo + $soLuong);
+        $gioiHanKho = min(99, (int)$sp->tonKho);
+        $tongMoi = min($gioiHanKho, $hienCo + $soLuong);
         $_SESSION['gio'][$id] = $tongMoi;
+
+        // Lưu vào CSDL MySQL
+        $this->dongBoCsdl($id, $tongMoi, 'set');
 
         return true;
     }
 
     /**
-     * Cập nhật số lượng của một sản phẩm trong giỏ
+     * Cập nhật số lượng của một sản phẩm trong giỏ (Đồng bộ CSDL MySQL)
      */
     public function capNhat(int $id, int $soLuong): bool
     {
@@ -57,6 +100,7 @@ class GioHang
 
         if (isset($_SESSION['gio'][$id])) {
             $_SESSION['gio'][$id] = $soLuong;
+            $this->dongBoCsdl($id, $soLuong, 'set');
             return true;
         }
 
@@ -64,19 +108,21 @@ class GioHang
     }
 
     /**
-     * Xóa một sản phẩm khỏi giỏ
+     * Xóa một sản phẩm khỏi giỏ (Đồng bộ CSDL MySQL)
      */
     public function xoa(int $id): void
     {
         unset($_SESSION['gio'][$id]);
+        $this->dongBoCsdl($id, null, 'xoa');
     }
 
     /**
-     * Xóa toàn bộ sản phẩm trong giỏ
+     * Xóa toàn bộ sản phẩm trong giỏ (Đồng bộ CSDL MySQL)
      */
     public function xoaHet(): void
     {
         $_SESSION['gio'] = [];
+        $this->dongBoCsdl(null, null, 'xoa_het');
     }
 
     /**

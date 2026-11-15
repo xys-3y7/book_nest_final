@@ -1,13 +1,14 @@
 <?php
 /**
- * quan-tri.php - Bảng điều khiển Quản trị viên: Quản trị sách, Đơn hàng và Liên hệ
- * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
- * Chức năng 3 (Bảng 1): yeuCauQuyen('quan_tri'), danh sách phân trang, CRUD, xem liên hệ
+ * quan-tri.php - Administrator Dashboard: Full Platform Control
+ * Team 12 - Class 24CNTT3 - University of Science and Education, Danang
+ * Admin Role: Dashboard, Users, Books, Categories, Orders, Sellers, Reports, Settings
  */
 
 require_once __DIR__ . '/inc/config.php';
+require_once __DIR__ . '/inc/don-hang.php';
 
-// Yêu cầu quyền Quản trị viên (quan_tri)
+// Requires 'quan_tri' role
 yeuCauQuyen('quan_tri');
 
 use App\Data\KhoSanPham;
@@ -16,62 +17,233 @@ use App\Data\KhoLienHe;
 $db = db();
 $khoSp = new KhoSanPham($db);
 $khoLh = new KhoLienHe($db);
+$u = nguoiDung();
 
-// Xử lý cập nhật trạng thái đơn hàng nếu có POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cap_nhat_don'])) {
+// -------------------------------------------------------------
+// POST HANDLERS FOR ADMIN OPERATIONS
+// -------------------------------------------------------------
+
+// 1. User Management Actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_them_user'])) {
+    $hoTen = trim(chuoi($_POST['ho_ten'] ?? ''));
+    $email = trim(chuoi($_POST['email'] ?? ''));
+    $pass = $_POST['mat_khau'] ?? '';
+    $role = chuoi($_POST['vai_tro'] ?? 'khach_hang');
+
+    // Strict Single Admin Policy: Only 1 Super Administrator account is permitted
+    if ($role === 'quan_tri') {
+        $_SESSION['flash_loi'] = 'Policy restriction: BookNest strictly permits only 1 Super Administrator account. New accounts must be Customer or Seller.';
+        header('Location: quan-tri.php?tab=users');
+        exit;
+    }
+    $hopLeRole = ['khach_hang', 'chu_sach'];
+
+    if ($hoTen !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) && mb_strlen($pass) >= 6 && in_array($role, $hopLeRole, true)) {
+        try {
+            $hash = password_hash($pass, PASSWORD_DEFAULT);
+            $st = $db->prepare('INSERT INTO nguoi_dung (ho_ten, email, mat_khau, vai_tro, kich_hoat) VALUES (?, ?, ?, ?, 1)');
+            $st->execute([$hoTen, $email, $hash, $role]);
+            $_SESSION['flash'] = "User '$email' successfully created with role '$role'.";
+        } catch (PDOException $e) {
+            $_SESSION['flash_loi'] = "Cannot create user: Email already registered.";
+        }
+    } else {
+        $_SESSION['flash_loi'] = "Invalid user input (Name, valid email, and min 6-char password required).";
+    }
+    header('Location: quan-tri.php?tab=users');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_kich_hoat_user'])) {
+    $targetUid = filter_var($_POST['user_id'] ?? '', FILTER_VALIDATE_INT);
+    $kichHoatMoi = (int)($_POST['trang_thai_moi'] ?? 1);
+
+    if ($targetUid && $targetUid !== (int)$u['id']) {
+        $st = $db->prepare('UPDATE nguoi_dung SET kich_hoat = ? WHERE id = ?');
+        $st->execute([$kichHoatMoi, $targetUid]);
+        $_SESSION['flash'] = "User #$targetUid status updated to " . ($kichHoatMoi === 1 ? 'Active' : 'Suspended') . ".";
+    }
+    header('Location: quan-tri.php?tab=users');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_doi_vai_tro'])) {
+    $targetUid = filter_var($_POST['user_id'] ?? '', FILTER_VALIDATE_INT);
+    $vaiTroMoi = trim(chuoi($_POST['vai_tro'] ?? ''));
+
+    if ($targetUid) {
+        $stCheck = $db->prepare('SELECT id, vai_tro FROM nguoi_dung WHERE id = ?');
+        $stCheck->execute([$targetUid]);
+        $targetUser = $stCheck->fetch();
+
+        if ($targetUser) {
+            if ($targetUser['vai_tro'] === 'quan_tri' || $targetUid === (int)$u['id']) {
+                $_SESSION['flash_loi'] = 'Policy restriction: The Super Administrator account role cannot be changed.';
+            } elseif ($vaiTroMoi === 'quan_tri') {
+                $_SESSION['flash_loi'] = 'Policy restriction: Only 1 Super Administrator account is permitted. Cannot promote accounts to Admin.';
+            } elseif (in_array($vaiTroMoi, ['khach_hang', 'chu_sach'], true)) {
+                $st = $db->prepare('UPDATE nguoi_dung SET vai_tro = ? WHERE id = ?');
+                $st->execute([$vaiTroMoi, $targetUid]);
+                $_SESSION['flash'] = "User #$targetUid role updated to '$vaiTroMoi'.";
+            }
+        }
+    }
+    header('Location: quan-tri.php?tab=users');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_xoa_user'])) {
+    $targetUid = filter_var($_POST['user_id'] ?? '', FILTER_VALIDATE_INT);
+    if ($targetUid) {
+        $stCheck = $db->prepare('SELECT vai_tro FROM nguoi_dung WHERE id = ?');
+        $stCheck->execute([$targetUid]);
+        $targetRole = $stCheck->fetchColumn();
+
+        if ($targetRole === 'quan_tri' || $targetUid === (int)$u['id']) {
+            $_SESSION['flash_loi'] = 'Policy restriction: Cannot delete the primary Super Administrator account.';
+        } else {
+            // Remove user data references
+            $db->prepare('DELETE FROM gio_hang WHERE nguoi_dung_id = ?')->execute([$targetUid]);
+            $db->prepare('DELETE FROM yeu_thich WHERE nguoi_dung_id = ?')->execute([$targetUid]);
+            $db->prepare('DELETE FROM danh_gia WHERE nguoi_dung_id = ?')->execute([$targetUid]);
+            $db->prepare('DELETE FROM so_dia_chi WHERE nguoi_dung_id = ?')->execute([$targetUid]);
+            $st = $db->prepare('DELETE FROM nguoi_dung WHERE id = ?');
+            $st->execute([$targetUid]);
+            $_SESSION['flash'] = "User account #$targetUid has been deleted.";
+        }
+    }
+    header('Location: quan-tri.php?tab=users');
+    exit;
+}
+
+// 2. Book Supervision & Approval Actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_duyet_sach'])) {
+    $bookId = filter_var($_POST['book_id'] ?? '', FILTER_VALIDATE_INT);
+    $status = trim(chuoi($_POST['status'] ?? 'approved'));
+    if ($bookId && in_array($status, ['approved', 'rejected', 'pending'], true)) {
+        $st = $db->prepare('UPDATE san_pham SET trang_thai_duyet = ? WHERE id = ?');
+        $st->execute([$status, $bookId]);
+        $_SESSION['flash'] = "Book #$bookId status set to '$status'.";
+    }
+    header('Location: quan-tri.php?tab=books');
+    exit;
+}
+
+// 3. Category Management Actions (Add, Edit, Delete)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_them_danh_muc'])) {
+    $tenDm = trim(chuoi($_POST['ten_danh_muc'] ?? ''));
+    $moTaDm = trim(chuoi($_POST['mo_ta'] ?? ''));
+    if ($tenDm !== '') {
+        $slug = taoSlugCategory($tenDm, $db);
+        $st = $db->prepare('INSERT INTO danh_muc (ten, slug, mo_ta) VALUES (?, ?, ?)');
+        $st->execute([$tenDm, $slug, $moTaDm]);
+        $_SESSION['flash'] = "✓ Category '$tenDm' added successfully (Slug: $slug).";
+    } else {
+        $_SESSION['flash_loi'] = "Category name cannot be empty.";
+    }
+    header('Location: quan-tri.php?tab=books#categories');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_sua_danh_muc'])) {
+    $dmId = filter_var($_POST['danh_muc_id'] ?? '', FILTER_VALIDATE_INT);
+    $tenMoi = trim(chuoi($_POST['ten_danh_muc'] ?? ''));
+    $moTaMoi = trim(chuoi($_POST['mo_ta'] ?? ''));
+    if ($dmId && $tenMoi !== '') {
+        $st = $db->prepare('UPDATE danh_muc SET ten = ?, mo_ta = ? WHERE id = ?');
+        $st->execute([$tenMoi, $moTaMoi, $dmId]);
+        $_SESSION['flash'] = "✓ Category #$dmId updated successfully.";
+    }
+    header('Location: quan-tri.php?tab=books#categories');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_xoa_danh_muc'])) {
+    $dmId = filter_var($_POST['danh_muc_id'] ?? '', FILTER_VALIDATE_INT);
+    if ($dmId) {
+        $stCheck = $db->prepare('SELECT COUNT(*) FROM san_pham WHERE danh_muc_id = ?');
+        $stCheck->execute([$dmId]);
+        if ((int)$stCheck->fetchColumn() > 0) {
+            $_SESSION['flash_loi'] = "Cannot delete category: Textbooks currently belong to this category.";
+        } else {
+            $db->prepare('DELETE FROM danh_muc WHERE id = ?')->execute([$dmId]);
+            $_SESSION['flash'] = "✓ Category #$dmId deleted successfully.";
+        }
+    }
+    header('Location: quan-tri.php?tab=books#categories');
+    exit;
+}
+
+// 4. Order Management Actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_cap_nhat_don_admin'])) {
     $donId = filter_var($_POST['don_id'] ?? '', FILTER_VALIDATE_INT);
-    $trangThaiMoi = trim($_POST['trang_thai'] ?? '');
+    $trangThaiMoi = trim(chuoi($_POST['trang_thai'] ?? ''));
     $hopLe = ['cho_xu_ly', 'dang_giao', 'da_giao', 'da_huy'];
 
     if ($donId && in_array($trangThaiMoi, $hopLe, true)) {
-        $st = $db->prepare('UPDATE don_hang SET trang_thai = ? WHERE id = ?');
-        $st->execute([$trangThaiMoi, $donId]);
-        $_SESSION['flash'] = "Đã cập nhật trạng thái đơn hàng #$donId thành công!";
+        if ($trangThaiMoi === 'da_huy') {
+            try {
+                huyDonHang($donId, 0, true);
+                $_SESSION['flash'] = "Order #$donId cancelled and inventory restored.";
+            } catch (Throwable $e) {
+                $_SESSION['flash_loi'] = $e->getMessage();
+            }
+        } else {
+            $st = $db->prepare('UPDATE don_hang SET trang_thai = ? WHERE id = ?');
+            $st->execute([$trangThaiMoi, $donId]);
+            if ($trangThaiMoi === 'da_giao') {
+                $db->prepare('UPDATE don_hang SET trang_thai_tt = "da_thanh_toan" WHERE id = ?')->execute([$donId]);
+                $db->prepare('UPDATE thanh_toan SET trang_thai = "completed" WHERE don_hang_id = ?')->execute([$donId]);
+            }
+            $_SESSION['flash'] = "Order status #$donId updated to '$trangThaiMoi'.";
+        }
     }
-    header('Location: quan-tri.php');
+    header('Location: quan-tri.php?tab=orders');
     exit;
 }
 
-// Xử lý đổi vai trò người dùng (Admin quản lý người dùng & chủ sách)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['doi_vai_tro'])) {
-    $uid = filter_var($_POST['user_id'] ?? '', FILTER_VALIDATE_INT);
-    $vaiTroMoi = trim($_POST['vai_tro'] ?? '');
-    $hopLe = ['khach_hang', 'chu_sach', 'quan_tri'];
-
-    if ($uid && in_array($vaiTroMoi, $hopLe, true)) {
-        $st = $db->prepare('UPDATE nguoi_dung SET vai_tro = ? WHERE id = ?');
-        $st->execute([$vaiTroMoi, $uid]);
-        $_SESSION['flash'] = "Đã cập nhật vai trò người dùng #$uid thành công!";
+// 5. Seller Management Actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_duyet_seller'])) {
+    $sellerId = filter_var($_POST['seller_id'] ?? '', FILTER_VALIDATE_INT);
+    $sellerStatus = trim(chuoi($_POST['seller_status'] ?? 'active'));
+    if ($sellerId && in_array($sellerStatus, ['active', 'pending', 'rejected', 'suspended'], true)) {
+        $st = $db->prepare('UPDATE nguoi_dung SET trang_thai_seller = ? WHERE id = ?');
+        $st->execute([$sellerStatus, $sellerId]);
+        $_SESSION['flash'] = "Seller #$sellerId status updated to '$sellerStatus'.";
     }
-    header('Location: quan-tri.php#nguoi-dung');
+    header('Location: quan-tri.php?tab=sellers');
     exit;
 }
 
-// Phân trang danh sách sách quản trị
-$trangSp = filter_var($_GET['trang'] ?? 1, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'default' => 1]]);
-$moiTrang = 10;
-$tongSp = $khoSp->dem([]);
-$soTrangSp = max(1, (int) ceil($tongSp / $moiTrang));
-$trangSp = min($trangSp, $soTrangSp);
-$dsSach = $khoSp->trang([], 'moi', $moiTrang, ($trangSp - 1) * $moiTrang);
+// 6. System Settings Actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_luu_cai_dat'])) {
+    $keys = ['site_name', 'hotline', 'email_lien_he', 'dia_chi', 'banner_thong_bao', 'khuyen_mai_active'];
+    $stSet = $db->prepare('INSERT INTO he_thong_cai_dat (khoa, gia_tri) VALUES (?, ?) ON DUPLICATE KEY UPDATE gia_tri = VALUES(gia_tri)');
+    foreach ($keys as $k) {
+        $v = trim(chuoi($_POST[$k] ?? ''));
+        $stSet->execute([$k, $v]);
+    }
+    $_SESSION['flash'] = 'Platform system settings updated successfully!';
+    header('Location: quan-tri.php?tab=settings');
+    exit;
+}
 
-// Đọc danh sách liên hệ mới nhất từ MySQL
-$dsLienHe = $khoLh->tatCa();
+// -------------------------------------------------------------
+// DATA QUERIES FOR DASHBOARD & TABS
+// -------------------------------------------------------------
 
-// Đọc danh sách đơn hàng toàn hệ thống
-$stDon = $db->query(
-    'SELECT dh.*, nd.ho_ten, nd.email 
-     FROM don_hang dh 
-     JOIN nguoi_dung nd ON dh.nguoi_dung_id = nd.id 
-     ORDER BY dh.ngay_tao DESC, dh.id DESC 
-     LIMIT 15'
-);
-$dsDonHang = $stDon->fetchAll();
+// Dashboard KPI Counts
+$tongNguoiDung = (int)$db->query('SELECT COUNT(*) FROM nguoi_dung')->fetchColumn();
+$tongSeller = (int)$db->query('SELECT COUNT(*) FROM nguoi_dung WHERE vai_tro = "chu_sach"')->fetchColumn();
+$tongKhachHang = (int)$db->query('SELECT COUNT(*) FROM nguoi_dung WHERE vai_tro = "khach_hang"')->fetchColumn();
+$tongSach = (int)$db->query('SELECT COUNT(*) FROM san_pham')->fetchColumn();
+$tongDonHang = (int)$db->query('SELECT COUNT(*) FROM don_hang')->fetchColumn();
+$tongDoanhThu = (int)$db->query('SELECT COALESCE(SUM(tong_tien), 0) FROM don_hang WHERE trang_thai != "da_huy"')->fetchColumn();
 
-// Đọc danh sách người dùng và chủ sách
+// All Users
 $stUsers = $db->query(
-    'SELECT nd.id, nd.email, nd.ho_ten, nd.vai_tro, nd.ngay_tao,
-            COUNT(sp.id) AS so_sach
+    'SELECT nd.*, COUNT(sp.id) AS so_sach,
+            COALESCE((SELECT COUNT(*) FROM don_hang dh WHERE dh.nguoi_dung_id = nd.id), 0) AS so_don
      FROM nguoi_dung nd
      LEFT JOIN san_pham sp ON sp.chu_sach_id = nd.id
      GROUP BY nd.id
@@ -79,299 +251,768 @@ $stUsers = $db->query(
 );
 $dsNguoiDung = $stUsers->fetchAll();
 
+// All Books
+$stBooks = $db->query(
+    'SELECT sp.*, dm.ten AS ten_danh_muc, nd.ho_ten AS ten_chu_sach, nd.ten_gian_hang
+     FROM san_pham sp
+     JOIN danh_muc dm ON sp.danh_muc_id = dm.id
+     LEFT JOIN nguoi_dung nd ON sp.chu_sach_id = nd.id
+     ORDER BY sp.id DESC'
+);
+$dsTatCaSach = $stBooks->fetchAll();
+
+// Categories
+$dsDanhMuc = $db->query('SELECT dm.*, COUNT(sp.id) AS so_sach FROM danh_muc dm LEFT JOIN san_pham sp ON sp.danh_muc_id = dm.id GROUP BY dm.id ORDER BY dm.id ASC')->fetchAll();
+
+// All Orders
+$stDon = $db->query(
+    'SELECT dh.*, nd.ho_ten, nd.email,
+            (SELECT COUNT(*) FROM chi_tiet_don ct WHERE ct.don_hang_id = dh.id) AS so_mon
+     FROM don_hang dh 
+     JOIN nguoi_dung nd ON dh.nguoi_dung_id = nd.id 
+     ORDER BY dh.ngay_tao DESC, dh.id DESC'
+);
+$dsDonHang = $stDon->fetchAll();
+
+// Sellers List
+$stSellers = $db->query(
+    'SELECT nd.*, COUNT(sp.id) AS so_sach,
+            COALESCE(SUM(ct.so_luong * ct.don_gia), 0) AS doanh_thu
+     FROM nguoi_dung nd
+     LEFT JOIN san_pham sp ON sp.chu_sach_id = nd.id
+     LEFT JOIN chi_tiet_don ct ON ct.san_pham_id = sp.id
+     WHERE nd.vai_tro = "chu_sach"
+     GROUP BY nd.id
+     ORDER BY nd.id ASC'
+);
+$dsSellers = $stSellers->fetchAll();
+
+// Top Selling Books for Platform
+$stTopPlatform = $db->query(
+    'SELECT sp.id, sp.ten, sp.anh, sp.gia, dm.ten AS ten_danh_muc,
+            COALESCE(SUM(ct.so_luong), 0) AS units_sold,
+            COALESCE(SUM(ct.so_luong * ct.don_gia), 0) AS revenue
+     FROM san_pham sp
+     JOIN danh_muc dm ON sp.danh_muc_id = dm.id
+     LEFT JOIN chi_tiet_don ct ON ct.san_pham_id = sp.id
+     LEFT JOIN don_hang dh ON ct.don_hang_id = dh.id AND dh.trang_thai != "da_huy"
+     GROUP BY sp.id
+     ORDER BY units_sold DESC, revenue DESC
+     LIMIT 6'
+);
+$dsTopPlatform = $stTopPlatform->fetchAll();
+
+// Settings
+$stSettings = $db->query('SELECT khoa, gia_tri FROM he_thong_cai_dat');
+$caiDatMap = $stSettings->fetchAll(PDO::FETCH_KEY_PAIR);
+
 $thongBao = $_SESSION['flash'] ?? '';
 $thongBaoLoi = $_SESSION['flash_loi'] ?? '';
 unset($_SESSION['flash'], $_SESSION['flash_loi']);
 
-$u = nguoiDung();
-$tieuDe = 'Bảng điều khiển Quản trị viên';
+$tabHienTai = $_GET['tab'] ?? 'dashboard';
+
+$tieuDe = 'Administrator Dashboard';
 $trang = 'quan-tri';
 
 require __DIR__ . '/inc/header.php';
 ?>
 
 <main class="noi-dung-chinh khung-chua" style="padding-top: 25px; padding-bottom: 50px;">
-  <!-- Admin Banner -->
+  
+  <!-- Super Admin Banner -->
   <div style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); color: #ffffff; padding: 26px 30px; border-radius: 16px; margin-bottom: 28px; box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.35); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; border: 1px solid rgba(255,255,255,0.08);">
     <div>
       <span style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: #ffffff; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);">
         👑 SUPER ADMIN PORTAL
       </span>
-      <h1 style="color: #ffffff; margin: 10px 0 4px 0; font-size: 1.85rem; font-weight: 800; font-family: 'Prompt', var(--font-family);">
-        Bảng điều khiển Quản trị viên
+      <h1 style="color: #ffffff; margin: 10px 0 4px 0; font-size: 1.85rem; font-weight: 800;">
+        Administrator Dashboard
       </h1>
       <p style="margin: 0; color: #94a3b8; font-size: 0.95rem;">
-        Quản trị toàn bộ hệ thống sách, phân quyền chủ sách, kiểm soát mọi đơn hàng &amp; danh sách liên hệ.
+        Full oversight of users, book catalog, orders, sellers, financial reports, and platform settings.
       </p>
     </div>
-    <div style="display: flex; gap: 10px; align-items: center;">
-      <a href="them-san-pham.php" class="nut nut--chinh" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); font-weight: 700; padding: 10px 18px; border-radius: 8px; font-size: 0.92rem; border: none; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);">
-        ➕ Thêm sách mới
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <a href="danh-sach.php" class="nut nut--vien" style="color: #ffffff; border-color: rgba(255,255,255,0.3); font-weight: 600; padding: 10px 18px; border-radius: 8px;">
+        👁️ Public Catalog
       </a>
-      <a href="chu-sach.php" class="nut nut--vien" style="background: rgba(255,255,255,0.1); color: #ffffff; border-color: rgba(255,255,255,0.25); font-weight: 700; padding: 10px 16px; border-radius: 8px; font-size: 0.92rem;">
-        🏪 Kênh người bán
+      <a href="tai-khoan.php" class="nut" style="background: rgba(255,255,255,0.15); color: #fff; font-weight: 600; padding: 10px 18px; border-radius: 8px; text-decoration: none;">
+        👤 My Account
       </a>
     </div>
   </div>
 
-  <!-- Thông báo Flash Message -->
-  <?php if ($thongBao !== ''): ?>
-    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;" aria-live="polite">
-      <strong>✓ Hoàn tất:</strong> <?= e($thongBao) ?>
+  <?php if ($thongBao): ?>
+    <div style="background: #ecfdf5; border: 1.5px solid #a7f3d0; color: #065f46; padding: 14px 20px; border-radius: 10px; margin-bottom: 22px; font-weight: 600;" aria-live="polite">
+      ✓ <?= e($thongBao) ?>
     </div>
   <?php endif; ?>
 
-  <?php if ($thongBaoLoi !== ''): ?>
-    <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;" aria-live="assertive">
-      <strong>⚠ Thông báo:</strong> <?= e($thongBaoLoi) ?>
+  <?php if ($thongBaoLoi): ?>
+    <div style="background: #fef2f2; border: 1.5px solid #fecaca; color: #991b1b; padding: 14px 20px; border-radius: 10px; margin-bottom: 22px; font-weight: 600;" aria-live="assertive">
+      ⚠ <?= e($thongBaoLoi) ?>
     </div>
   <?php endif; ?>
 
-  <!-- 1. QUẢN TRỊ DANH MỤC SÁCH / THỰC THỂ CHÍNH -->
-  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 35px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-      <h2 style="margin: 0; color: #1e3b6d;">Quản lý kho sách (Tổng: <?= $tongSp ?> cuốn)</h2>
-      <a href="them-san-pham.php" class="nut nut--chinh" style="padding: 7px 16px; font-size: 0.9rem;">+ Thêm sản phẩm</a>
+  <!-- 6 KPI STATS CARDS -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px;">
+    
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+      <div style="color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Total Users</div>
+      <div style="font-size: 1.75rem; font-weight: 800; color: #0f172a; margin-top: 4px;">👥 <?= number_format($tongNguoiDung) ?></div>
+      <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Registered accounts</div>
     </div>
 
-    <div style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; text-align: left;">
-        <thead>
-          <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.9rem;">
-            <th style="padding: 10px 12px; width: 60px;">Mã ID</th>
-            <th style="padding: 10px 12px; width: 70px;">Ảnh</th>
-            <th style="padding: 10px 12px;">Tên giáo trình</th>
-            <th style="padding: 10px 12px; width: 130px;">Danh mục</th>
-            <th style="padding: 10px 12px; width: 140px;">Chủ sở hữu</th>
-            <th style="padding: 10px 12px; width: 110px;">Đơn giá</th>
-            <th style="padding: 10px 12px; width: 80px; text-align: center;">Tồn kho</th>
-            <th style="padding: 10px 12px; width: 140px; text-align: center;">Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($dsSach as $sp): ?>
-            <tr style="border-bottom: 1px solid #e2e8f0; vertical-align: middle;">
-              <td style="padding: 10px 12px; font-weight: bold; color: #64748b;">#<?= $sp->id ?></td>
-              <td style="padding: 10px 12px;">
-                <img src="<?= e(anhSach($sp->anh)) ?>" alt="Bìa" width="45" height="55" style="border-radius: 4px; object-fit: cover;">
-              </td>
-              <td style="padding: 10px 12px;">
-                <a href="chi-tiet.php?id=<?= $sp->id ?>" target="_blank" style="font-weight: bold; color: #1e40af; text-decoration: none;">
-                  <?= e($sp->ten) ?>
-                </a>
-              </td>
-              <td style="padding: 10px 12px; font-size: 0.85rem; color: #475569;">
-                <?= e($sp->tenDanhMuc ?? 'Chưa phân loại') ?>
-              </td>
-              <td style="padding: 10px 12px; font-size: 0.82rem;">
-                <?php if ($sp->chuSachId): ?>
-                  <span style="background: #fef3c7; color: #b45309; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block;">
-                    🏪 <?= e($sp->tenChuSach ?: ('Chủ #' . $sp->chuSachId)) ?>
-                  </span>
-                <?php else: ?>
-                  <span style="background: #eff6ff; color: #1d4ed8; font-weight: 700; padding: 3px 8px; border-radius: 4px; display: inline-block;">
-                    👑 Admin sàn
-                  </span>
-                <?php endif; ?>
-              </td>
-              <td style="padding: 10px 12px; font-weight: bold; color: #dc2626;">
-                <?= vnd($sp->gia) ?>
-              </td>
-              <td style="padding: 10px 12px; text-align: center;">
-                <span style="font-weight: bold; color: <?= $sp->tonKho > 0 ? '#16a34a' : '#dc2626' ?>;">
-                  <?= $sp->tonKho ?>
-                </span>
-              </td>
-              <td style="padding: 10px 12px; text-align: center;">
-                <div style="display: flex; gap: 6px; justify-content: center;">
-                  <a href="sua-san-pham.php?id=<?= $sp->id ?>" class="nut nut--vien" style="padding: 4px 10px; font-size: 0.8rem;">Sửa</a>
-                  <form method="POST" action="xoa-san-pham.php" class="form-xoa-sp" style="margin: 0;">
-                    <?= csrfField() ?>
-                    <input type="hidden" name="id" value="<?= $sp->id ?>">
-                    <button type="submit" class="nut nut--vien" style="padding: 4px 10px; font-size: 0.8rem; color: #dc2626; border-color: #fca5a5;">Xóa</button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+      <div style="color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Total Sellers</div>
+      <div style="font-size: 1.75rem; font-weight: 800; color: #ea580c; margin-top: 4px;">🏪 <?= number_format($tongSeller) ?></div>
+      <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Partner bookstores</div>
     </div>
 
-    <!-- Phân trang quản trị sách -->
-    <?php if ($soTrangSp > 1): ?>
-      <nav aria-label="Phân trang quản trị" style="margin-top: 20px; display: flex; justify-content: center; gap: 6px;">
-        <?php for ($i = 1; $i <= $soTrangSp; $i++): ?>
-          <a href="quan-tri.php?trang=<?= $i ?>" class="nut <?= $i === $trangSp ? 'nut--chinh' : 'nut--vien' ?>" style="padding: 5px 12px; font-size: 0.85rem;">
-            <?= $i ?>
-          </a>
-        <?php endfor; ?>
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+      <div style="color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Total Customers</div>
+      <div style="font-size: 1.75rem; font-weight: 800; color: #16a34a; margin-top: 4px;">👤 <?= number_format($tongKhachHang) ?></div>
+      <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Active students</div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+      <div style="color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Total Books</div>
+      <div style="font-size: 1.75rem; font-weight: 800; color: #2563eb; margin-top: 4px;">📚 <?= number_format($tongSach) ?></div>
+      <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Listed textbooks</div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+      <div style="color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Total Orders</div>
+      <div style="font-size: 1.75rem; font-weight: 800; color: #7c3aed; margin-top: 4px;">🛒 <?= number_format($tongDonHang) ?></div>
+      <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Platform transactions</div>
+    </div>
+
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+      <div style="color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Total Revenue</div>
+      <div style="font-size: 1.55rem; font-weight: 800; color: #dc2626; margin-top: 4px;"><?= vnd($tongDoanhThu) ?></div>
+      <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">Platform volume</div>
+    </div>
+
+  </div>
+
+  <!-- Layout: Sidebar Tabs + Content Area -->
+  <div style="display: grid; grid-template-columns: 240px 1fr; gap: 24px; align-items: flex-start;">
+    
+    <!-- Sidebar Navigation -->
+    <aside style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+      <nav style="display: flex; flex-direction: column; gap: 4px;">
+        <a href="quan-tri.php?tab=dashboard" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.92rem; color: <?= $tabHienTai === 'dashboard' ? '#dc2626' : '#334155' ?>; background: <?= $tabHienTai === 'dashboard' ? '#fef2f2' : 'transparent' ?>;">
+          <span>📊</span> Dashboard &amp; Analytics
+        </a>
+        <a href="quan-tri.php?tab=users" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.92rem; color: <?= $tabHienTai === 'users' ? '#dc2626' : '#334155' ?>; background: <?= $tabHienTai === 'users' ? '#fef2f2' : 'transparent' ?>;">
+          <span>👥</span> User Management (<?= count($dsNguoiDung) ?>)
+        </a>
+        <a href="quan-tri.php?tab=books" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.92rem; color: <?= $tabHienTai === 'books' ? '#dc2626' : '#334155' ?>; background: <?= $tabHienTai === 'books' ? '#fef2f2' : 'transparent' ?>;">
+          <span>📚</span> Book Supervision (<?= count($dsTatCaSach) ?>)
+        </a>
+        <a href="quan-tri.php?tab=orders" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.92rem; color: <?= $tabHienTai === 'orders' ? '#dc2626' : '#334155' ?>; background: <?= $tabHienTai === 'orders' ? '#fef2f2' : 'transparent' ?>;">
+          <span>📦</span> Orders (<?= count($dsDonHang) ?>)
+        </a>
+        <a href="quan-tri.php?tab=sellers" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.92rem; color: <?= $tabHienTai === 'sellers' ? '#dc2626' : '#334155' ?>; background: <?= $tabHienTai === 'sellers' ? '#fef2f2' : 'transparent' ?>;">
+          <span>🏪</span> Sellers (<?= count($dsSellers) ?>)
+        </a>
+        <a href="quan-tri.php?tab=reports" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.92rem; color: <?= $tabHienTai === 'reports' ? '#dc2626' : '#334155' ?>; background: <?= $tabHienTai === 'reports' ? '#fef2f2' : 'transparent' ?>;">
+          <span>📈</span> Reports &amp; Revenue
+        </a>
+        <a href="quan-tri.php?tab=settings" style="display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.92rem; color: <?= $tabHienTai === 'settings' ? '#dc2626' : '#334155' ?>; background: <?= $tabHienTai === 'settings' ? '#fef2f2' : 'transparent' ?>;">
+          <span>⚙️</span> System Settings
+        </a>
       </nav>
-    <?php endif; ?>
-  </section>
+    </aside>
 
-  <!-- 2. QUẢN LÝ ĐƠN ĐẶT HÀNG TOÀN HỆ THỐNG -->
-  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 35px;">
-    <h2 style="margin: 0 0 15px 0; color: #1e3b6d;">Đơn đặt sách gần đây (Toàn hệ thống)</h2>
-    <div style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; text-align: left;">
-        <thead>
-          <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.9rem;">
-            <th style="padding: 10px 12px; width: 60px;">Mã đơn</th>
-            <th style="padding: 10px 12px; width: 140px;">Ngày tạo</th>
-            <th style="padding: 10px 12px;">Khách hàng</th>
-            <th style="padding: 10px 12px; width: 120px;">Tổng tiền</th>
-            <th style="padding: 10px 12px; width: 140px;">Trạng thái</th>
-            <th style="padding: 10px 12px; width: 130px; text-align: center;">Cập nhật</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($dsDonHang as $dh): ?>
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-              <td style="padding: 10px 12px; font-weight: bold; color: #1e40af;">
-                <a href="don-hang.php?id=<?= $dh['id'] ?>">#<?= $dh['id'] ?></a>
-              </td>
-              <td style="padding: 10px 12px; font-size: 0.85rem; color: #64748b;"><?= e($dh['ngay_tao']) ?></td>
-              <td style="padding: 10px 12px;">
-                <strong><?= e($dh['ho_ten']) ?></strong><br>
-                <small style="color: #64748b;"><?= e($dh['email']) ?> | <?= e($dh['so_dien_thoai']) ?></small>
-              </td>
-              <td style="padding: 10px 12px; font-weight: bold; color: #dc2626;"><?= vnd($dh['tong_tien']) ?></td>
-              <td style="padding: 10px 12px;">
-                <form method="POST" action="quan-tri.php" style="display: flex; gap: 6px; align-items: center; margin: 0;">
-                  <?= csrfField() ?>
-                  <input type="hidden" name="cap_nhat_don" value="1">
-                  <input type="hidden" name="don_id" value="<?= $dh['id'] ?>">
-                  <select name="trang_thai" style="padding: 4px 8px; font-size: 0.85rem; border: 1px solid #cbd5e1; border-radius: 4px;">
-                    <option value="cho_xu_ly" <?= $dh['trang_thai'] === 'cho_xu_ly' ? 'selected' : '' ?>>Chờ xử lý</option>
-                    <option value="dang_giao" <?= $dh['trang_thai'] === 'dang_giao' ? 'selected' : '' ?>>Đang giao</option>
-                    <option value="da_giao" <?= $dh['trang_thai'] === 'da_giao' ? 'selected' : '' ?>>Đã giao</option>
-                    <option value="da_huy" <?= $dh['trang_thai'] === 'da_huy' ? 'selected' : '' ?>>Đã hủy</option>
-                  </select>
-                  <button type="submit" class="nut nut--vien" style="padding: 4px 8px; font-size: 0.8rem;">Lưu</button>
-                </form>
-              </td>
-              <td style="padding: 10px 12px; text-align: center;">
-                <a href="don-hang.php?id=<?= $dh['id'] ?>" class="nut nut--vien" style="padding: 4px 8px; font-size: 0.8rem;">Xem chi tiết</a>
-              </td>
+    <!-- Main Content Area -->
+    <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 28px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+
+      <?php if ($tabHienTai === 'dashboard'): ?>
+        <!-- TAB 1: DASHBOARD & CHARTS -->
+        <h2 style="margin: 0 0 16px 0; font-size: 1.35rem; color: #0f172a; font-weight: 800;">
+          Platform Sales &amp; Growth Analytics
+        </h2>
+
+        <!-- SVG Platform Revenue Chart -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 22px; margin-bottom: 28px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3 style="margin: 0; font-size: 1.05rem; color: #1e3b6d;">Platform Monthly Gross Volume (2026)</h3>
+            <span style="font-size: 0.85rem; color: #059669; font-weight: 700;">● Active Monitoring</span>
+          </div>
+
+          <svg viewBox="0 0 600 200" style="width: 100%; height: auto; display: block;" aria-label="Platform Chart">
+            <line x1="50" y1="20" x2="580" y2="20" stroke="#e2e8f0" stroke-dasharray="4" />
+            <line x1="50" y1="70" x2="580" y2="70" stroke="#e2e8f0" stroke-dasharray="4" />
+            <line x1="50" y1="120" x2="580" y2="120" stroke="#e2e8f0" stroke-dasharray="4" />
+            <line x1="50" y1="170" x2="580" y2="170" stroke="#cbd5e1" stroke-width="2" />
+
+            <text x="40" y="24" font-size="10" fill="#64748b" text-anchor="end">3.0M</text>
+            <text x="40" y="74" font-size="10" fill="#64748b" text-anchor="end">2.0M</text>
+            <text x="40" y="124" font-size="10" fill="#64748b" text-anchor="end">1.0M</text>
+            <text x="40" y="174" font-size="10" fill="#64748b" text-anchor="end">0</text>
+
+            <rect x="80" y="110" width="36" height="60" rx="4" fill="#cbd5e1" />
+            <text x="98" y="188" font-size="11" fill="#64748b" text-anchor="middle">Jan</text>
+            <rect x="145" y="80" width="36" height="90" rx="4" fill="#93c5fd" />
+            <text x="163" y="188" font-size="11" fill="#64748b" text-anchor="middle">Feb</text>
+            <rect x="210" y="55" width="36" height="115" rx="4" fill="#3b82f6" />
+            <text x="228" y="188" font-size="11" fill="#64748b" text-anchor="middle">Mar</text>
+            <rect x="275" y="45" width="36" height="125" rx="4" fill="#1d4ed8" />
+            <text x="293" y="188" font-size="11" fill="#64748b" text-anchor="middle">Apr</text>
+            <rect x="340" y="25" width="36" height="145" rx="4" fill="#dc2626" />
+            <text x="358" y="188" font-size="11" fill="#dc2626" font-weight="700" text-anchor="middle">May (Current)</text>
+            <rect x="405" y="60" width="36" height="110" rx="4" fill="#fca5a5" />
+            <text x="423" y="188" font-size="11" fill="#64748b" text-anchor="middle">Jun</text>
+            <rect x="470" y="85" width="36" height="85" rx="4" fill="#e2e8f0" />
+            <text x="488" y="188" font-size="11" fill="#64748b" text-anchor="middle">Jul</text>
+          </svg>
+        </div>
+
+        <h3 style="margin: 0 0 14px 0; font-size: 1.15rem; color: #0f172a;">
+          Top 6 Best-Selling Textbooks Across All Sellers
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+          <thead>
+            <tr style="background: #f1f5f9; text-align: left; border-bottom: 2px solid #cbd5e1;">
+              <th style="padding: 10px 12px;">Cover</th>
+              <th style="padding: 10px 12px;">Title</th>
+              <th style="padding: 10px 12px;">Category</th>
+              <th style="padding: 10px 12px; text-align: right;">Price</th>
+              <th style="padding: 10px 12px; text-align: center;">Sold</th>
+              <th style="padding: 10px 12px; text-align: right;">Gross Revenue</th>
             </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  </section>
+          </thead>
+          <tbody>
+            <?php foreach ($dsTopPlatform as $tp): ?>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 10px 12px; width: 45px;">
+                  <img src="<?= e(anhSach($tp['anh'])) ?>" alt="Cover" width="36" height="48" style="object-fit: cover; border-radius: 4px;">
+                </td>
+                <td style="padding: 10px 12px;">
+                  <strong><a href="chi-tiet.php?id=<?= $tp['id'] ?>" target="_blank" style="color: #1e3b6d; text-decoration: none;"><?= e($tp['ten']) ?></a></strong>
+                </td>
+                <td style="padding: 10px 12px; color: #64748b;"><?= e($tp['ten_danh_muc']) ?></td>
+                <td style="padding: 10px 12px; text-align: right;"><?= vnd($tp['gia']) ?></td>
+                <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: #ea580c;"><?= $tp['units_sold'] ?></td>
+                <td style="padding: 10px 12px; text-align: right; font-weight: 800; color: #059669;"><?= vnd($tp['revenue']) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
 
-  <!-- 3. DANH SÁCH LIÊN HỆ ĐÃ NHẬN TỪ BẢNG LIEN_HE -->
-  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0;">
-    <h2 style="margin: 0 0 15px 0; color: #1e3b6d;">Danh sách góp ý &amp; Liên hệ đã nhận (Tổng: <?= count($dsLienHe) ?>)</h2>
-    <div style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; text-align: left;">
-        <thead>
-          <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.9rem;">
-            <th style="padding: 10px 12px; width: 140px;">Thời gian</th>
-            <th style="padding: 10px 12px; width: 180px;">Người gửi</th>
-            <th style="padding: 10px 12px;">Chủ đề &amp; Nội dung liên hệ</th>
-            <th style="padding: 10px 12px; width: 90px; text-align: center;">Ảnh</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($dsLienHe as $lh): ?>
-            <tr style="border-bottom: 1px solid #e2e8f0; vertical-align: top;">
-              <td style="padding: 10px 12px; font-size: 0.85rem; color: #64748b;"><?= e($lh['ngay_gui']) ?></td>
-              <td style="padding: 10px 12px;">
-                <strong><?= e($lh['ho_ten']) ?></strong><br>
-                <small style="color: #64748b;">📧 <?= e($lh['email']) ?></small>
-              </td>
-              <td style="padding: 10px 12px;">
-                <strong style="color: #1e40af;"><?= e($lh['chu_de']) ?></strong>
-                <p style="margin: 4px 0 0 0; color: #334155; font-size: 0.9rem;"><?= nl2br(e($lh['noi_dung'])) ?></p>
-              </td>
-              <td style="padding: 10px 12px; text-align: center;">
-                <?php if (!empty($lh['anh']) && file_exists(__DIR__ . '/uploads/' . $lh['anh'])): ?>
-                  <a href="uploads/<?= e($lh['anh']) ?>" target="_blank">
-                    <img src="uploads/<?= e($lh['anh']) ?>" alt="Ảnh" width="40" height="40" style="object-fit: cover; border-radius: 4px;">
-                  </a>
-                <?php else: ?>
-                  <span style="color: #94a3b8; font-size: 0.8rem;">Không</span>
-                <?php endif; ?>
-              </td>
+      <?php elseif ($tabHienTai === 'users'): ?>
+        <!-- TAB 2: USER MANAGEMENT -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="margin: 0; font-size: 1.35rem; color: #0f172a; font-weight: 800;">
+              User Account Management (<?= count($dsNguoiDung) ?>)
+            </h2>
+            <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">
+              Manage customer and seller accounts, activate/suspend access, and assign roles.
+            </p>
+          </div>
+        </div>
+
+        <!-- Single Admin Policy Banner -->
+        <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; color: #1e40af; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.25rem;">🛡️</span>
+          <div>
+            <strong>Single Administrator Policy Active:</strong> BookNest strictly operates with exactly 1 Super Administrator account (ID #1: <code>admin@ued.vn</code>). All newly created or modified accounts are restricted to Customer (Student) or Seller (Bookstore).
+          </div>
+        </div>
+
+        <!-- Add New User Form -->
+        <details style="background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 16px; margin-bottom: 24px;">
+          <summary style="font-weight: 700; color: #1e3b6d; cursor: pointer;">
+            ➕ Add New User Account (Customer / Seller)
+          </summary>
+          <form method="POST" action="quan-tri.php?tab=users" style="margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 130px; gap: 12px; align-items: flex-end;">
+            <?= csrfField() ?>
+            <input type="hidden" name="action_them_user" value="1">
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; color: #334155;">Full Name:</label>
+              <input type="text" name="ho_ten" required placeholder="e.g. Alice Smith" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; color: #334155;">Email Address:</label>
+              <input type="email" name="email" required placeholder="alice@ued.vn" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; color: #334155;">Initial Password:</label>
+              <input type="password" name="mat_khau" required placeholder="Min 6 chars" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+            </div>
+            <div>
+              <label style="font-size: 0.82rem; font-weight: 700; color: #334155;">Role:</label>
+              <select name="vai_tro" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-weight: 600;">
+                <option value="khach_hang">👤 Customer (Student)</option>
+                <option value="chu_sach">🏪 Seller (Bookstore)</option>
+              </select>
+            </div>
+            <button type="submit" class="nut nut--chinh" style="padding: 9px 14px; font-size: 0.88rem; font-weight: 700; border-radius: 6px;">
+              Create User
+            </button>
+          </form>
+        </details>
+
+        <!-- Users Table -->
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <thead>
+              <tr style="background: #f1f5f9; text-align: left; border-bottom: 2px solid #cbd5e1; color: #475569;">
+                <th style="padding: 10px 12px; width: 50px;">ID</th>
+                <th style="padding: 10px 12px;">User / Identity</th>
+                <th style="padding: 10px 12px; width: 170px;">Role</th>
+                <th style="padding: 10px 12px; text-align: center; width: 100px;">Status</th>
+                <th style="padding: 10px 12px; text-align: center; width: 110px;">Activity</th>
+                <th style="padding: 10px 12px; text-align: center; width: 190px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($dsNguoiDung as $nd): 
+                $isSelf = ((int)$nd['id'] === (int)$u['id']);
+                $isActive = (isset($nd['kich_hoat']) ? (int)$nd['kich_hoat'] === 1 : true);
+                $isAdmin = ($nd['vai_tro'] === 'quan_tri');
+              ?>
+                <tr style="border-bottom: 1px solid #e2e8f0; background: <?= $isActive ? 'transparent' : '#fff1f2' ?>;">
+                  <td style="padding: 10px 12px; font-weight: 700; color: #64748b;">#<?= $nd['id'] ?></td>
+                  <td style="padding: 10px 12px;">
+                    <strong><?= e($nd['ho_ten']) ?></strong> <?= $isSelf ? '<span style="color:#2563eb;font-size:0.75rem;">(You)</span>' : '' ?><br>
+                    <small style="color: #64748b;">📧 <?= e($nd['email']) ?></small>
+                  </td>
+                  <td style="padding: 10px 12px;">
+                    <?php if ($isAdmin): ?>
+                      <span style="background: #fef3c7; color: #92400e; font-weight: 800; font-size: 0.78rem; padding: 4px 10px; border-radius: 6px; border: 1px solid #fde68a; display: inline-flex; align-items: center; gap: 4px;">
+                        👑 Super Admin (Sole Admin)
+                      </span>
+                    <?php else: ?>
+                      <form method="POST" action="quan-tri.php?tab=users" style="margin: 0; display: inline-flex; align-items: center; gap: 4px;">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="action_doi_vai_tro" value="1">
+                        <input type="hidden" name="user_id" value="<?= $nd['id'] ?>">
+                        <select name="vai_tro" onchange="this.form.submit()" style="padding: 4px 6px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #cbd5e1; font-weight: 600;">
+                          <option value="khach_hang" <?= $nd['vai_tro'] === 'khach_hang' ? 'selected' : '' ?>>👤 Customer</option>
+                          <option value="chu_sach" <?= $nd['vai_tro'] === 'chu_sach' ? 'selected' : '' ?>>🏪 Seller</option>
+                        </select>
+                      </form>
+                    <?php endif; ?>
+                  </td>
+                  <td style="padding: 10px 12px; text-align: center;">
+                    <?php if ($isActive): ?>
+                      <span style="background: #ecfdf5; color: #047857; font-weight: 700; font-size: 0.78rem; padding: 3px 8px; border-radius: 4px;">Active</span>
+                    <?php else: ?>
+                      <span style="background: #fee2e2; color: #991b1b; font-weight: 700; font-size: 0.78rem; padding: 3px 8px; border-radius: 4px;">Suspended</span>
+                    <?php endif; ?>
+                  </td>
+                  <td style="padding: 10px 12px; text-align: center; font-size: 0.82rem; color: #64748b;">
+                    <?= $nd['so_sach'] ?> books &bull; <?= $nd['so_don'] ?> orders
+                  </td>
+                  <td style="padding: 10px 12px; text-align: center;">
+                    <div style="display: flex; gap: 6px; justify-content: center;">
+                      <?php if ($isAdmin): ?>
+                        <span style="color: #64748b; font-size: 0.8rem; font-weight: 700; background: #f1f5f9; padding: 4px 8px; border-radius: 4px;">Protected Admin</span>
+                      <?php else: ?>
+                        <!-- Activate / Deactivate Toggle -->
+                        <form method="POST" action="quan-tri.php?tab=users" style="margin: 0;">
+                          <?= csrfField() ?>
+                          <input type="hidden" name="action_kich_hoat_user" value="1">
+                          <input type="hidden" name="user_id" value="<?= $nd['id'] ?>">
+                          <input type="hidden" name="trang_thai_moi" value="<?= $isActive ? '0' : '1' ?>">
+                          <button type="submit" class="nut nut--vien" style="padding: 4px 8px; font-size: 0.78rem; color: <?= $isActive ? '#dc2626' : '#16a34a' ?>;">
+                            <?= $isActive ? 'Suspend' : 'Activate' ?>
+                          </button>
+                        </form>
+
+                        <!-- Delete User Account -->
+                        <form method="POST" action="quan-tri.php?tab=users" style="margin: 0;" onsubmit="return confirm('Delete account <?= e($nd['email']) ?>? All related session and cart data will be wiped.');">
+                          <?= csrfField() ?>
+                          <input type="hidden" name="action_xoa_user" value="1">
+                          <input type="hidden" name="user_id" value="<?= $nd['id'] ?>">
+                          <button type="submit" class="nut nut--nguy-hiem" style="padding: 4px 8px; font-size: 0.78rem;">
+                            🗑️
+                          </button>
+                        </form>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+
+      <?php elseif ($tabHienTai === 'books'): ?>
+        <!-- TAB 3: BOOK SUPERVISION & CATEGORY MANAGEMENT -->
+        <h2 style="margin: 0 0 8px 0; font-size: 1.35rem; color: #0f172a; font-weight: 800;">
+          Book Supervision &amp; Category Management
+        </h2>
+        <p style="color: #64748b; font-size: 0.9rem; margin: 0 0 20px 0;">
+          Approve or reject seller listings, remove violating items, and manage platform textbook categories.
+        </p>
+
+        <!-- Category Management Section (Admin Can Add Categories) -->
+        <details open id="categories" style="background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 28px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+          <summary style="font-weight: 800; color: #0f172a; font-size: 1.15rem; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+            <span>📂 Manage &amp; Add Textbook Categories (<?= count($dsDanhMuc) ?> Categories)</span>
+          </summary>
+          <div style="margin-top: 16px;">
+            <!-- Add New Category Form -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+              <h4 style="margin: 0 0 10px 0; font-size: 0.95rem; color: #1e3b6d; font-weight: 700;">
+                ➕ Add New Category
+              </h4>
+              <form method="POST" action="quan-tri.php?tab=books#categories" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <?= csrfField() ?>
+                <input type="hidden" name="action_them_danh_muc" value="1">
+                <input type="text" name="ten_danh_muc" required placeholder="Category Name (e.g. Data Science & Artificial Intelligence)" style="padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 6px; flex: 2; min-width: 250px; font-size: 0.95rem;">
+                <input type="text" name="mo_ta" placeholder="Short description for students & sellers" style="padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 6px; flex: 3; min-width: 280px; font-size: 0.95rem;">
+                <button type="submit" class="nut nut--chinh" style="padding: 10px 20px; font-size: 0.95rem; font-weight: 700; border-radius: 6px;">
+                  + Add Category
+                </button>
+              </form>
+            </div>
+
+            <!-- Categories Table -->
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+              <thead>
+                <tr style="background: #f1f5f9; text-align: left; border-bottom: 2px solid #cbd5e1; color: #475569;">
+                  <th style="padding: 10px 12px; width: 50px;">ID</th>
+                  <th style="padding: 10px 12px;">Category Name</th>
+                  <th style="padding: 10px 12px; width: 180px;">URL Slug</th>
+                  <th style="padding: 10px 12px;">Description</th>
+                  <th style="padding: 10px 12px; text-align: center; width: 90px;">Books</th>
+                  <th style="padding: 10px 12px; text-align: center; width: 80px;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($dsDanhMuc as $dm): ?>
+                  <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 10px 12px; font-weight: 700; color: #64748b;">#<?= $dm['id'] ?></td>
+                    <td style="padding: 10px 12px; font-weight: 700; color: #1e3b6d;">
+                      <?= e(layTenDanhMucEn($dm['id'], $dm['ten'])) ?>
+                    </td>
+                    <td style="padding: 10px 12px;">
+                      <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #475569;"><?= e($dm['slug']) ?></code>
+                    </td>
+                    <td style="padding: 10px 12px; color: #64748b;"><?= e($dm['mo_ta'] ?? '') ?></td>
+                    <td style="padding: 10px 12px; text-align: center; font-weight: 700;">
+                      <span style="background: #eff6ff; color: #1e40af; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem;">
+                        <?= $dm['so_sach'] ?> books
+                      </span>
+                    </td>
+                    <td style="padding: 10px 12px; text-align: center;">
+                      <?php if ((int)$dm['so_sach'] === 0): ?>
+                        <form method="POST" action="quan-tri.php?tab=books#categories" style="margin: 0;" onsubmit="return confirm('Delete this empty category #<?= $dm['id'] ?>?');">
+                          <?= csrfField() ?>
+                          <input type="hidden" name="action_xoa_danh_muc" value="1">
+                          <input type="hidden" name="danh_muc_id" value="<?= $dm['id'] ?>">
+                          <button type="submit" class="nut nut--nguy-hiem" style="padding: 4px 10px; font-size: 0.78rem;">Delete</button>
+                        </form>
+                      <?php else: ?>
+                        <span style="color: #94a3b8; font-size: 0.78rem; font-weight: 600;">In use</span>
+                      <?php endif; ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </details>
+
+        <!-- Books Table -->
+        <h3 style="margin: 0 0 12px 0; font-size: 1.15rem; color: #0f172a;">All Platform Books (<?= count($dsTatCaSach) ?>)</h3>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+            <thead>
+              <tr style="background: #f1f5f9; text-align: left; border-bottom: 2px solid #cbd5e1; color: #475569;">
+                <th style="padding: 10px 12px; width: 45px;">ID</th>
+                <th style="padding: 10px 12px; width: 60px;">Cover</th>
+                <th style="padding: 10px 12px;">Title &amp; Author</th>
+                <th style="padding: 10px 12px; width: 140px;">Seller</th>
+                <th style="padding: 10px 12px; text-align: right; width: 100px;">Price</th>
+                <th style="padding: 10px 12px; text-align: center; width: 70px;">Stock</th>
+                <th style="padding: 10px 12px; text-align: center; width: 110px;">Approval</th>
+                <th style="padding: 10px 12px; text-align: center; width: 140px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($dsTatCaSach as $s): ?>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 10px 12px; font-weight: 700; color: #64748b;">#<?= $s['id'] ?></td>
+                  <td style="padding: 10px 12px;">
+                    <img src="<?= e(anhSach($s['anh'])) ?>" alt="Cover" width="40" height="54" style="object-fit: cover; border-radius: 4px;">
+                  </td>
+                  <td style="padding: 10px 12px;">
+                    <strong><a href="chi-tiet.php?id=<?= $s['id'] ?>" target="_blank" style="color: #1e3b6d; text-decoration: none;"><?= e($s['ten']) ?></a></strong>
+                    <div style="font-size: 0.78rem; color: #64748b;">
+                      <?= e($s['tac_gia'] ?: 'UED Faculty') ?> &bull; <code><?= e($s['isbn'] ?: 'N/A') ?></code>
+                    </div>
+                  </td>
+                  <td style="padding: 10px 12px;">
+                    <span style="font-size: 0.82rem; font-weight: 600; color: #b45309;">
+                      🏪 <?= e($s['ten_gian_hang'] ?: ($s['ten_chu_sach'] ?: 'UED Official')) ?>
+                    </span>
+                  </td>
+                  <td style="padding: 10px 12px; text-align: right; font-weight: 800; color: #dc2626;">
+                    <?= vnd($s['gia']) ?>
+                  </td>
+                  <td style="padding: 10px 12px; text-align: center; font-weight: 700;">
+                    <?= $s['ton_kho'] ?>
+                  </td>
+                  <td style="padding: 10px 12px; text-align: center;">
+                    <form method="POST" action="quan-tri.php?tab=books" style="margin: 0;">
+                      <?= csrfField() ?>
+                      <input type="hidden" name="action_duyet_sach" value="1">
+                      <input type="hidden" name="book_id" value="<?= $s['id'] ?>">
+                      <select name="status" onchange="this.form.submit()" style="font-size: 0.78rem; padding: 3px 6px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: 700; color: <?= ($s['trang_thai_duyet'] ?? 'approved') === 'approved' ? '#047857' : '#991b1b' ?>;">
+                        <option value="approved" <?= ($s['trang_thai_duyet'] ?? 'approved') === 'approved' ? 'selected' : '' ?>>✓ Approved</option>
+                        <option value="pending" <?= ($s['trang_thai_duyet'] ?? '') === 'pending' ? 'selected' : '' ?>>⏳ Pending</option>
+                        <option value="rejected" <?= ($s['trang_thai_duyet'] ?? '') === 'rejected' ? 'selected' : '' ?>>✕ Rejected</option>
+                      </select>
+                    </form>
+                  </td>
+                  <td style="padding: 10px 12px; text-align: center;">
+                    <div style="display: flex; gap: 6px; justify-content: center;">
+                      <a href="chi-tiet.php?id=<?= $s['id'] ?>" target="_blank" class="nut nut--vien" style="padding: 3px 8px; font-size: 0.78rem;">View</a>
+                      <form method="POST" action="xoa-san-pham.php" style="margin: 0;" onsubmit="return confirm('Remove violating book #<?= $s['id'] ?> from the platform?');">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="id" value="<?= $s['id'] ?>">
+                        <button type="submit" class="nut nut--nguy-hiem" style="padding: 3px 8px; font-size: 0.78rem;" title="Delete violation">Remove</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+
+      <?php elseif ($tabHienTai === 'orders'): ?>
+        <!-- TAB 4: ORDER MANAGEMENT -->
+        <h2 style="margin: 0 0 8px 0; font-size: 1.35rem; color: #0f172a; font-weight: 800;">
+          All Customer Orders (<?= count($dsDonHang) ?>)
+        </h2>
+        <p style="color: #64748b; font-size: 0.9rem; margin: 0 0 20px 0;">
+          View customer purchase orders, update status, and manage refunds/cancellations.
+        </p>
+
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+            <thead>
+              <tr style="background: #f1f5f9; text-align: left; border-bottom: 2px solid #cbd5e1; color: #475569;">
+                <th style="padding: 10px 12px; width: 60px;">ID</th>
+                <th style="padding: 10px 12px; width: 140px;">Date</th>
+                <th style="padding: 10px 12px;">Customer</th>
+                <th style="padding: 10px 12px;">Shipping Address</th>
+                <th style="padding: 10px 12px; width: 120px;">Payment</th>
+                <th style="padding: 10px 12px; text-align: right; width: 110px;">Total</th>
+                <th style="padding: 10px 12px; text-align: center; width: 140px;">Status</th>
+                <th style="padding: 10px 12px; text-align: center; width: 90px;">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($dsDonHang as $dh): ?>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 10px 12px; font-weight: 700; color: #1e3b6d;">#<?= $dh['id'] ?></td>
+                  <td style="padding: 10px 12px; color: #64748b; font-size: 0.82rem;"><?= date('d/m/Y H:i', strtotime($dh['ngay_tao'])) ?></td>
+                  <td style="padding: 10px 12px;">
+                    <strong><?= e($dh['ho_ten']) ?></strong><br>
+                    <small style="color: #64748b;"><?= e($dh['email']) ?></small>
+                  </td>
+                  <td style="padding: 10px 12px; font-size: 0.82rem; color: #475569;">
+                    <?= e($dh['dia_chi']) ?><br>
+                    📞 <?= e($dh['so_dien_thoai']) ?>
+                  </td>
+                  <td style="padding: 10px 12px; font-size: 0.82rem;">
+                    <strong><?= e($dh['phuong_thuc_tt'] ?? 'COD') ?></strong><br>
+                    <small style="color: <?= $dh['trang_thai_tt'] === 'da_thanh_toan' ? '#059669' : '#d97706' ?>; font-weight: 700;">
+                      <?= $dh['trang_thai_tt'] === 'da_thanh_toan' ? '✓ Paid' : '⏳ Pending' ?>
+                    </small>
+                  </td>
+                  <td style="padding: 10px 12px; text-align: right; font-weight: 800; color: #dc2626;">
+                    <?= vnd($dh['tong_tien']) ?>
+                  </td>
+                  <td style="padding: 10px 12px; text-align: center;">
+                    <form method="POST" action="quan-tri.php?tab=orders" style="margin: 0;">
+                      <?= csrfField() ?>
+                      <input type="hidden" name="action_cap_nhat_don_admin" value="1">
+                      <input type="hidden" name="don_id" value="<?= $dh['id'] ?>">
+                      <select name="trang_thai" onchange="this.form.submit()" style="font-size: 0.8rem; padding: 4px 6px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: 700;">
+                        <option value="cho_xu_ly" <?= $dh['trang_thai'] === 'cho_xu_ly' ? 'selected' : '' ?>>⏳ Pending</option>
+                        <option value="dang_giao" <?= $dh['trang_thai'] === 'dang_giao' ? 'selected' : '' ?>>⚡ Shipping</option>
+                        <option value="da_giao" <?= $dh['trang_thai'] === 'da_giao' ? 'selected' : '' ?>>✓ Delivered</option>
+                        <option value="da_huy" <?= $dh['trang_thai'] === 'da_huy' ? 'selected' : '' ?>>✕ Cancelled / Refund</option>
+                      </select>
+                    </form>
+                  </td>
+                  <td style="padding: 10px 12px; text-align: center;">
+                    <a href="don-hang.php?id=<?= $dh['id'] ?>" class="nut nut--vien" style="padding: 4px 8px; font-size: 0.8rem;">View</a>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+
+      <?php elseif ($tabHienTai === 'sellers'): ?>
+        <!-- TAB 5: SELLER MANAGEMENT -->
+        <h2 style="margin: 0 0 8px 0; font-size: 1.35rem; color: #0f172a; font-weight: 800;">
+          Seller Management &amp; Approvals (<?= count($dsSellers) ?>)
+        </h2>
+        <p style="color: #64748b; font-size: 0.9rem; margin: 0 0 20px 0;">
+          Monitor partner bookstores, approve registrations, track performance, and suspend violating sellers.
+        </p>
+
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <thead>
+              <tr style="background: #f1f5f9; text-align: left; border-bottom: 2px solid #cbd5e1; color: #475569;">
+                <th style="padding: 10px 12px; width: 50px;">ID</th>
+                <th style="padding: 10px 12px;">Store Name &amp; Owner</th>
+                <th style="padding: 10px 12px;">Contact</th>
+                <th style="padding: 10px 12px; text-align: center; width: 90px;">Books</th>
+                <th style="padding: 10px 12px; text-align: right; width: 130px;">Total Sales</th>
+                <th style="padding: 10px 12px; text-align: center; width: 140px;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($dsSellers as $sl): ?>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 10px 12px; font-weight: 700; color: #64748b;">#<?= $sl['id'] ?></td>
+                  <td style="padding: 10px 12px;">
+                    <strong style="color: #b45309; font-size: 0.95rem;">🏪 <?= e($sl['ten_gian_hang'] ?: ($sl['ho_ten'] . "'s Store")) ?></strong><br>
+                    <small style="color: #64748b;">Owner: <?= e($sl['ho_ten']) ?></small>
+                  </td>
+                  <td style="padding: 10px 12px; font-size: 0.85rem; color: #475569;">
+                    📧 <?= e($sl['email']) ?><br>
+                    📞 <?= e($sl['so_dien_thoai'] ?: 'N/A') ?>
+                  </td>
+                  <td style="padding: 10px 12px; text-align: center; font-weight: 700;"><?= $sl['so_sach'] ?></td>
+                  <td style="padding: 10px 12px; text-align: right; font-weight: 800; color: #059669;"><?= vnd((int)$sl['doanh_thu']) ?></td>
+                  <td style="padding: 10px 12px; text-align: center;">
+                    <form method="POST" action="quan-tri.php?tab=sellers" style="margin: 0;">
+                      <?= csrfField() ?>
+                      <input type="hidden" name="action_duyet_seller" value="1">
+                      <input type="hidden" name="seller_id" value="<?= $sl['id'] ?>">
+                      <select name="seller_status" onchange="this.form.submit()" style="font-size: 0.8rem; padding: 4px 6px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: 700;">
+                        <option value="active" <?= ($sl['trang_thai_seller'] ?? 'active') === 'active' ? 'selected' : '' ?>>✓ Active</option>
+                        <option value="pending" <?= ($sl['trang_thai_seller'] ?? '') === 'pending' ? 'selected' : '' ?>>⏳ Pending</option>
+                        <option value="suspended" <?= ($sl['trang_thai_seller'] ?? '') === 'suspended' ? 'selected' : '' ?>>⛔ Suspended</option>
+                        <option value="rejected" <?= ($sl['trang_thai_seller'] ?? '') === 'rejected' ? 'selected' : '' ?>>✕ Rejected</option>
+                      </select>
+                    </form>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+
+      <?php elseif ($tabHienTai === 'reports'): ?>
+        <!-- TAB 6: REPORTS & ANALYTICS -->
+        <h2 style="margin: 0 0 8px 0; font-size: 1.35rem; color: #0f172a; font-weight: 800;">
+          Reports &amp; Revenue Analytics
+        </h2>
+        <p style="color: #64748b; font-size: 0.9rem; margin: 0 0 20px 0;">
+          Financial reports, revenue breakdown by category, and platform performance metrics.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px;">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.05rem; color: #1e3b6d;">Financial Summary</h3>
+            <p style="margin: 4px 0;">Total Orders Placed: <strong><?= $tongDonHang ?></strong></p>
+            <p style="margin: 4px 0;">Total Gross Sales: <strong style="color: #059669;"><?= vnd($tongDoanhThu) ?></strong></p>
+            <p style="margin: 4px 0;">Total Physical Copies in Stock: <strong><?= number_format((int)$db->query('SELECT COALESCE(SUM(ton_kho), 0) FROM san_pham')->fetchColumn()) ?></strong></p>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px;">
+            <h3 style="margin: 0 0 10px 0; font-size: 1.05rem; color: #1e3b6d;">Platform Capacity</h3>
+            <p style="margin: 4px 0;">Total Partner Sellers: <strong><?= $tongSeller ?></strong></p>
+            <p style="margin: 4px 0;">Active Customer Accounts: <strong><?= $tongKhachHang ?></strong></p>
+            <p style="margin: 4px 0;">Total Available Titles: <strong><?= $tongSach ?></strong></p>
+          </div>
+        </div>
+
+        <h3 style="margin: 20px 0 12px 0; font-size: 1.15rem; color: #0f172a;">Sales Volume by Category</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+          <thead>
+            <tr style="background: #f1f5f9; text-align: left; border-bottom: 2px solid #cbd5e1;">
+              <th style="padding: 10px 12px;">Category</th>
+              <th style="padding: 10px 12px; text-align: center;">Total Titles</th>
+              <th style="padding: 10px 12px; text-align: right;">Estimated Revenue</th>
             </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  </section>
+          </thead>
+          <tbody>
+            <?php foreach ($dsDanhMuc as $dm): 
+              $stRevDm = $db->prepare('SELECT COALESCE(SUM(ct.so_luong * ct.don_gia), 0) FROM chi_tiet_don ct JOIN san_pham sp ON ct.san_pham_id = sp.id WHERE sp.danh_muc_id = ?');
+              $stRevDm->execute([$dm['id']]);
+              $revDm = (int)$stRevDm->fetchColumn();
+            ?>
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 10px 12px; font-weight: 700; color: #1e3b6d;"><?= e(layTenDanhMucEn($dm['id'], $dm['ten'])) ?></td>
+                <td style="padding: 10px 12px; text-align: center;"><?= $dm['so_sach'] ?></td>
+                <td style="padding: 10px 12px; text-align: right; font-weight: 800; color: #059669;"><?= vnd($revDm) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
 
-  <!-- 4. QUẢN LÝ NGƯỜI DÙNG & CHỦ SÁCH (USERS & BOOK OWNERS) -->
-  <section id="nguoi-dung" style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 35px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-      <div>
-        <h2 style="margin: 0; color: #1e3b6d;">Quản lý Người dùng &amp; Chủ sách (Book Owners)</h2>
-        <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.9rem;">Admin có toàn quyền kiểm soát danh sách người dùng, cấp quyền hoặc chuyển đổi vai trò Chủ sách (Book Owner).</p>
-      </div>
-      <span style="background: #f1f5f9; color: #475569; padding: 6px 14px; border-radius: 9999px; font-weight: 700; font-size: 0.85rem;">Tổng: <?= count($dsNguoiDung) ?> tài khoản</span>
-    </div>
+      <?php elseif ($tabHienTai === 'settings'): ?>
+        <!-- TAB 7: SYSTEM SETTINGS -->
+        <h2 style="margin: 0 0 8px 0; font-size: 1.35rem; color: #0f172a; font-weight: 800;">
+          System Settings &amp; Site Configuration
+        </h2>
+        <p style="color: #64748b; font-size: 0.9rem; margin: 0 0 20px 0;">
+          Configure platform information, announcements, hotline, and promotional campaigns.
+        </p>
 
-    <div style="overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; text-align: left;">
-        <thead>
-          <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.9rem;">
-            <th style="padding: 10px 12px; width: 60px;">ID</th>
-            <th style="padding: 10px 12px;">Họ và tên</th>
-            <th style="padding: 10px 12px;">Email</th>
-            <th style="padding: 10px 12px; width: 170px; text-align: center;">Vai trò hiện tại</th>
-            <th style="padding: 10px 12px; width: 110px; text-align: center;">Sách đăng bán</th>
-            <th style="padding: 10px 12px; width: 200px; text-align: center;">Phân quyền vai trò</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($dsNguoiDung as $user): ?>
-            <tr style="border-bottom: 1px solid #e2e8f0; vertical-align: middle;">
-              <td style="padding: 10px 12px; font-weight: bold; color: #64748b;">#<?= $user['id'] ?></td>
-              <td style="padding: 10px 12px; font-weight: 700; color: #1e293b;">
-                <?= e($user['ho_ten']) ?>
-                <?php if ((int)$user['id'] === (int)$u['id']): ?>
-                  <span style="font-size: 0.72rem; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 4px;">Bạn</span>
-                <?php endif; ?>
-              </td>
-              <td style="padding: 10px 12px; font-size: 0.9rem; color: #475569;">
-                <code><?= e($user['email']) ?></code>
-              </td>
-              <td style="padding: 10px 12px; text-align: center;">
-                <?php if ($user['vai_tro'] === 'quan_tri'): ?>
-                  <span style="background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">👑 Quản trị viên (Admin)</span>
-                <?php elseif ($user['vai_tro'] === 'chu_sach'): ?>
-                  <span style="background: #fef3c7; color: #b45309; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">🏪 Chủ sách (Book Owner)</span>
-                <?php else: ?>
-                  <span style="background: #eff6ff; color: #1e40af; padding: 3px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">👤 Khách hàng (Customer)</span>
-                <?php endif; ?>
-              </td>
-              <td style="padding: 10px 12px; text-align: center; font-weight: bold; color: <?= $user['so_sach'] > 0 ? '#ea580c' : '#94a3b8' ?>;">
-                <?= $user['so_sach'] ?> cuốn
-              </td>
-              <td style="padding: 10px 12px; text-align: center;">
-                <?php if ((int)$user['id'] === (int)$u['id']): ?>
-                  <span style="color: #94a3b8; font-size: 0.8rem; font-style: italic;">Đang đăng nhập</span>
-                <?php else: ?>
-                  <form method="POST" action="quan-tri.php" style="display: flex; gap: 6px; justify-content: center; align-items: center; margin: 0;">
-                    <?= csrfField() ?>
-                    <input type="hidden" name="doi_vai_tro" value="1">
-                    <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
-                    <select name="vai_tro" style="padding: 4px 6px; font-size: 0.82rem; border: 1px solid #cbd5e1; border-radius: 4px;">
-                      <option value="khach_hang" <?= $user['vai_tro'] === 'khach_hang' ? 'selected' : '' ?>>Khách hàng</option>
-                      <option value="chu_sach" <?= $user['vai_tro'] === 'chu_sach' ? 'selected' : '' ?>>Chủ sách</option>
-                      <option value="quan_tri" <?= $user['vai_tro'] === 'quan_tri' ? 'selected' : '' ?>>Quản trị viên</option>
-                    </select>
-                    <button type="submit" class="nut nut--vien" style="padding: 3px 8px; font-size: 0.78rem;">Đổi</button>
-                  </form>
-                <?php endif; ?>
-              </td>
-            </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+        <form method="POST" action="quan-tri.php?tab=settings" style="max-width: 600px;">
+          <?= csrfField() ?>
+          <input type="hidden" name="action_luu_cai_dat" value="1">
+
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: 700; margin-bottom: 6px; color: #334155;">Platform Name:</label>
+            <input type="text" name="site_name" value="<?= e($caiDatMap['site_name'] ?? 'BookNest - UED Student Bookstore') ?>" required style="width: 100%; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: 700; margin-bottom: 6px; color: #334155;">Support Hotline:</label>
+            <input type="text" name="hotline" value="<?= e($caiDatMap['hotline'] ?? '0236.3841.323') ?>" required style="width: 100%; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: 700; margin-bottom: 6px; color: #334155;">Contact Email:</label>
+            <input type="email" name="email_lien_he" value="<?= e($caiDatMap['email_lien_he'] ?? 'hotro@ued.vn') ?>" required style="width: 100%; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: 700; margin-bottom: 6px; color: #334155;">Campus Address:</label>
+            <input type="text" name="dia_chi" value="<?= e($caiDatMap['dia_chi'] ?? '459 Ton Duc Thang, Lien Chieu, Da Nang') ?>" required style="width: 100%; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: 700; margin-bottom: 6px; color: #334155;">Top Banner Announcement:</label>
+            <textarea name="banner_thong_bao" rows="2" style="width: 100%; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;"><?= e($caiDatMap['banner_thong_bao'] ?? 'New Semester Book Fair 2026: Up to 25% OFF all textbooks!') ?></textarea>
+          </div>
+
+          <div style="margin-bottom: 24px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #334155; cursor: pointer;">
+              <input type="checkbox" name="khuyen_mai_active" value="1" <?= (!empty($caiDatMap['khuyen_mai_active']) && $caiDatMap['khuyen_mai_active'] === '1') ? 'checked' : '' ?>>
+              <span>Enable 25% Student Discount Campaign Across All Textbooks</span>
+            </label>
+          </div>
+
+          <button type="submit" class="nut nut--chinh" style="padding: 11px 24px; font-weight: 700; font-size: 0.95rem; border-radius: 8px;">
+            Save Platform Settings
+          </button>
+        </form>
+
+      <?php endif; ?>
+
     </div>
-  </section>
+  </div>
+
 </main>
 
 <?php require __DIR__ . '/inc/footer.php'; ?>

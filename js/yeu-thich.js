@@ -51,6 +51,11 @@ export function kiemTraYeuThich(id) {
  * @returns {boolean} Trạng thái mới: true nếu vừa thêm, false nếu vừa bỏ
  */
 export function chuyenDoiYeuThich(id) {
+  if (typeof window !== 'undefined' && (!window.BOOKNEST_UID || window.BOOKNEST_UID <= 0)) {
+    window.location.href = 'dang-nhap.php?yeu_cau=yeu_thich';
+    return false;
+  }
+
   const maSo = Number(id);
   let ds = layDanhSachYeuThich();
   let daThem = false;
@@ -79,6 +84,6 @@ export function capNhatBadgeYeuThich() {
 
   phanTuBadge.forEach((badge) => {
     badge.textContent = String(soLuong);
-    badge.setAttribute('aria-label', `Có ${soLuong} sản phẩm trong danh sách yêu thích`);
+    badge.setAttribute('aria-label', `${soLuong} items in wishlist`);
   });
 }

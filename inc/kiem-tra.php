@@ -7,29 +7,35 @@
 function kiemTraSanPham(array $vao, array $idDanhMuc): array
 {
     $du = [
-        'ten'         => trim($vao['ten'] ?? ''),
-        'gia'         => filter_var($vao['gia'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1000]]),
-        'ton_kho'     => filter_var($vao['ton_kho'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 9999]]),
-        'danh_muc_id' => filter_var($vao['danh_muc_id'] ?? '', FILTER_VALIDATE_INT),
-        'mo_ta'       => trim($vao['mo_ta'] ?? ''),
+        'ten'          => trim($vao['ten'] ?? ''),
+        'tac_gia'      => trim($vao['tac_gia'] ?? ''),
+        'isbn'         => trim($vao['isbn'] ?? ''),
+        'nam_xuat_ban' => filter_var($vao['nam_xuat_ban'] ?? date('Y'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1900, 'max_range' => 2099]]),
+        'gia'          => filter_var($vao['gia'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1000]]),
+        'ton_kho'      => filter_var($vao['ton_kho'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 9999]]),
+        'danh_muc_id'  => filter_var($vao['danh_muc_id'] ?? '', FILTER_VALIDATE_INT),
+        'mo_ta'        => trim($vao['mo_ta'] ?? ''),
     ];
 
     $loi = [];
     $n = mb_strlen($du['ten']);
     if ($n < 2 || $n > 200) {
-        $loi['ten'] = 'Tên sách phải dài từ 2 đến 200 ký tự';
+        $loi['ten'] = 'Book title must be between 2 and 200 characters.';
+    }
+    if ($du['tac_gia'] !== '' && mb_strlen($du['tac_gia']) > 150) {
+        $loi['tac_gia'] = 'Author name must not exceed 150 characters.';
     }
     if ($du['gia'] === false) {
-        $loi['gia'] = 'Giá sách phải là số nguyên từ 1.000 VNĐ trở lên';
+        $loi['gia'] = 'Book price must be an integer of at least 1,000 VNĐ.';
     }
     if ($du['ton_kho'] === false) {
-        $loi['ton_kho'] = 'Tồn kho phải là số nguyên từ 0 đến 9.999';
+        $loi['ton_kho'] = 'Stock quantity must be an integer between 0 and 9,999.';
     }
     if ($du['danh_muc_id'] === false || !in_array((int)$du['danh_muc_id'], $idDanhMuc, true)) {
-        $loi['danh_muc_id'] = 'Vui lòng chọn một danh mục sách có sẵn';
+        $loi['danh_muc_id'] = 'Please select a valid textbook category.';
     }
-    if (mb_strlen($du['mo_ta']) > 2000) {
-        $loi['mo_ta'] = 'Mô tả sách không được vượt quá 2.000 ký tự';
+    if ($du['mo_ta'] !== '' && mb_strlen($du['mo_ta']) > 2000) {
+        $loi['mo_ta'] = 'Book description must not exceed 2,000 characters.';
     }
 
     return [$du, $loi];

@@ -19,10 +19,10 @@ INSERT INTO danh_muc (id, ten, slug, mo_ta) VALUES
   (5, 'Ngoại ngữ & Du học', 'ngoai-ngu-du-hoc', 'Tài liệu luyện thi IELTS, TOEIC, tiếng Nhật, tiếng Trung (Hiện chưa có sách)');
 
 -- 2. DỮ LIỆU TÀI KHOẢN NGƯỜI DÙNG
--- Mật khẩu chung của tất cả tài khoản thử nghiệm: matkhau123
--- Băm chuẩn BCRYPT: $2y$12$qHb8qF.xgsQsDEN5nvxo6OsTDLDQmDQmTnjDdlNCp7MqAzd4fkWBG
+-- Tài khoản Admin: admin / admin123 (hoặc admin@ued.vn / admin123)
+-- Tài khoản người dùng khác: matkhau123
 INSERT INTO nguoi_dung (id, email, ho_ten, mat_khau, vai_tro) VALUES
-  (1, 'admin@ued.vn', 'Quản trị viên Hệ thống', '$2y$12$qHb8qF.xgsQsDEN5nvxo6OsTDLDQmDQmTnjDdlNCp7MqAzd4fkWBG', 'quan_tri'),
+  (1, 'admin@ued.vn', 'Quản trị viên Hệ thống', '$2y$12$EhvGWBjtejID4xV8jeIWO.PgcMjwYTR5D.M5Q3OM3uFttpMDUbObC', 'quan_tri'),
   (2, 'lan@ued.vn', 'Nguyễn Thị Lan', '$2y$12$qHb8qF.xgsQsDEN5nvxo6OsTDLDQmDQmTnjDdlNCp7MqAzd4fkWBG', 'khach_hang'),
   (3, 'an@ued.vn', 'Trần Văn An', '$2y$12$qHb8qF.xgsQsDEN5nvxo6OsTDLDQmDQmTnjDdlNCp7MqAzd4fkWBG', 'khach_hang'),
   (4, 'yoi@ued.vn', 'Xaiyasith Yoi', '$2y$12$qHb8qF.xgsQsDEN5nvxo6OsTDLDQmDQmTnjDdlNCp7MqAzd4fkWBG', 'quan_tri'),

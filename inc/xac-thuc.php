@@ -24,10 +24,17 @@ function nguoiDung(): ?array
     }
 
     try {
-        $st = db()->prepare('SELECT id, email, ho_ten, vai_tro, ngay_tao FROM nguoi_dung WHERE id = ?');
+        $st = db()->prepare('SELECT id, email, ho_ten, vai_tro, ngay_tao, so_dien_thoai, dia_chi, avatar, kich_hoat, ten_gian_hang, mo_ta_shop, logo_shop, trang_thai_seller FROM nguoi_dung WHERE id = ?');
         $st->execute([$uid]);
         $u = $st->fetch();
-        $nguoiDungHienTai = $u ?: null;
+        if ($u && isset($u['kich_hoat']) && (int)$u['kich_hoat'] === 0) {
+            // Suspended/deactivated account
+            dangXuat();
+            $_SESSION['flash_error'] = 'Your account has been deactivated or suspended by the administrator.';
+            $nguoiDungHienTai = null;
+        } else {
+            $nguoiDungHienTai = $u ?: null;
+        }
     } catch (Throwable $e) {
         $nguoiDungHienTai = null;
     }
@@ -65,12 +72,12 @@ function dangXuat(): void
 /**
  * Yêu cầu người dùng phải đăng nhập trước khi xem trang
  */
-function yeuCauDangNhap(): array
+function yeuCauDangNhap(?string $thongBao = null): array
 {
     $nd = nguoiDung();
     if (!$nd) {
-        $_SESSION['flash_error'] = 'Vui lòng đăng nhập để tiếp tục.';
-        $_SESSION['redirect_sau_dang_nhap'] = $_SERVER['REQUEST_URI'];
+        $_SESSION['flash_error'] = $thongBao ?? 'Vui lòng đăng nhập để tiếp tục.';
+        $_SESSION['redirect_sau_dang_nhap'] = $_SERVER['REQUEST_URI'] ?? 'index.php';
         header('Location: dang-nhap.php');
         exit;
     }

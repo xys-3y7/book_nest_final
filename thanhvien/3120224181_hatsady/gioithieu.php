@@ -3,9 +3,9 @@
  * thanhvien/3120224181_hatsady/gioithieu.php - Trang cá nhân của Phommaket Hatsady
  * Mã sinh viên: 3120224181 - Lớp: 24CNTT3
  * Chức năng Phần B:
- *   1. Danh sách dự án CNTT cá nhân từ bảng tv_du_an: tìm kiếm từ khóa, lọc theo công nghệ qua prepared statements.
- *   2. Biểu mẫu thêm dự án mới vào CSDL MySQL (chỉ chủ trang đăng nhập mới được thực hiện).
- * Cách thử: Gõ từ khóa tìm kiếm dự án; đăng nhập hatsady@ued.vn / matkhau123 để thêm dự án mới.
+ *   1. Danh sách dự án CNTT cá nhân từ bảng tv_du_an: tìm kiếm từ khóa an toàn, lọc theo công nghệ qua prepared statements.
+ *   2. Biểu mẫu thêm dự án mới và nút xóa dự án vào CSDL MySQL (chỉ chủ trang đăng nhập mới được thực hiện).
+ * Cách thử: Gõ từ khóa tìm kiếm dự án; đăng nhập hatsady@ued.vn / matkhau123 để thêm hoặc xóa dự án.
  */
 
 require_once __DIR__ . '/../../inc/config.php';
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($xoaId) {
         $stDel = $db->prepare('DELETE FROM tv_du_an WHERE id = ? AND mssv = ?');
         $stDel->execute([$xoaId, MSSV]);
-        $_SESSION['flash'] = 'Đã xóa dự án thành công!';
+        $_SESSION['flash'] = 'Đã xóa dự án thành công khỏi CSDL!';
         header('Location: gioithieu.php');
         exit;
     }
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($loi)) {
         $stAdd = $db->prepare('INSERT INTO tv_du_an (mssv, ten_du_an, cong_nghe, mo_ta, link_github) VALUES (?, ?, ?, ?, ?)');
         $stAdd->execute([MSSV, $tenDuAn, $congNghe, $moTa, $link ?: null]);
-        $_SESSION['flash'] = 'Thêm dự án mới thành công!';
+        $_SESSION['flash'] = 'Đã thêm dự án công nghệ mới thành công!';
         header('Location: gioithieu.php');
         exit;
     }
@@ -80,146 +80,240 @@ $stDs = $db->prepare($sql);
 $stDs->execute($params);
 $dsDuAn = $stDs->fetchAll();
 
+$tongDuAn = (int)$db->query("SELECT COUNT(*) FROM tv_du_an WHERE mssv = '" . MSSV . "'")->fetchColumn();
+
 $thongBao = $_SESSION['flash'] ?? '';
 unset($_SESSION['flash']);
 
-$tieuDe = 'Trang cá nhân - Phommaket Hatsady';
+$tieuDe = 'Trang cá nhân - Phommaket Hatsady | Dự án công nghệ';
 $trang = 'gioi-thieu';
 
 require __DIR__ . '/../../inc/header.php';
 ?>
 
-<main class="noi-dung-chinh khung-chua" style="max-width: 900px; margin: 30px auto;">
-  <!-- Thông tin cá nhân -->
-  <section style="display: flex; gap: 30px; align-items: center; background: #ffffff; padding: 28px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 30px; flex-wrap: wrap; box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05); position: relative; overflow: hidden;">
-    <div style="position: absolute; top: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, #0f2b5c 0%, #0284c7 100%);"></div>
-    <img src="<?= $goc ?>images/hatsady-avatar.png" alt="Ảnh Phommaket Hatsady" width="130" height="130" style="border-radius: 50%; object-fit: cover; border: 4px solid #ffffff; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.15);">
-    <div style="flex: 1; min-width: 280px;">
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px;">
-        <h1 style="margin: 0; color: #0f2b5c; font-size: 1.85rem; font-weight: 800;">Phommaket Hatsady</h1>
-        <span class="huy-hieu huy-hieu--thanh-cong" style="font-size: 0.75rem; padding: 4px 10px;">Thành viên</span>
+<main class="noi-dung-chinh khung-chua" style="max-width: 960px; margin: 32px auto; padding: 0 16px;">
+  <!-- Thẻ thông tin cá nhân (Profile Hero) -->
+  <section style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05); margin-bottom: 28px; overflow: hidden; position: relative;">
+    <div style="height: 100px; background: linear-gradient(135deg, #1e3a8a 0%, #0284c7 50%, #0d9488 100%);"></div>
+    <div style="padding: 0 28px 24px; position: relative; display: flex; gap: 24px; align-items: flex-end; flex-wrap: wrap; margin-top: -50px;">
+      <img src="<?= $goc ?>images/hatsady-avatar.png" alt="Ảnh Phommaket Hatsady" width="120" height="120" style="border-radius: 50%; object-fit: cover; border: 4px solid #ffffff; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15); background: #ffffff;">
+      <div style="flex: 1; min-width: 280px; padding-top: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px;">
+          <h1 style="margin: 0; color: #0f2b5c; font-size: 1.85rem; font-weight: 800;">Phommaket Hatsady</h1>
+          <span style="background: #e0f2fe; color: #0369a1; font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 9999px;">💻 Thành viên &bull; MSSV: 3120224181</span>
+          <span style="background: #ecfdf5; color: #065f46; font-size: 0.8rem; font-weight: 600; padding: 4px 10px; border-radius: 9999px;">Lớp: 24CNTT3</span>
+        </div>
+        <p style="margin: 6px 0 10px; color: #475569; font-size: 0.95rem; line-height: 1.5;">
+          <strong>Trách nhiệm chính:</strong> Trang danh mục sách <code>danh-sach.php</code>, bộ lọc an toàn, phân trang, cấu hình máy chủ Apache <code>.htaccess</code>.
+        </p>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <a href="https://github.com/daimobile33076-eng" target="_blank" rel="noopener noreferrer" class="github-pill" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; background: #0f172a; color: #ffffff; border-radius: 20px; text-decoration: none; font-size: 0.85rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            <span>GitHub: daimobile33076-eng</span>
+          </a>
+          <a href="../../gioi-thieu.php" class="nut nut--vien" style="padding: 5px 14px; font-size: 0.85rem; border-radius: 9999px;">&larr; Trang giới thiệu Nhóm 12</a>
+          
+          <?php if ($laChuTrang): ?>
+            <span style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; font-size: 0.85rem; font-weight: 700; padding: 5px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px;">
+              ✓ Đang đăng nhập: Chủ trang (hatsady@ued.vn)
+            </span>
+          <?php else: ?>
+            <a href="../../dang-nhap.php?email=hatsady@ued.vn" style="background: #fef3c7; border: 1px solid #fde68a; color: #b45309; font-size: 0.85rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+              🔑 Đăng nhập tài khoản Hatsady để thêm / xóa dự án &rarr;
+            </a>
+          <?php endif; ?>
+        </div>
       </div>
-      <p style="margin: 4px 0; color: #64748b; font-size: 0.95rem;">Mã sinh viên: <strong>3120224181</strong> &bull; Lớp: <strong>24CNTT3</strong></p>
-      <div style="margin: 8px 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <a href="https://github.com/daimobile33076-eng" target="_blank" rel="noopener noreferrer" class="github-pill">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          <span>daimobile33076-eng</span>
-        </a>
-        <a href="../../gioi-thieu.php" class="nut nut--vien" style="padding: 4px 12px; font-size: 0.85rem; border-radius: 9999px;">&larr; Trang giới thiệu nhóm</a>
-      </div>
-      <p style="margin: 4px 0; color: #475569; font-size: 0.9rem;">
-        <strong>Trách nhiệm:</strong> Trang danh mục sách danh-sach.php, bộ lọc GET an toàn, phân trang và dịch vụ Giỏ hàng.
-      </p>
-      <?php if ($laChuTrang): ?>
-        <p style="margin: 8px 0 0 0; color: #16a34a; font-weight: bold; font-size: 0.9rem;">✓ Bạn đang đăng nhập với tư cách Chủ trang (hatsady@ued.vn)</p>
-      <?php endif; ?>
     </div>
   </section>
 
-  <!-- BẢNG NHIỆM VỤ CHI TIẾT TRONG VIỆC LÀM BÁO CÁO BÀI TẬP 7 (THEO YÊU CẦU) -->
-  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.04);">
-    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
-      <h2 style="margin: 0; color: #1e3b6d; font-size: 1.35rem;">📋 Nhiệm vụ &amp; Đóng góp trong Báo cáo Bài tập nhóm số 7 (Bảo mật Web)</h2>
-      <span style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold;">Đóng góp: 100%</span>
+  <!-- Nhiệm vụ báo cáo đồ án chi tiết (Theo Báo cáo Bài tập 7) -->
+  <section style="background: #ffffff; padding: 26px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 28px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+      <h2 style="margin: 0; color: #0f2b5c; font-size: 1.3rem;">📋 Bảng phân công nhiệm vụ chi tiết của Phommaket Hatsady</h2>
+      <span style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 9999px; font-size: 0.82rem; font-weight: 700;">Đóng góp: 100% &bull; Hoàn thành xuất sắc</span>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 18px;">
-      <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #1e3b6d;">
-        <h4 style="margin: 0 0 8px 0; color: #1e3b6d;">1. Biện pháp bảo mật phụ trách</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+      <div style="background: #f8fafc; padding: 18px; border-radius: 10px; border-left: 4px solid #1e3a8a;">
+        <strong style="color: #1e3a8a; font-size: 1rem; display: block; margin-bottom: 8px;">1. Vai trò Lập trình Giao diện &amp; Danh mục:</strong>
         <ul style="margin: 0; padding-left: 18px; font-size: 0.9rem; color: #334155; line-height: 1.6;">
-          <li><strong>Biện pháp 5:</strong> Bảo vệ máy chủ Apache qua tập tin <code>.htaccess</code> và <code>uploads/.htaccess</code>.</li>
-          <li>Chặn liệt kê thư mục (<code>Options -Indexes</code>).</li>
-          <li>Chặn truy cập trực tiếp <code>.env</code>, <code>.git</code>, <code>.sql</code>, <code>.log</code>, <code>composer.json</code>, các thư mục nội bộ (HTTP 404/403).</li>
-          <li>Cấm thực thi mã PHP trong <code>uploads/</code> (<code>SetHandler None</code>), thêm <code>nosniff</code>.</li>
+          <li>Phát triển trang danh mục sách <code>danh-sach.php</code> với bộ lọc chuyên ngành và tìm kiếm từ khóa an toàn.</li>
+          <li>Xây dựng thuật toán phân trang dữ liệu theo từng trang trên CSDL MySQL.</li>
+          <li>Đồng phát triển logic dịch vụ Giỏ hàng (thêm, cập nhật số lượng, xóa sản phẩm).</li>
         </ul>
       </div>
 
-      <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #ea580c;">
-        <h4 style="margin: 0 0 8px 0; color: #ea580c;">2. Nội dung biên soạn báo cáo</h4>
+      <div style="background: #f8fafc; padding: 18px; border-radius: 10px; border-left: 4px solid #0284c7;">
+        <strong style="color: #0284c7; font-size: 1rem; display: block; margin-bottom: 8px;">2. Biện pháp bảo mật đảm nhiệm (Chương 7):</strong>
         <ul style="margin: 0; padding-left: 18px; font-size: 0.9rem; color: #334155; line-height: 1.6;">
-          <li><strong>Phần A:</strong> Phân tích nguy cơ lộ lọt cấu hình máy chủ và giải trình giải pháp <code>.htaccess</code> trong Bảng 1.</li>
-          <li><strong>Phần B:</strong> Báo cáo bảo mật trang cá nhân <code>phommaket.php</code>, kiểm tra quyền chủ trang khi Thêm/Xóa dự án <code>tv_du_an</code>, 5 ca kiểm thử thực nghiệm.</li>
-          <li><strong>Phần C:</strong> Biên soạn giải đáp <strong>Câu C.3</strong> (.htaccess vs php -S, finfo_file và giải pháp kiến trúc Web Root).</li>
+          <li><strong>Biện pháp 3 (Tiêu đề bảo mật &amp; CSP):</strong> Thiết lập Content-Security-Policy <code>script-src 'self'</code>, loại bỏ <code>X-Powered-By</code>, thêm <code>nosniff</code>, Console 0 lỗi vi phạm.</li>
+          <li><strong>Biện pháp 5 (Bảo vệ Apache .htaccess):</strong> Cấu hình <code>.htaccess</code> chặn liệt kê thư mục (<code>-Indexes</code>), chặn tải file nhạy cảm (<code>.env</code>, <code>.git</code>, <code>.sql</code>, <code>.log</code>); cấm chạy mã PHP trong <code>uploads/</code>.</li>
+          <li><strong>Thảo luận C.3:</strong> Phân tích nguy cơ lộ file cấu hình máy chủ web và so sánh bảo vệ tầng ứng dụng vs tầng máy chủ web.</li>
         </ul>
       </div>
-    </div>
 
-    <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.9rem; color: #334155; line-height: 1.6;">
-      <strong style="color: #1e3b6d;">3. Thực thi kiểm thử &amp; Minh chứng chất lượng:</strong>
-      <ul style="margin: 6px 0 0 0; padding-left: 18px;">
-        <li>Thực hiện các ca kiểm thử bảo mật phủ định: cố tình tải tệp nhạy cảm <code>.env</code>, <code>.git/HEAD</code>, <code>database/schema.sql</code>, tệp PHP trong <code>uploads/</code>.</li>
-        <li>Chụp và chèn ảnh minh chứng <strong>Hình 7</strong> trong báo cáo đồ án.</li>
-        <li>Commit Git phụ trách: <code>ee32b9d</code> (Biện pháp 5) và <code>f1c6fde</code> (Phần B cá nhân).</li>
-      </ul>
+      <div style="background: #f8fafc; padding: 18px; border-radius: 10px; border-left: 4px solid #0d9488;">
+        <strong style="color: #0d9488; font-size: 1rem; display: block; margin-bottom: 8px;">3. Chức năng CSDL riêng Phần B:</strong>
+        <ul style="margin: 0; padding-left: 18px; font-size: 0.9rem; color: #334155; line-height: 1.6;">
+          <li><strong>Quản lý dự án công nghệ:</strong> Bảng <code>tv_du_an</code> hiển thị portfolio dự án CNTT cá nhân.</li>
+          <li><strong>Tìm kiếm đa tiêu chí:</strong> Lọc theo tên dự án hoặc công nghệ sử dụng, chống SQL Injection qua Prepared Statements.</li>
+          <li><strong>Phân quyền chủ trang:</strong> Chỉ tài khoản Hatsady mới được thêm dự án mới và xóa dự án trên CSDL (403 Forbidden nếu trái quyền).</li>
+        </ul>
+      </div>
     </div>
   </section>
 
+  <!-- Thông báo trạng thái -->
   <?php if ($thongBao !== ''): ?>
-    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px 16px; border-radius: 6px; margin-bottom: 25px;">
-      <?= e($thongBao) ?>
+    <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px 18px; border-radius: 8px; margin-bottom: 24px; font-weight: 500;" aria-live="polite">
+      ✓ <?= e($thongBao) ?>
     </div>
   <?php endif; ?>
 
-  <!-- Chức năng CSDL 2: Thêm dự án mới (chỉ chủ trang) -->
+  <!-- Chức năng CSDL 2: Biểu mẫu thêm dự án công nghệ mới (chỉ dành cho chủ trang) -->
   <?php if ($laChuTrang): ?>
-    <section style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
-      <h2 style="margin-top: 0; color: #1e3b6d; font-size: 1.25rem;">+ Thêm dự án công nghệ mới (Bảng tv_du_an)</h2>
-      <form method="POST" action="gioithieu.php">
+    <section style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 24px; border-radius: 12px; margin-bottom: 28px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);">
+      <h2 style="margin: 0 0 6px; color: #166534; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+        <span>🚀</span> Thêm dự án công nghệ mới vào CSDL (Quyền Chủ trang)
+      </h2>
+      <p style="margin: 0 0 16px; color: #15803d; font-size: 0.9rem;">
+        Dữ liệu sẽ được lưu an toàn vào bảng <code>tv_du_an</code> qua Prepared Statement.
+      </p>
+
+      <form method="POST" action="gioithieu.php" style="background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #bbf7d0;">
         <?= csrfField() ?>
-        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 12px;">
-          <div style="flex: 1; min-width: 220px;">
-            <label style="display:block;font-weight:bold;margin-bottom:4px;">Tên dự án *</label>
-            <input type="text" name="ten_du_an" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:4px;box-sizing:border-box;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 14px;">
+          <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #1e293b; font-size: 0.9rem;">
+              Tên dự án <span style="color: #ef4444;">*</span>
+            </label>
+            <input type="text" name="ten_du_an" placeholder="Ví dụ: Cổng Quản lý Đồ án Tốt nghiệp" required style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+            <?php if (isset($loi['ten_du_an'])): ?>
+              <p style="color: #ef4444; font-size: 0.85rem; margin: 4px 0 0;"><?= e($loi['ten_du_an']) ?></p>
+            <?php endif; ?>
           </div>
-          <div style="flex: 1; min-width: 220px;">
-            <label style="display:block;font-weight:bold;margin-bottom:4px;">Công nghệ *</label>
-            <input type="text" name="cong_nghe" placeholder="Ví dụ: PHP 8, MariaDB, Docker" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:4px;box-sizing:border-box;">
+          <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #1e293b; font-size: 0.9rem;">
+              Công nghệ sử dụng <span style="color: #ef4444;">*</span>
+            </label>
+            <input type="text" name="cong_nghe" placeholder="Ví dụ: React, Node.js, PostgreSQL" required style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+            <?php if (isset($loi['cong_nghe'])): ?>
+              <p style="color: #ef4444; font-size: 0.85rem; margin: 4px 0 0;"><?= e($loi['cong_nghe']) ?></p>
+            <?php endif; ?>
           </div>
         </div>
-        <div style="margin-bottom: 12px;">
-          <label style="display:block;font-weight:bold;margin-bottom:4px;">Mô tả dự án *</label>
-          <textarea name="mo_ta" rows="2" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:4px;box-sizing:border-box;"></textarea>
+
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #1e293b; font-size: 0.9rem;">
+            Mô tả tóm tắt dự án <span style="color: #ef4444;">*</span>
+          </label>
+          <textarea name="mo_ta" rows="2" placeholder="Tóm tắt chức năng, kiến trúc hoặc giải thuật nổi bật..." required style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; line-height: 1.5;"></textarea>
+          <?php if (isset($loi['mo_ta'])): ?>
+            <p style="color: #ef4444; font-size: 0.85rem; margin: 4px 0 0;"><?= e($loi['mo_ta']) ?></p>
+          <?php endif; ?>
         </div>
-        <div style="margin-bottom: 15px;">
-          <label style="display:block;font-weight:bold;margin-bottom:4px;">Link GitHub</label>
-          <input type="url" name="link_github" placeholder="https://github.com/..." style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:4px;box-sizing:border-box;">
+
+        <div style="margin-bottom: 18px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #1e293b; font-size: 0.9rem;">
+            Đường dẫn GitHub Repository (Tùy chọn)
+          </label>
+          <input type="url" name="link_github" placeholder="https://github.com/daimobile33076-eng/..." style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
         </div>
-        <button type="submit" class="nut nut--chinh">Lưu dự án vào CSDL</button>
+
+        <button type="submit" class="nut nut--chinh" style="padding: 10px 22px; font-size: 0.95rem; border-radius: 6px; background: #166534; border-color: #166534;">
+          💾 Lưu dự án vào CSDL
+        </button>
       </form>
     </section>
   <?php endif; ?>
 
-  <!-- Chức năng CSDL 1: Danh sách dự án kèm tìm kiếm -->
-  <section style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
-      <h2 style="margin: 0; color: #1e3b6d;">💻 Dự án cá nhân &amp; Đóng góp phần mềm</h2>
-      <form method="GET" action="gioithieu.php" style="display: flex; gap: 6px;">
-        <input type="text" name="q" value="<?= e($q) ?>" placeholder="Tìm tên hoặc công nghệ..." style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
-        <button type="submit" class="nut nut--chinh" style="padding: 6px 12px;">Tìm</button>
+  <!-- Chức năng CSDL 1: Danh mục dự án công nghệ kèm tìm kiếm -->
+  <section style="background: #ffffff; padding: 26px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 22px;">
+      <div>
+        <h2 style="margin: 0; color: #0f2b5c; font-size: 1.35rem; display: flex; align-items: center; gap: 8px;">
+          <span>💻</span> Danh mục dự án công nghệ (Bảng CSDL: <code>tv_du_an</code>)
+        </h2>
+        <p style="margin: 4px 0 0; color: #64748b; font-size: 0.9rem;">
+          Hiển thị các sản phẩm phần mềm đã thực hiện. Đã có <?= $tongDuAn ?> dự án trong CSDL.
+        </p>
+      </div>
+
+      <!-- Khung tìm kiếm an toàn -->
+      <form method="GET" action="gioithieu.php" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <input type="text" name="q" value="<?= e($q) ?>" placeholder="Tìm tên hoặc công nghệ..." style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; min-width: 220px;">
+        <button type="submit" class="nut nut--chinh" style="padding: 8px 16px; font-size: 0.9rem; border-radius: 6px;">
+          🔍 Tìm
+        </button>
         <?php if ($q !== ''): ?>
-          <a href="gioithieu.php" class="nut nut--vien" style="padding: 6px 10px;">Đặt lại</a>
+          <a href="gioithieu.php" class="nut nut--vien" style="padding: 8px 14px; font-size: 0.9rem; border-radius: 6px; text-decoration: none;">
+            Làm mới
+          </a>
         <?php endif; ?>
       </form>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px;">
-      <?php foreach ($dsDuAn as $da): ?>
-        <article style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <h3 style="margin: 0 0 8px 0; color: #1e40af; font-size: 1.1rem;"><?= e($da['ten_du_an']) ?></h3>
-            <span style="display: inline-block; background: #e0f2fe; color: #0369a1; font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-bottom: 10px;">
-              <?= e($da['cong_nghe']) ?>
-            </span>
-            <p style="margin: 0 0 15px 0; color: #334155; font-size: 0.9rem; line-height: 1.5;"><?= nl2br(e($da['mo_ta'])) ?></p>
-          </div>
-          <?php if (!empty($da['link_github'])): ?>
-            <a href="<?= e($da['link_github']) ?>" target="_blank" rel="noopener" class="nut nut--vien" style="text-align: center; font-size: 0.85rem; padding: 6px;">
-              Xem mã nguồn trên GitHub &rarr;
-            </a>
-          <?php endif; ?>
-        </article>
-      <?php endforeach; ?>
-    </div>
+    <?php if ($q !== ''): ?>
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 8px 14px; border-radius: 6px; font-size: 0.9rem; margin-bottom: 20px;">
+        Đang lọc theo từ khóa: <strong>"<?= e($q) ?>"</strong> &bull; Tìm thấy <strong><?= count($dsDuAn) ?></strong> kết quả.
+      </div>
+    <?php endif; ?>
+
+    <?php if (empty($dsDuAn)): ?>
+      <div style="text-align: center; padding: 36px 20px; background: #f8fafc; border-radius: 8px; color: #64748b;">
+        <p style="margin: 0; font-style: italic;">Không tìm thấy dự án nào phù hợp với yêu cầu tìm kiếm.</p>
+      </div>
+    <?php else: ?>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+        <?php foreach ($dsDuAn as $da): ?>
+          <article style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, box-shadow 0.2s; position: relative;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
+                <h3 style="margin: 0; color: #1e40af; font-size: 1.15rem; font-weight: 700; line-height: 1.4;">
+                  <?= e($da['ten_du_an']) ?>
+                </h3>
+                <?php if ($laChuTrang): ?>
+                  <form method="POST" action="gioithieu.php" style="margin: 0;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa dự án này khỏi CSDL?');">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="xoa_id" value="<?= $da['id'] ?>">
+                    <button type="submit" title="Xóa dự án" style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: 600;">
+                      🗑️ Xóa
+                    </button>
+                  </form>
+                <?php endif; ?>
+              </div>
+
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+                <?php 
+                  $tags = array_map('trim', explode(',', $da['cong_nghe']));
+                  foreach ($tags as $tag):
+                ?>
+                  <span style="background: #e0f2fe; color: #0369a1; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
+                    <?= e($tag) ?>
+                  </span>
+                <?php endforeach; ?>
+              </div>
+
+              <p style="margin: 0 0 16px; color: #334155; font-size: 0.92rem; line-height: 1.55;">
+                <?= nl2br(e($da['mo_ta'])) ?>
+              </p>
+            </div>
+
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 8px;">
+              <?php if (!empty($da['link_github'])): ?>
+                <a href="<?= e($da['link_github']) ?>" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; color: #1e40af; font-weight: 600; font-size: 0.85rem; text-decoration: none;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                  <span>Xem mã nguồn trên GitHub &rarr;</span>
+                </a>
+              <?php else: ?>
+                <span style="color: #94a3b8; font-size: 0.82rem; font-style: italic;">Mã nguồn nội bộ</span>
+              <?php endif; ?>
+            </div>
+          </article>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
   </section>
 </main>
 

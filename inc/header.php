@@ -7,152 +7,131 @@
 
 $goc   ??= '';
 $trang ??= '';
-$tieuDe ??= 'Trang chủ';
-$moTaTrang ??= 'BookNest - Nhà sách trực tuyến chuyên cung cấp giáo trình đại học, sách chuyên ngành CNTT, Toán học cho sinh viên Trường ĐH Sư phạm - ĐH Đà Nẵng.';
+$tieuDe ??= 'Home';
+$moTaTrang ??= 'BookNest - Online bookstore offering academic textbooks, Computer Science, and Mathematics for students of University of Science and Education - The University of Da Nang.';
 
 $u = nguoiDung();
 $gio = new \App\Services\GioHang();
 $khoDungChung = new \App\Data\KhoSanPham(db());
 ?>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="<?= e($moTaTrang) ?>">
   <meta name="csrf-token" content="<?= csrfToken() ?>">
-  <title><?= e($tieuDe) ?> | BookNest - Nhà sách sinh viên UED</title>
+  <title><?= e($tieuDe) ?> | BookNest - UED Student Bookstore</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Cache-busting URL để trình duyệt luôn tải CSS mới nhất -->
+  <!-- Cache-busting URL to ensure fresh CSS -->
   <link rel="stylesheet" href="<?= $goc ?>css/style.css?v=<?= time() ?>">
   <script>window.BOOKNEST_UID = <?= $u ? (int)$u['id'] : 0 ?>;</script>
 </head>
 <body class="trang-grid">
 
-  <!-- 1. THANH TOP BAR TMĐT TRÊN CÙNG -->
+  <!-- 1. TOP BAR -->
   <div class="top-bar-tmdt">
     <div class="khung-chua top-bar-tmdt__inner">
       <div class="top-bar-tmdt__left">
-        <span class="top-bar-tmdt__tag">Ưu đãi SV</span>
-        <span>Hội sách học kỳ mới 2026: Giảm đến <strong>25%</strong> toàn bộ giáo trình!</span>
+        <span class="top-bar-tmdt__tag">Student Deals</span>
+        <span>New Semester Book Fair 2026: Up to <strong>25% OFF</strong> all textbooks!</span>
       </div>
       <div class="top-bar-tmdt__right chi-hien-tren-may-tinh">
         <?php if ($u): ?>
-          <a href="<?= $goc ?>don-hang.php" class="top-bar-tmdt__link" style="color:#1d4ed8;font-weight:700;">📦 Lịch sử đơn mua</a>
+          <a href="<?= $goc ?>tai-khoan.php" class="top-bar-tmdt__link" style="color:#ea580c;font-weight:700;">👤 My Account</a>
+          <span>|</span>
+          <a href="<?= $goc ?>don-hang.php" class="top-bar-tmdt__link">📦 My Orders</a>
         <?php else: ?>
-          <a href="<?= $goc ?>don-hang.php" class="top-bar-tmdt__link">📦 Tra cứu đơn hàng</a>
+          <a href="<?= $goc ?>don-hang.php" class="top-bar-tmdt__link">📦 Track Order</a>
         <?php endif; ?>
         <span>|</span>
-        <a href="<?= $goc ?>lien-he.php" class="top-bar-tmdt__link">💬 Hỗ trợ sinh viên</a>
+        <a href="<?= $goc ?>lien-he.php" class="top-bar-tmdt__link">💬 Student Support</a>
         <span>|</span>
-        <span class="top-bar-tmdt__link">📍 ĐH Sư Phạm - ĐH Đà Nẵng</span>
+        <span class="top-bar-tmdt__link">📍 UED - University of Da Nang</span>
       </div>
     </div>
   </div>
 
-  <!-- 2. HEADER CHÍNH SÀN THƯƠNG MẠI ĐIỆN TỬ -->
+  <!-- 2. MAIN HEADER -->
   <header class="header-tmdt">
     <div class="khung-chua header-tmdt__inner">
       
-      <!-- Logo Thương hiệu BookNest -->
+      <!-- Logo Brand -->
       <a href="<?= $goc ?>index.php" class="header-tmdt__logo">
         <div class="header-tmdt__logo-badge">📚</div>
         <div class="header-tmdt__logo-text">
           <div class="header-tmdt__logo-brand">Book<span>Nest</span></div>
-          <span class="header-tmdt__logo-sub">Nhà sách sinh viên UED</span>
+          <span class="header-tmdt__logo-sub">UED Student Bookstore</span>
         </div>
       </a>
 
-      <!-- Thanh tìm kiếm kiểu Shopee/Tiki/Fahasa -->
+      <!-- Search bar -->
       <div class="header-tmdt__search">
         <form action="<?= $goc ?>danh-sach.php" method="GET" class="header-tmdt__search-form">
-          <select name="dm" class="header-tmdt__search-cat chi-hien-tren-may-tinh">
-            <option value="">Tất cả danh mục</option>
-            <option value="1" <?= (isset($_GET['dm']) && $_GET['dm'] == '1') ? 'selected' : '' ?>>CNTT & Lập trình</option>
-            <option value="2" <?= (isset($_GET['dm']) && $_GET['dm'] == '2') ? 'selected' : '' ?>>Kinh tế & Khởi nghiệp</option>
-            <option value="3" <?= (isset($_GET['dm']) && $_GET['dm'] == '3') ? 'selected' : '' ?>>Văn học & Nghệ thuật</option>
-            <option value="4" <?= (isset($_GET['dm']) && $_GET['dm'] == '4') ? 'selected' : '' ?>>Kỹ năng sống</option>
-          </select>
-          <input type="text" name="q" value="<?= isset($_GET['q']) ? e($_GET['q']) : '' ?>" class="header-tmdt__search-input" placeholder="Tìm kiếm tên sách, tác giả, giáo trình CNTT, Toán học..." autocomplete="off">
-          <button type="submit" class="header-tmdt__search-btn">
-            <span>🔍</span>
-            <span class="chi-hien-tren-may-tinh">Tìm kiếm</span>
-          </button>
+          <span class="header-tmdt__search-icon">🔍</span>
+          <input type="text" name="q" value="<?= isset($_GET['q']) ? e($_GET['q']) : '' ?>" class="header-tmdt__search-input" placeholder="Search textbooks, titles, authors..." autocomplete="off">
+          <button type="submit" class="header-tmdt__search-btn">Search</button>
         </form>
-
-        <div class="header-tmdt__search-tags chi-hien-tren-may-tinh">
-          <span>Gợi ý:</span>
-          <a href="<?= $goc ?>danh-sach.php?q=PHP">Lập trình PHP</a>
-          <a href="<?= $goc ?>danh-sach.php?q=MySQL">Cơ sở dữ liệu</a>
-          <a href="<?= $goc ?>danh-sach.php?q=Toán">Toán cao cấp</a>
-          <a href="<?= $goc ?>danh-sach.php?q=Web">Thiết kế Web</a>
-        </div>
       </div>
 
-      <!-- Cụm tác vụ người dùng: Yêu thích, Giỏ hàng, Tài khoản -->
+      <!-- User actions -->
       <div class="header-tmdt__actions">
         
-        <!-- Yêu thích (Wishlist) -->
-        <a href="<?= $goc ?>yeu-thich.php" class="action-pill-tmdt <?= $trang === 'yeu-thich' ? 'active' : '' ?>" title="Danh sách yêu thích">
-          <div class="action-pill-tmdt__icon">
-            <span>❤️</span>
-            <span class="action-pill-tmdt__badge so-luong-yeu-thich"><?= soLuongYeuThich() ?></span>
+        <!-- Wishlist -->
+        <a href="<?= $goc ?>yeu-thich.php" class="header-action-item <?= $trang === 'yeu-thich' ? 'active' : '' ?>" title="My Wishlist">
+          <div class="header-action-item__icon-wrap">
+            <span class="header-action-item__emoji">❤️</span>
+            <span class="header-action-item__badge so-luong-yeu-thich" aria-label="<?= soLuongYeuThich() ?> saved items"><?= soLuongYeuThich() ?></span>
           </div>
-          <div class="action-pill-tmdt__text chi-hien-tren-may-tinh">
-            <span class="action-pill-tmdt__title">Quan tâm</span>
-            <span class="action-pill-tmdt__val">Yêu thích</span>
+          <span class="header-action-item__label chi-hien-tren-may-tinh">Wishlist</span>
+        </a>
+
+        <!-- Cart -->
+        <a href="<?= $goc ?>gio-hang.php" class="header-action-item <?= $trang === 'gio-hang' ? 'active' : '' ?>" title="Shopping Cart">
+          <div class="header-action-item__icon-wrap">
+            <span class="header-action-item__emoji">🛒</span>
+            <span class="header-action-item__badge so-luong-gio"><?= $gio->soMon() ?></span>
+          </div>
+          <div class="header-action-item__text chi-hien-tren-may-tinh">
+            <span class="header-action-item__label">Cart</span>
+            <span class="header-action-item__val"><?= $gio->soMon() > 0 ? vnd($gio->tongTien($khoDungChung)) : '0 VNĐ' ?></span>
           </div>
         </a>
 
-        <!-- Giỏ hàng (Cart) -->
-        <a href="<?= $goc ?>gio-hang.php" class="action-pill-tmdt <?= $trang === 'gio-hang' ? 'active' : '' ?>" title="Giỏ hàng của bạn">
-          <div class="action-pill-tmdt__icon">
-            <span>🛒</span>
-            <span class="action-pill-tmdt__badge so-luong-gio"><?= $gio->soMon() ?></span>
-          </div>
-          <div class="action-pill-tmdt__text chi-hien-tren-may-tinh">
-            <span class="action-pill-tmdt__title">Giỏ hàng</span>
-            <span class="action-pill-tmdt__val"><?= vnd($gio->tongTien($khoDungChung)) ?></span>
-          </div>
-        </a>
-
-        <!-- Lịch sử đơn mua (Dành cho tài khoản đã đăng nhập) -->
-        <?php if ($u): ?>
-          <a href="<?= $goc ?>don-hang.php" class="action-pill-tmdt <?= $trang === 'don-hang' ? 'active' : '' ?>" title="Xem lịch sử mua hàng của bạn">
-            <div class="action-pill-tmdt__icon">
-              <span>📦</span>
-            </div>
-            <div class="action-pill-tmdt__text chi-hien-tren-may-tinh">
-              <span class="action-pill-tmdt__title">Lịch sử</span>
-              <span class="action-pill-tmdt__val">Đơn mua</span>
-            </div>
-          </a>
-        <?php endif; ?>
-
-        <!-- Tài khoản cá nhân -->
+        <!-- User account -->
         <div class="header-tmdt__auth">
           <?php if ($u): ?>
-            <div class="header-user-badge">
-              <div class="header-user-avatar"><?= mb_strtoupper(mb_substr($u['ho_ten'], 0, 1)) ?></div>
-              <span style="font-weight:700;font-size:0.88rem;" class="chi-hien-tren-may-tinh"><?= e($u['ho_ten']) ?></span>
-              <?php if ($u['vai_tro'] === 'quan_tri'): ?>
-                <a href="<?= $goc ?>quan-tri.php" style="background:#fef3c7;color:#b45309;font-size:0.75rem;font-weight:700;padding:3px 7px;border-radius:6px;border:1px solid #fde68a;text-decoration:none;display:inline-flex;align-items:center;gap:2px;" title="Quản trị hệ thống">⚙️ Quản trị</a>
-              <?php elseif ($u['vai_tro'] === 'chu_sach'): ?>
-                <a href="<?= $goc ?>chu-sach.php" style="background:#fef3c7;color:#b45309;font-size:0.75rem;font-weight:700;padding:3px 7px;border-radius:6px;border:1px solid #fde68a;text-decoration:none;display:inline-flex;align-items:center;gap:2px;" title="Kênh người bán">🏪 Quầy sách</a>
-              <?php else: ?>
-                <a href="<?= $goc ?>don-hang.php" style="background:#eff6ff;color:#1d4ed8;font-size:0.75rem;font-weight:700;padding:3px 7px;border-radius:6px;border:1px solid #bfdbfe;text-decoration:none;display:inline-flex;align-items:center;gap:2px;" title="Xem lịch sử đơn mua">📦 Đơn</a>
-              <?php endif; ?>
-              <!-- Đăng xuất an toàn bằng POST + CSRF token theo chuẩn Chương 7 -->
-              <form action="<?= $goc ?>dang-xuat.php" method="POST" style="margin:0;display:inline;">
-                <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
-                <button type="submit" class="header-user-logout" title="Đăng xuất khỏi hệ thống" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:0.82rem;font-weight:700;color:#e02424;padding:0 4px;">Thoát</button>
-              </form>
+            <div class="header-user-card">
+              <div class="header-user-card__avatar">
+                <?= mb_strtoupper(mb_substr($u['ho_ten'], 0, 1)) ?>
+              </div>
+              <div class="header-user-card__info chi-hien-tren-may-tinh">
+                <span class="header-user-card__name"><?= e($u['ho_ten']) ?></span>
+                <span class="header-user-card__role">
+                  <?= $u['vai_tro'] === 'quan_tri' ? 'Administrator' : ($u['vai_tro'] === 'chu_sach' ? 'Book Seller' : 'Student') ?>
+                </span>
+              </div>
+              
+              <div class="header-user-card__actions">
+                <?php if ($u['vai_tro'] === 'quan_tri'): ?>
+                  <a href="<?= $goc ?>quan-tri.php" class="btn-role-chip btn-role-chip--admin" title="Admin Dashboard">⚙️ Admin</a>
+                <?php elseif ($u['vai_tro'] === 'chu_sach'): ?>
+                  <a href="<?= $goc ?>chu-sach.php" class="btn-role-chip btn-role-chip--seller" title="Seller Hub">🏪 Seller</a>
+                <?php else: ?>
+                  <a href="<?= $goc ?>tai-khoan.php" class="btn-role-chip btn-role-chip--user" title="Customer Dashboard">👤 Account</a>
+                <?php endif; ?>
+
+                <form action="<?= $goc ?>dang-xuat.php" method="POST" style="margin:0;display:inline;">
+                  <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
+                  <button type="submit" class="btn-clean-logout" title="Sign out">Logout</button>
+                </form>
+              </div>
             </div>
           <?php else: ?>
-            <a href="<?= $goc ?>dang-nhap.php" class="btn-auth-tmdt btn-auth-tmdt--login">Đăng nhập</a>
-            <a href="<?= $goc ?>dang-ky.php" class="btn-auth-tmdt btn-auth-tmdt--reg chi-hien-tren-may-tinh">Đăng ký</a>
+            <a href="<?= $goc ?>dang-nhap.php" class="btn-clean-auth btn-clean-auth--login">Sign In</a>
+            <a href="<?= $goc ?>dang-ky.php" class="btn-clean-auth btn-clean-auth--reg chi-hien-tren-may-tinh">Register</a>
           <?php endif; ?>
         </div>
 
@@ -160,36 +139,36 @@ $khoDungChung = new \App\Data\KhoSanPham(db());
     </div>
   </header>
 
-  <!-- 3. THANH ĐIỀU HƯỚNG DANH MỤC SÀN TMĐT -->
-  <nav class="navbar-tmdt" aria-label="Danh mục chính">
+  <!-- 3. NAVIGATION BAR -->
+  <nav class="navbar-tmdt" aria-label="Main Navigation">
     <div class="khung-chua navbar-tmdt__inner">
       <div class="navbar-tmdt__left">
         <a href="<?= $goc ?>danh-sach.php" class="btn-danhmuc-all">
           <span>☰</span>
-          <span>Danh Mục Sách</span>
+          <span>CATEGORIES</span>
         </a>
 
         <ul class="navbar-tmdt__menu">
-          <li><a href="<?= $goc ?>index.php" <?= $trang === 'index' ? 'class="active"' : '' ?>>Trang chủ</a></li>
-          <li><a href="<?= $goc ?>danh-sach.php" <?= $trang === 'danh-sach' ? 'class="active"' : '' ?>>Tất cả giáo trình</a></li>
-          <li><a href="<?= $goc ?>gioi-thieu.php" <?= $trang === 'gioi-thieu' ? 'class="active"' : '' ?>>Nhóm 12 (UED)</a></li>
-          <li><a href="<?= $goc ?>lien-he.php" <?= $trang === 'lien-he' ? 'class="active"' : '' ?>>Liên hệ &amp; Hỗ trợ</a></li>
-          <?php if ($u && $u['vai_tro'] === 'khach_hang'): ?>
-            <li><a href="<?= $goc ?>don-hang.php" style="color:#1d4ed8;font-weight:700;" <?= $trang === 'don-hang' ? 'class="active"' : '' ?>>📦 Lịch sử đơn mua</a></li>
-          <?php endif; ?>
-          <?php if ($u && $u['vai_tro'] === 'chu_sach'): ?>
-            <li><a href="<?= $goc ?>chu-sach.php" style="color:#d97706;font-weight:800;" <?= $trang === 'chu-sach' ? 'class="active"' : '' ?>>🏪 Kênh người bán (Book Owner)</a></li>
-          <?php endif; ?>
+          <li><a href="<?= $goc ?>index.php" <?= $trang === 'index' ? 'class="active"' : '' ?>>Home</a></li>
+          <li><a href="<?= $goc ?>danh-sach.php" <?= $trang === 'danh-sach' ? 'class="active"' : '' ?>>All Textbooks</a></li>
+          <li><a href="<?= $goc ?>gioi-thieu.php" <?= $trang === 'gioi-thieu' ? 'class="active"' : '' ?>>About Us</a></li>
+          <li><a href="<?= $goc ?>lien-he.php" <?= $trang === 'lien-he' ? 'class="active"' : '' ?>>Contact &amp; Support</a></li>
           <?php if ($u && $u['vai_tro'] === 'quan_tri'): ?>
-            <li><a href="<?= $goc ?>quan-tri.php" style="color:#d97706;font-weight:800;">⚙️ Quản trị hệ thống</a></li>
-            <li><a href="<?= $goc ?>don-hang.php" style="color:#2563eb;font-weight:700;" <?= $trang === 'don-hang' ? 'class="active"' : '' ?>>📦 Quản lý mọi đơn</a></li>
+            <li><a href="<?= $goc ?>quan-tri.php" class="nav-role-link nav-role-link--admin">⚙️ Admin Dashboard</a></li>
+          <?php elseif ($u && $u['vai_tro'] === 'chu_sach'): ?>
+            <li><a href="<?= $goc ?>chu-sach.php" class="nav-role-link nav-role-link--seller">🏪 Seller Portal</a></li>
+          <?php elseif ($u): ?>
+            <li><a href="<?= $goc ?>tai-khoan.php" <?= $trang === 'tai-khoan' ? 'class="active"' : '' ?>>👤 Customer Hub</a></li>
+            <li><a href="<?= $goc ?>don-hang.php" <?= $trang === 'don-hang' ? 'class="active"' : '' ?>>📦 Orders</a></li>
           <?php endif; ?>
         </ul>
       </div>
 
       <div class="navbar-tmdt__right chi-hien-tren-may-tinh">
-        <span class="badge-flash-hot">HOT</span>
-        <span>⚡ Giao nhanh KTX trong 24h &bull; Hotline: <strong>0236.3841.323</strong></span>
+        <div class="hotline-chip-clean">
+          <span class="hotline-chip-dot"></span>
+          <span>Dorm delivery in 24h &bull; Hotline: <strong>0236.3841.323</strong></span>
+        </div>
       </div>
     </div>
   </nav>

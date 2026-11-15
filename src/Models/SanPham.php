@@ -21,7 +21,12 @@ class SanPham implements JsonSerializable
         public readonly string $ngayTao = '',
         public readonly ?string $tenDanhMuc = null,
         public readonly ?int $chuSachId = null,
-        public readonly ?string $tenChuSach = null
+        public readonly ?string $tenChuSach = null,
+        public readonly ?string $tacGia = null,
+        public readonly ?string $isbn = null,
+        public readonly ?int $namXuatBan = null,
+        public readonly string $trangThaiDuyet = 'approved',
+        public readonly int $luotXem = 0
     ) {}
 
     /**
@@ -40,7 +45,12 @@ class SanPham implements JsonSerializable
             ngayTao: (string)($d['ngay_tao'] ?? ''),
             tenDanhMuc: isset($d['ten_danh_muc']) ? (string)$d['ten_danh_muc'] : null,
             chuSachId: isset($d['chu_sach_id']) ? (int)$d['chu_sach_id'] : null,
-            tenChuSach: isset($d['ten_chu_sach']) ? (string)$d['ten_chu_sach'] : null
+            tenChuSach: isset($d['ten_chu_sach']) ? (string)$d['ten_chu_sach'] : null,
+            tacGia: !empty($d['tac_gia']) ? (string)$d['tac_gia'] : null,
+            isbn: !empty($d['isbn']) ? (string)$d['isbn'] : null,
+            namXuatBan: isset($d['nam_xuat_ban']) && $d['nam_xuat_ban'] !== '' ? (int)$d['nam_xuat_ban'] : null,
+            trangThaiDuyet: (string)($d['trang_thai_duyet'] ?? 'approved'),
+            luotXem: (int)($d['luot_xem'] ?? 0)
         );
     }
 
@@ -51,14 +61,18 @@ class SanPham implements JsonSerializable
     public function jsonSerialize(): array
     {
         return [
-            'id'           => $this->id,
-            'danh_muc_id'  => $this->danhMucId,
-            'ten'          => $this->ten,
-            'gia'          => $this->gia,
-            'ton_kho'      => $this->tonKho,
-            'anh'          => $this->anh,
-            'mo_ta'        => $this->moTa,
-            'ten_danh_muc' => $this->tenDanhMuc,
+            'id'               => $this->id,
+            'danh_muc_id'      => $this->danhMucId,
+            'ten'              => $this->ten,
+            'gia'              => $this->gia,
+            'ton_kho'          => $this->tonKho,
+            'anh'              => $this->anh,
+            'mo_ta'            => $this->moTa,
+            'ten_danh_muc'     => $this->tenDanhMuc,
+            'tac_gia'          => $this->tacGia,
+            'isbn'             => $this->isbn,
+            'nam_xuat_ban'     => $this->namXuatBan,
+            'trang_thai_duyet' => $this->trangThaiDuyet,
         ];
     }
 }

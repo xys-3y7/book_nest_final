@@ -1,21 +1,37 @@
 <?php
 /**
- * don-hang.php - Quản lý và xem chi tiết đơn hàng của người dùng / quản trị
- * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
- * Chức năng 5 (Bảng 1): Đơn hàng của tôi, xem chi tiết, phân quyền chủ sở hữu dữ liệu (đơn người khác -> 404)
+ * don-hang.php - Manage and view user / admin orders
+ * Team 12 - Class 24CNTT3 - University of Science and Education, Danang
  */
 
 require_once __DIR__ . '/inc/config.php';
+require_once __DIR__ . '/inc/don-hang.php';
 
-// Yêu cầu bắt buộc phải đăng nhập
+// Authentication required
 yeuCauDangNhap();
 
 $u = nguoiDung();
 $db = db();
 
+// Handle order cancellation
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_huy_don'])) {
+    $cancelId = filter_var($_POST['don_id'] ?? '', FILTER_VALIDATE_INT);
+    if ($cancelId) {
+        try {
+            $laAdmin = ($u['vai_tro'] === 'quan_tri');
+            huyDonHang($cancelId, (int)$u['id'], $laAdmin);
+            $_SESSION['flash'] = "Order #$cancelId has been cancelled and stock restored successfully.";
+        } catch (Throwable $e) {
+            $_SESSION['flash_loi'] = $e->getMessage();
+        }
+    }
+    header('Location: ' . ($_POST['redirect'] ?? 'don-hang.php'));
+    exit;
+}
+
 $idDon = filter_var($_GET['id'] ?? '', FILTER_VALIDATE_INT);
 
-// Trường hợp 1: Xem chi tiết một đơn hàng cụ thể
+// Case 1: View order details
 if ($idDon) {
     $st = $db->prepare(
         'SELECT dh.*, nd.ho_ten, nd.email 
@@ -26,15 +42,13 @@ if ($idDon) {
     $st->execute([$idDon]);
     $don = $st->fetch();
 
-    // BẢO MẬT PHÂN QUYỀN CHỦ SỞ HỮU DỮ LIỆU:
-    // Nếu đơn hàng không tồn tại HOẶC (không phải quản trị VÀ không phải đơn của chính mình) -> Báo lỗi 404
+    // Data ownership security check
     if (!$don || ($u['vai_tro'] !== 'quan_tri' && (int)$don['nguoi_dung_id'] !== (int)$u['id'])) {
         http_response_code(404);
         require __DIR__ . '/404.php';
         exit;
     }
 
-    // Lấy chi tiết các cuốn sách trong đơn kèm đơn giá tại thời điểm đặt
     $stItems = $db->prepare(
         'SELECT ctd.*, sp.ten, sp.anh 
          FROM chi_tiet_don ctd 
@@ -44,19 +58,19 @@ if ($idDon) {
     $stItems->execute([$idDon]);
     $items = $stItems->fetchAll();
 
-    $tieuDe = 'Chi tiết đơn hàng #' . $idDon;
+    $tieuDe = 'Order Details #' . $idDon;
     $trang = 'don-hang';
     require __DIR__ . '/inc/header.php';
     ?>
     <main class="noi-dung-chinh khung-chua" style="max-width: 850px; margin: 30px auto;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h1 style="margin: 0; color: #1e3b6d;">Chi tiết đơn hàng #<?= $idDon ?></h1>
-        <a href="don-hang.php" class="nut nut--vien">&larr; Danh sách đơn hàng</a>
+        <h1 style="margin: 0; color: #1e3b6d;">Order Details #<?= $idDon ?></h1>
+        <a href="don-hang.php" class="nut nut--vien">&larr; Back to Orders</a>
       </div>
 
       <?php if (!empty($_SESSION['flash'])): ?>
         <div style="background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;" aria-live="polite">
-          <strong>✓ Thông báo:</strong> <?= e($_SESSION['flash']) ?>
+          <strong>✓ Notice:</strong> <?= e($_SESSION['flash']) ?>
         </div>
         <?php unset($_SESSION['flash']); ?>
       <?php endif; ?>
@@ -64,48 +78,62 @@ if ($idDon) {
       <div style="background: #ffffff; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
         <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 15px;">
           <div>
-            <p style="margin: 3px 0;"><strong>Ngày đặt:</strong> <?= e($don['ngay_tao']) ?></p>
-            <p style="margin: 3px 0;"><strong>Khách hàng:</strong> <?= e($don['ho_ten']) ?> (<code><?= e($don['email']) ?></code>)</p>
-            <p style="margin: 3px 0;"><strong>Số điện thoại:</strong> <?= e($don['so_dien_thoai']) ?></p>
-            <p style="margin: 3px 0;"><strong>Địa chỉ giao:</strong> <?= e($don['dia_chi']) ?></p>
+            <p style="margin: 3px 0;"><strong>Order Date:</strong> <?= e($don['ngay_tao']) ?></p>
+            <p style="margin: 3px 0;"><strong>Customer:</strong> <?= e($don['ho_ten']) ?> (<code><?= e($don['email']) ?></code>)</p>
+            <p style="margin: 3px 0;"><strong>Phone:</strong> <?= e($don['so_dien_thoai']) ?></p>
+            <p style="margin: 3px 0;"><strong>Shipping Address:</strong> <?= e($don['dia_chi']) ?></p>
             <?php if (!empty($don['ghi_chu'])): ?>
-              <p style="margin: 3px 0; color: #64748b;"><strong>Ghi chú:</strong> <?= e($don['ghi_chu']) ?></p>
+              <p style="margin: 3px 0; color: #64748b;"><strong>Notes:</strong> <?= e($don['ghi_chu']) ?></p>
             <?php endif; ?>
           </div>
           <div style="text-align: right;">
-            <p style="margin: 3px 0;"><strong>Trạng thái:</strong>
+            <p style="margin: 3px 0;"><strong>Status:</strong>
               <?php
               $nhanTrangThai = [
-                  'cho_xu_ly' => '<span style="background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:4px;font-weight:bold;">Chờ xử lý</span>',
-                  'dang_giao' => '<span style="background:#e0f2fe;color:#0369a1;padding:4px 10px;border-radius:4px;font-weight:bold;">Đang giao</span>',
-                  'da_giao'   => '<span style="background:#ecfdf5;color:#065f46;padding:4px 10px;border-radius:4px;font-weight:bold;">Đã giao</span>',
-                  'da_huy'    => '<span style="background:#fee2e2;color:#991b1b;padding:4px 10px;border-radius:4px;font-weight:bold;">Đã hủy</span>',
+                  'cho_xu_ly' => '<span style="background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:4px;font-weight:bold;">Pending</span>',
+                  'dang_giao' => '<span style="background:#e0f2fe;color:#0369a1;padding:4px 10px;border-radius:4px;font-weight:bold;">Shipping</span>',
+                  'da_giao'   => '<span style="background:#ecfdf5;color:#065f46;padding:4px 10px;border-radius:4px;font-weight:bold;">Delivered</span>',
+                  'da_huy'    => '<span style="background:#fee2e2;color:#991b1b;padding:4px 10px;border-radius:4px;font-weight:bold;">Cancelled</span>',
               ];
               echo $nhanTrangThai[$don['trang_thai']] ?? e($don['trang_thai']);
               ?>
             </p>
-            <p style="margin: 10px 0 0 0; font-size: 1.25rem; font-weight: bold; color: #dc2626;">
-              Tổng cộng: <?= vnd($don['tong_tien']) ?>
+            <p style="margin: 3px 0; color: #475569; font-size: 0.88rem;">
+              <strong>Payment:</strong> <?= e($don['phuong_thuc_tt'] ?? 'COD') ?> (<?= $don['trang_thai_tt'] === 'da_thanh_toan' ? 'Paid' : 'Unpaid' ?>)
             </p>
+            <p style="margin: 8px 0 0 0; font-size: 1.25rem; font-weight: bold; color: #dc2626;">
+              Total: <?= vnd($don['tong_tien']) ?>
+            </p>
+            <?php if ($don['trang_thai'] === 'cho_xu_ly'): ?>
+              <form method="POST" action="don-hang.php" onsubmit="return confirm('Are you sure you want to cancel this order? Stock will be restored.');" style="margin-top: 10px;">
+                <?= csrfField() ?>
+                <input type="hidden" name="action_huy_don" value="1">
+                <input type="hidden" name="don_id" value="<?= $don['id'] ?>">
+                <input type="hidden" name="redirect" value="don-hang.php?id=<?= $don['id'] ?>">
+                <button type="submit" class="nut" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:6px 14px;border-radius:6px;font-weight:bold;font-size:0.85rem;">
+                  Cancel Order
+                </button>
+              </form>
+            <?php endif; ?>
           </div>
         </div>
 
-        <h3 style="margin: 0 0 12px 0;">Danh sách sách đã mua</h3>
+        <h3 style="margin: 0 0 12px 0;">Purchased Books</h3>
         <table style="width: 100%; border-collapse: collapse; text-align: left;">
           <thead>
             <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.9rem;">
-              <th style="padding: 10px;">Ảnh</th>
-              <th style="padding: 10px;">Tên sách</th>
-              <th style="padding: 10px; width: 120px;">Đơn giá lúc đặt</th>
-              <th style="padding: 10px; width: 80px; text-align: center;">Số lượng</th>
-              <th style="padding: 10px; width: 130px; text-align: right;">Thành tiền</th>
+              <th style="padding: 10px;">Cover</th>
+              <th style="padding: 10px;">Textbook Title</th>
+              <th style="padding: 10px; width: 120px;">Price</th>
+              <th style="padding: 10px; width: 80px; text-align: center;">Qty</th>
+              <th style="padding: 10px; width: 130px; text-align: right;">Subtotal</th>
             </tr>
           </thead>
           <tbody>
             <?php foreach ($items as $item): ?>
               <tr style="border-bottom: 1px solid #e2e8f0;">
                 <td style="padding: 10px; width: 60px;">
-                  <img src="<?= e(anhSach($item['anh'])) ?>" alt="Bìa" width="45" height="55" style="border-radius: 4px; object-fit: cover;">
+                  <img src="<?= e(anhSach($item['anh'])) ?>" alt="Cover" width="45" height="55" style="border-radius: 4px; object-fit: cover;">
                 </td>
                 <td style="padding: 10px;">
                   <a href="chi-tiet.php?id=<?= $item['san_pham_id'] ?>" style="font-weight: bold; color: #1e40af; text-decoration: none;">
@@ -128,11 +156,10 @@ if ($idDon) {
     exit;
 }
 
-// Trường hợp 2: Xem danh sách các đơn hàng
+// Case 2: List orders
 $laQuanTri = $u['vai_tro'] === 'quan_tri';
 
 if ($laQuanTri) {
-    // Quản trị viên xem mọi đơn hàng
     $st = $db->query(
         'SELECT dh.*, nd.ho_ten, nd.email 
          FROM don_hang dh 
@@ -140,7 +167,6 @@ if ($laQuanTri) {
          ORDER BY dh.ngay_tao DESC, dh.id DESC'
     );
 } else {
-    // Khách hàng chỉ xem danh sách đơn hàng của chính mình
     $st = $db->prepare(
         'SELECT dh.*, nd.ho_ten, nd.email 
          FROM don_hang dh 
@@ -152,7 +178,7 @@ if ($laQuanTri) {
 }
 $danhSachDon = $st->fetchAll();
 
-$tieuDe = $laQuanTri ? 'Quản lý Đơn hàng hệ thống' : 'Đơn hàng của tôi';
+$tieuDe = $laQuanTri ? 'System Orders' : 'My Orders';
 $trang = 'don-hang';
 
 require __DIR__ . '/inc/header.php';
@@ -161,35 +187,35 @@ require __DIR__ . '/inc/header.php';
 <main class="noi-dung-chinh khung-chua">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
     <div>
-      <h1 style="margin: 0; color: #1e3b6d;"><?= $laQuanTri ? 'Quản lý toàn bộ Đơn hàng' : 'Đơn hàng của tôi' ?></h1>
+      <h1 style="margin: 0; color: #1e3b6d;"><?= $laQuanTri ? 'All Orders Management' : 'My Orders' ?></h1>
       <p style="margin: 5px 0 0 0; color: #64748b;">
-        <?= $laQuanTri ? 'Theo dõi và xử lý đơn đặt sách của toàn bộ sinh viên trên hệ thống.' : 'Xem danh sách và tiến độ các đơn đặt giáo trình của bạn.' ?>
+        <?= $laQuanTri ? 'Track and manage orders across the BookNest platform.' : 'View history and tracking status of your textbook orders.' ?>
       </p>
     </div>
-    <a href="danh-sach.php" class="nut nut--chinh">+ Tiếp tục mua sách</a>
+    <a href="danh-sach.php" class="nut nut--chinh">+ Continue Shopping</a>
   </div>
 
   <?php if (empty($danhSachDon)): ?>
     <div style="text-align: center; padding: 50px 20px; background: #ffffff; border-radius: 8px; border: 1px dashed #cbd5e1;">
       <p style="font-size: 3rem; margin: 0 0 10px 0;">📦</p>
-      <h2>Bạn chưa có đơn đặt hàng nào</h2>
-      <p style="color: #64748b; margin-bottom: 20px;">Hãy dạo qua danh mục sách và đặt những cuốn giáo trình ưng ý nhé!</p>
-      <a href="danh-sach.php" class="nut nut--chinh">Khám phá danh mục sách</a>
+      <h2>You have no orders yet</h2>
+      <p style="color: #64748b; margin-bottom: 20px;">Browse our catalog and order the textbooks you need today!</p>
+      <a href="danh-sach.php" class="nut nut--chinh">Explore Book Catalog</a>
     </div>
   <?php else: ?>
     <div style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow-x: auto;">
       <table style="width: 100%; border-collapse: collapse; text-align: left;">
         <thead>
           <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.9rem;">
-            <th style="padding: 12px 15px; width: 80px;">Mã đơn</th>
-            <th style="padding: 12px 15px; width: 160px;">Thời gian đặt</th>
+            <th style="padding: 12px 15px; width: 80px;">Order ID</th>
+            <th style="padding: 12px 15px; width: 160px;">Date</th>
             <?php if ($laQuanTri): ?>
-              <th style="padding: 12px 15px;">Khách hàng</th>
+              <th style="padding: 12px 15px;">Customer</th>
             <?php endif; ?>
-            <th style="padding: 12px 15px;">Địa chỉ giao sách</th>
-            <th style="padding: 12px 15px; width: 130px;">Tổng tiền</th>
-            <th style="padding: 12px 15px; width: 130px;">Trạng thái</th>
-            <th style="padding: 12px 15px; width: 120px; text-align: center;">Thao tác</th>
+            <th style="padding: 12px 15px;">Shipping Address</th>
+            <th style="padding: 12px 15px; width: 130px;">Total</th>
+            <th style="padding: 12px 15px; width: 130px;">Status</th>
+            <th style="padding: 12px 15px; width: 120px; text-align: center;">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -208,7 +234,7 @@ require __DIR__ . '/inc/header.php';
                 </td>
               <?php endif; ?>
               <td style="padding: 12px 15px; font-size: 0.9rem; color: #334155;">
-                <?= e($d['dia_chi']) ?> (SĐT: <?= e($d['so_dien_thoai']) ?>)
+                <?= e($d['dia_chi']) ?> (Phone: <?= e($d['so_dien_thoai']) ?>)
               </td>
               <td style="padding: 12px 15px; font-weight: bold; color: #dc2626;">
                 <?= vnd($d['tong_tien']) ?>
@@ -216,17 +242,17 @@ require __DIR__ . '/inc/header.php';
               <td style="padding: 12px 15px;">
                 <?php
                 $nhanTrangThai = [
-                    'cho_xu_ly' => '<span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:4px;font-size:0.85rem;font-weight:bold;">Chờ xử lý</span>',
-                    'dang_giao' => '<span style="background:#e0f2fe;color:#0369a1;padding:3px 8px;border-radius:4px;font-size:0.85rem;font-weight:bold;">Đang giao</span>',
-                    'da_giao'   => '<span style="background:#ecfdf5;color:#065f46;padding:3px 8px;border-radius:4px;font-size:0.85rem;font-weight:bold;">Đã giao</span>',
-                    'da_huy'    => '<span style="background:#fee2e2;color:#991b1b;padding:3px 8px;border-radius:4px;font-size:0.85rem;font-weight:bold;">Đã hủy</span>',
+                    'cho_xu_ly' => '<span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:4px;font-size:0.85rem;font-weight:bold;">Pending</span>',
+                    'dang_giao' => '<span style="background:#e0f2fe;color:#0369a1;padding:3px 8px;border-radius:4px;font-size:0.85rem;font-weight:bold;">Shipping</span>',
+                    'da_giao'   => '<span style="background:#ecfdf5;color:#065f46;padding:3px 8px;border-radius:4px;font-size:0.85rem;font-weight:bold;">Delivered</span>',
+                    'da_huy'    => '<span style="background:#fee2e2;color:#991b1b;padding:3px 8px;border-radius:4px;font-size:0.85rem;font-weight:bold;">Cancelled</span>',
                 ];
                 echo $nhanTrangThai[$d['trang_thai']] ?? e($d['trang_thai']);
                 ?>
               </td>
               <td style="padding: 12px 15px; text-align: center;">
                 <a href="don-hang.php?id=<?= $d['id'] ?>" class="nut nut--vien" style="padding: 5px 12px; font-size: 0.85rem;">
-                  Chi tiết &rarr;
+                  Details &rarr;
                 </a>
               </td>
             </tr>

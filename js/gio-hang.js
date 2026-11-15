@@ -1,15 +1,19 @@
 /**
- * js/gio-hang.js - Thêm sách vào giỏ hàng qua Fetch API không tải lại trang
- * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
- * Chức năng 6 (Bảng 1): Fetch API, cập nhật header tức thời, nếu tắt JS thì form vẫn hoạt động bình thường
+ * js/gio-hang.js - Add textbooks to cart & toggle wishlist via Fetch API
+ * Team 12 - Class 24CNTT3 - University of Science and Education, Danang
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Xử lý form thêm vào giỏ tại trang chi tiết (chi-tiet.php)
+  // 1. Detail page form (chi-tiet.php)
   const formThemChiTiet = document.getElementById('form-them-gio');
   if (formThemChiTiet) {
     formThemChiTiet.addEventListener('submit', (e) => {
-      e.preventDefault(); // Chặn tải lại trang khi bật JavaScript
+      e.preventDefault();
+
+      if (!window.BOOKNEST_UID || window.BOOKNEST_UID <= 0) {
+        window.location.href = 'dang-nhap.php?yeu_cau=gio_hang';
+        return;
+      }
 
       const id = parseInt(formThemChiTiet.querySelector('input[name="id"]').value, 10);
       const slInput = formThemChiTiet.querySelector('input[name="soLuong"]');
@@ -18,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const btnThem = document.getElementById('btn-them-gio');
 
       btnThem.disabled = true;
-      if (thongBaoSpan) thongBaoSpan.textContent = 'Đang thêm...';
+      if (thongBaoSpan) thongBaoSpan.textContent = 'Adding...';
 
       guiYeuCauThemGio(id, sl)
         .then((data) => {
@@ -34,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
             thongBaoSpan.style.color = '#dc2626';
             thongBaoSpan.textContent = '⚠ ' + err.message;
           } else {
-            alert('Lỗi: ' + err.message);
+            alert('Error: ' + err.message);
           }
         })
         .finally(() => {
@@ -43,10 +47,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 2. Xử lý các nút thêm nhanh ngoài trang danh mục (danh-sach.php)
+  // 2. Quick add buttons on catalog cards
   document.querySelectorAll('.form-them-nhanh').forEach((form) => {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+
+      if (!window.BOOKNEST_UID || window.BOOKNEST_UID <= 0) {
+        window.location.href = 'dang-nhap.php?yeu_cau=gio_hang';
+        return;
+      }
 
       const id = parseInt(form.querySelector('input[name="id"]').value, 10);
       const btn = form.querySelector('.btn-them-nhanh');
@@ -58,24 +67,40 @@ document.addEventListener('DOMContentLoaded', () => {
       guiYeuCauThemGio(id, 1)
         .then((data) => {
           capNhatSoLuongHeader(data.so_mon);
-          btn.textContent = '✓ Đã thêm';
+          btn.textContent = '✓ Added';
           setTimeout(() => {
             btn.textContent = banDau;
             btn.disabled = false;
           }, 1500);
         })
         .catch((err) => {
-          alert('Không thể thêm vào giỏ: ' + err.message);
+          alert('Could not add to cart: ' + err.message);
           btn.textContent = banDau;
           btn.disabled = false;
         });
     });
   });
 
-  // 3. Xử lý các nút yêu thích (Wishlist) qua Fetch API không tải lại trang
+  // 2.5. Buy Now buttons (require login)
+  document.querySelectorAll('#form-mua-ngay, form[action="gio-hang.php"]:has(button[name="action"][value="mua_ngay"]), form:has(.btn-mua-ngay)').forEach((form) => {
+    form.addEventListener('submit', (e) => {
+      if (!window.BOOKNEST_UID || window.BOOKNEST_UID <= 0) {
+        e.preventDefault();
+        window.location.href = 'dang-nhap.php?yeu_cau=dat_hang';
+      }
+    });
+  });
+
+  // 3. Wishlist form submit
   document.querySelectorAll('.form-yeu-thich').forEach((form) => {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+
+      if (!window.BOOKNEST_UID || window.BOOKNEST_UID <= 0) {
+        window.location.href = 'dang-nhap.php?yeu_cau=yeu_thich';
+        return;
+      }
+
       const btn = form.querySelector('.btn-yeu-thich');
       const formData = new FormData(form);
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -91,8 +116,15 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         body: formData
       })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 401) {
+          window.location.href = 'dang-nhap.php';
+          return null;
+        }
+        return res.json();
+      })
       .then((data) => {
+        if (!data) return;
         if (data.thanh_cong) {
           document.querySelectorAll('.so-luong-yeu-thich').forEach((span) => {
             span.textContent = data.so_luong;
@@ -100,13 +132,13 @@ document.addEventListener('DOMContentLoaded', () => {
           if (btn) {
             if (data.da_thich) {
               btn.classList.add('da-thich');
-              btn.textContent = '❤️ Đã thích';
+              btn.textContent = '❤️ Saved';
               btn.style.background = '#fee2e2';
               btn.style.color = '#dc2626';
               btn.style.borderColor = '#fca5a5';
             } else {
               btn.classList.remove('da-thich');
-              btn.textContent = '🤍 Yêu thích';
+              btn.textContent = '🤍 Wishlist';
               btn.style.background = '';
               btn.style.color = '';
               btn.style.borderColor = '';
@@ -123,9 +155,63 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /**
-   * Gửi HTTP POST request với thân JSON lên endpoint api/gio-hang.php
-   */
+  // 4. Click event for .nut-bam-yeu-thich
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.nut-bam-yeu-thich');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    if (!id) return;
+    e.preventDefault();
+
+    if (!window.BOOKNEST_UID || window.BOOKNEST_UID <= 0) {
+      window.location.href = 'dang-nhap.php?yeu_cau=yeu_thich';
+      return;
+    }
+
+    fetch(`yeu-thich.php?action=toggle&id=${id}`, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+      }
+    })
+    .then((res) => {
+      if (res.status === 401) {
+        window.location.href = 'dang-nhap.php?yeu_cau=yeu_thich';
+        return null;
+      }
+      return res.json();
+    })
+    .then((data) => {
+      if (!data) return;
+      if (data.thanh_cong) {
+        document.querySelectorAll('.so-luong-yeu-thich').forEach((span) => {
+          span.textContent = data.so_luong;
+        });
+        document.querySelectorAll(`.nut-bam-yeu-thich[data-id="${id}"]`).forEach((b) => {
+          if (data.da_thich) {
+            b.classList.add('da-thich');
+            if (b.classList.contains('btn-fav-corner')) {
+              b.textContent = '❤️';
+            } else {
+              b.textContent = '❤️ Saved';
+            }
+          } else {
+            b.classList.remove('da-thich');
+            if (b.classList.contains('btn-fav-corner')) {
+              b.textContent = '🤍';
+            } else {
+              b.textContent = '🤍 Wishlist';
+            }
+          }
+        });
+      }
+    })
+    .catch(() => {
+      window.location.href = `yeu-thich.php?action=toggle&id=${id}&redirect=${encodeURIComponent(window.location.href)}`;
+    });
+  });
+
   async function guiYeuCauThemGio(id, sl) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const res = await fetch('api/gio-hang.php', {
@@ -138,15 +224,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const data = await res.json();
+    if (res.status === 401 || data.require_login) {
+      window.location.href = 'dang-nhap.php?yeu_cau=gio_hang';
+      throw new Error(data.loi || 'Sign in required');
+    }
     if (!res.ok) {
-      throw new Error(data.loi || 'Lỗi khi xử lý thêm sách vào giỏ');
+      throw new Error(data.loi || 'Error adding book to cart');
     }
     return data;
   }
 
-  /**
-   * Cập nhật số món hiển thị trên thanh Header ngay lập tức
-   */
   function capNhatSoLuongHeader(soMon) {
     document.querySelectorAll('.so-luong-gio').forEach((span) => {
       span.textContent = soMon;

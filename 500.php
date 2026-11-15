@@ -1,19 +1,17 @@
 <?php
 /**
- * 500.php - Trang thông báo lỗi máy chủ nội bộ thân thiện (Môi trường prod)
- * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
- * TUÂN THỦ NGHIÊM NGẶT: Không truy vấn CSDL, không nạp header có gọi nguoiDung()
- * เพื่อป้องกันข้อผิดพลาดซ้ำซ้อนเมื่อเซิร์ฟเวอร์ CSDL ไม่พร้อมทำงาน
+ * 500.php - 500 Internal Server Error Page
+ * Team 12 - Class 24CNTT3 - University of Science and Education, Danang
  */
 
 http_response_code(500);
 ?>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>500 - Lỗi hệ thống máy chủ | BookNest UED</title>
+  <title>500 - Internal Server Error | BookNest UED</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -69,11 +67,11 @@ http_response_code(500);
 <body>
   <div class="error-box">
     <h1>500</h1>
-    <h2>Lỗi máy chủ nội bộ (Internal Server Error)</h2>
+    <h2>Internal Server Error</h2>
     <p>
-      Hệ thống BookNest đang gặp sự cố kỹ thuật tạm thời. Chi tiết lỗi đã được máy chủ ghi nhận an toàn vào nhật ký hệ thống. Vui lòng thử lại sau giây lát.
+      The BookNest system encountered a temporary technical issue. The incident has been safely recorded in the server logs. Please try again in a few moments.
     </p>
-    <a href="index.php" class="btn">&larr; Quay lại Trang chủ</a>
+    <a href="index.php" class="btn">&larr; Back to Home</a>
   </div>
 </body>
 </html>

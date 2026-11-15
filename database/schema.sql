@@ -153,4 +153,30 @@ CREATE TABLE dang_nhap_sai (
   INDEX idx_email_thoigian (email, thoi_gian)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 10. BẢNG SÁCH YÊU THÍCH CỦA NGƯỜI DÙNG (yeu_thich) - ĐỒNG BỘ CSDL MYSQL
+CREATE TABLE yeu_thich (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nguoi_dung_id INT UNSIGNED NOT NULL,
+  san_pham_id   INT UNSIGNED NOT NULL,
+  ngay_tao      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_user_sp (nguoi_dung_id, san_pham_id),
+  INDEX idx_sp (san_pham_id),
+  CONSTRAINT fk_yeuthich_nguoidung FOREIGN KEY (nguoi_dung_id) REFERENCES nguoi_dung(id) ON DELETE CASCADE,
+  CONSTRAINT fk_yeuthich_sanpham FOREIGN KEY (san_pham_id) REFERENCES san_pham(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. BẢNG GIỎ HÀNG ĐỒNG BỘ CSDL (gio_hang) - LƯU TRỮ VĨNH VIỄN THEO TÀI KHOẢN
+CREATE TABLE gio_hang (
+  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  nguoi_dung_id INT UNSIGNED NOT NULL,
+  san_pham_id   INT UNSIGNED NOT NULL,
+  so_luong      INT UNSIGNED NOT NULL DEFAULT 1,
+  ngay_tao      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ngay_cap_nhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_user_sp (nguoi_dung_id, san_pham_id),
+  INDEX idx_sp (san_pham_id),
+  CONSTRAINT fk_giohang_nguoidung FOREIGN KEY (nguoi_dung_id) REFERENCES nguoi_dung(id) ON DELETE CASCADE,
+  CONSTRAINT fk_giohang_sanpham FOREIGN KEY (san_pham_id) REFERENCES san_pham(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;

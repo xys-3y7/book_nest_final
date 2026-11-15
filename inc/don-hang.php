@@ -1,33 +1,32 @@
 <?php
 /**
- * inc/don-hang.php - Xử lý đặt hàng trong giao dịch CSDL ACID
- * Nhóm 12 - Lớp 24CNTT3 - Trường ĐH Sư phạm - ĐH Đà Nẵng
+ * inc/don-hang.php - Order processing within ACID database transactions
+ * Team 12 - Class 24CNTT3 - University of Science and Education, Danang
  */
-
-use RuntimeException;
 
 /**
- * Lưu đơn hàng và chi tiết đơn hàng trong một Transaction CSDL an toàn
- * Cập nhật số lượng tồn kho với điều kiện ton_kho >= ? (chống overselling do race condition)
+ * Save order and order items in a secure database transaction.
+ * Updates stock with condition ton_kho >= ? (prevents race condition overselling)
  *
- * @param int $nguoiDungId ID tài khoản người đặt hàng
- * @param array $gio Mảng giỏ hàng dạng [san_pham_id => so_luong]
- * @param string $diaChi Địa chỉ nhận sách
- * @param string $soDienThoai Số điện thoại liên hệ
- * @param string|null $ghiChu Ghi chú thêm
- * @return int ID đơn hàng vừa tạo thành công
+ * @param int $nguoiDungId User ID placing the order
+ * @param array $gio Shopping cart array [san_pham_id => so_luong]
+ * @param string $diaChi Shipping address
+ * @param string $soDienThoai Contact phone number
+ * @param string|null $ghiChu Additional notes
+ * @param string $phuongThucTT Payment method (COD, Bank Transfer, MoMo)
+ * @return int Newly created order ID
  */
-function luuDonHang(int $nguoiDungId, array $gio, string $diaChi, string $soDienThoai, ?string $ghiChu = null): int
+function luuDonHang(int $nguoiDungId, array $gio, string $diaChi, string $soDienThoai, ?string $ghiChu = null, string $phuongThucTT = 'COD'): int
 {
     if (empty($gio)) {
-        throw new RuntimeException('Giỏ hàng đang trống, không thể đặt hàng.');
+        throw new RuntimeException('Your shopping cart is empty, cannot place an order.');
     }
 
     $db = db();
     $db->beginTransaction();
 
     try {
-        // 1. Đọc thông tin và đơn giá hiện tại của toàn bộ sản phẩm trong giỏ qua một câu WHERE IN
+        // 1. Fetch current info and prices of all books in cart in a single WHERE IN query
         $ids = array_map('intval', array_keys($gio));
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         
@@ -40,7 +39,7 @@ function luuDonHang(int $nguoiDungId, array $gio, string $diaChi, string $soDien
             $bangGia[$sp['id']] = $sp;
         }
 
-        // 2. Kiểm tra và trừ tồn kho từng sản phẩm với điều kiện ton_kho >= so_luong
+        // 2. Validate and decrement stock atomically with condition ton_kho >= so_luong
         $tongTien = 0;
         $stUpdateTonKho = $db->prepare('UPDATE san_pham SET ton_kho = ton_kho - ? WHERE id = ? AND ton_kho >= ?');
 
@@ -50,26 +49,27 @@ function luuDonHang(int $nguoiDungId, array $gio, string $diaChi, string $soDien
                 continue;
             }
             if (!isset($bangGia[$spId])) {
-                throw new RuntimeException("Sản phẩm mang mã #{$spId} không tồn tại trong hệ thống.");
+                throw new RuntimeException("Textbook #{$spId} does not exist in the catalog.");
             }
 
             $sp = $bangGia[$spId];
 
-            // Cập nhật nguyên tử (Atomic Update) - nếu ton_kho < sl thì rowCount() sẽ bằng 0
+            // Atomic update: if ton_kho < sl then rowCount() is 0
             $stUpdateTonKho->execute([$sl, $spId, $sl]);
             if ($stUpdateTonKho->rowCount() === 0) {
-                throw new RuntimeException("Rất tiếc! Sách \"{$sp['ten']}\" không đủ số lượng trong kho (còn {$sp['ton_kho']} cuốn).");
+                throw new RuntimeException("Sorry! Textbook \"{$sp['ten']}\" does not have enough stock available (only {$sp['ton_kho']} left).");
             }
 
             $tongTien += $sp['gia'] * $sl;
         }
 
-        // 3. Tạo bản ghi đơn hàng chính (don_hang)
-        $stDonHang = $db->prepare('INSERT INTO don_hang (nguoi_dung_id, tong_tien, dia_chi, so_dien_thoai, ghi_chu) VALUES (?, ?, ?, ?, ?)');
-        $stDonHang->execute([$nguoiDungId, $tongTien, $diaChi, $soDienThoai, $ghiChu]);
+        // 3. Insert order record (don_hang)
+        $trangThaiTT = ($phuongThucTT === 'COD') ? 'chua_thanh_toan' : 'da_thanh_toan';
+        $stDonHang = $db->prepare('INSERT INTO don_hang (nguoi_dung_id, tong_tien, dia_chi, so_dien_thoai, ghi_chu, phuong_thuc_tt, trang_thai_tt) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $stDonHang->execute([$nguoiDungId, $tongTien, $diaChi, $soDienThoai, $ghiChu, $phuongThucTT, $trangThaiTT]);
         $donHangId = (int)$db->lastInsertId();
 
-        // 4. Lưu từng dòng chi tiết đơn hàng (chi_tiet_don) với đơn giá tại thời điểm đặt
+        // 4. Insert order details (chi_tiet_don) with locked unit price
         $stChiTiet = $db->prepare('INSERT INTO chi_tiet_don (don_hang_id, san_pham_id, so_luong, don_gia) VALUES (?, ?, ?, ?)');
         foreach ($gio as $spId => $sl) {
             $sl = (int)$sl;
@@ -78,12 +78,81 @@ function luuDonHang(int $nguoiDungId, array $gio, string $diaChi, string $soDien
             $stChiTiet->execute([$donHangId, $spId, $sl, $donGia]);
         }
 
-        // 5. Xác nhận giao dịch thành công toàn vẹn
+        // 5. Record payment in thanh_toan table
+        $maGiaoDich = 'TXN-' . strtoupper(substr(md5(uniqid((string)mt_rand(), true)), 0, 10));
+        $stPayment = $db->prepare('INSERT INTO thanh_toan (don_hang_id, phuong_thuc, so_tien, trang_thai, ma_giao_dich, ghi_chu) VALUES (?, ?, ?, ?, ?, ?)');
+        $stPayment->execute([
+            $donHangId,
+            $phuongThucTT,
+            $tongTien,
+            ($phuongThucTT === 'COD' ? 'pending' : 'completed'),
+            $maGiaoDich,
+            "Payment for order #$donHangId via $phuongThucTT"
+        ]);
+
+        // 6. Commit transaction
         $db->commit();
         return $donHangId;
 
     } catch (Throwable $e) {
-        // Nếu có bất kỳ lỗi nào xảy ra, hoàn tác toàn bộ thao tác trong giao dịch
+        // Rollback on any failure
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        throw $e;
+    }
+}
+
+/**
+ * Cancel an order and restore stock quantities for each book item
+ */
+function huyDonHang(int $donHangId, int $nguoiDungId, bool $laAdmin = false): bool
+{
+    $db = db();
+    $db->beginTransaction();
+
+    try {
+        // Check order existence and permission
+        $st = $db->prepare('SELECT * FROM don_hang WHERE id = ? FOR UPDATE');
+        $st->execute([$donHangId]);
+        $don = $st->fetch();
+
+        if (!$don) {
+            throw new RuntimeException('Order not found.');
+        }
+
+        if (!$laAdmin && (int)$don['nguoi_dung_id'] !== $nguoiDungId) {
+            throw new RuntimeException('You do not have permission to cancel this order.');
+        }
+
+        if ($don['trang_thai'] === 'da_huy') {
+            throw new RuntimeException('This order is already cancelled.');
+        }
+
+        if (!$laAdmin && $don['trang_thai'] !== 'cho_xu_ly') {
+            throw new RuntimeException('Only orders with status "Pending" can be cancelled.');
+        }
+
+        // Restore stock
+        $stItems = $db->prepare('SELECT san_pham_id, so_luong FROM chi_tiet_don WHERE don_hang_id = ?');
+        $stItems->execute([$donHangId]);
+        $items = $stItems->fetchAll();
+
+        $stRestore = $db->prepare('UPDATE san_pham SET ton_kho = ton_kho + ? WHERE id = ?');
+        foreach ($items as $item) {
+            $stRestore->execute([(int)$item['so_luong'], (int)$item['san_pham_id']]);
+        }
+
+        // Update status to da_huy
+        $stUpdate = $db->prepare('UPDATE don_hang SET trang_thai = "da_huy" WHERE id = ?');
+        $stUpdate->execute([$donHangId]);
+
+        // Update payment status if exists
+        $db->prepare('UPDATE thanh_toan SET trang_thai = "refunded" WHERE don_hang_id = ?')->execute([$donHangId]);
+
+        $db->commit();
+        return true;
+    } catch (Throwable $e) {
         if ($db->inTransaction()) {
             $db->rollBack();
         }

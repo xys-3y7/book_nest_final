@@ -11,8 +11,10 @@ use App\Data\KhoSanPham;
 
 $kho = new KhoSanPham(db());
 
-// Lấy 10 cuốn sách mới nhất từ MySQL qua KhoSanPham (vừa vặn 2 hàng x 5 cột = 10 cuốn đầy đủ)
+// Fetch books from MySQL via KhoSanPham
 $sachMoi = $kho->sanPhamMoi(10);
+$sachBanChay = $kho->sanPhamBanChay(5);
+$sachGoiY = $kho->sanPhamGoiY(5);
 
 // Lấy 4 cuốn sách cho khối Flash Sale
 $sachFlashSale = array_slice($sachMoi, 0, 4);
@@ -27,9 +29,9 @@ if (!empty($_COOKIE['da_xem'])) {
     }
 }
 
-$tieuDe = 'Trang chủ | BookNest - Nhà sách sinh viên UED';
+$tieuDe = 'Home | BookNest - UED Student Bookstore';
 $trang = 'index';
-$moTaTrang = 'BookNest - Nhà sách trực tuyến chuyên cung cấp giáo trình đại học, sách chuyên ngành CNTT, Toán học cho sinh viên Trường ĐH Sư phạm - ĐH Đà Nẵng.';
+$moTaTrang = 'BookNest - Online bookstore providing academic textbooks, Computer Science, and Mathematics for students of University of Science and Education - The University of Da Nang.';
 
 require __DIR__ . '/inc/header.php';
 ?>
@@ -39,17 +41,39 @@ require __DIR__ . '/inc/header.php';
   <!-- 1. HERO BANNER SÀN THƯƠNG MẠI ĐIỆN TỬ -->
   <section class="hero-tmdt-grid">
     <!-- Banner chính lớn bên trái -->
-    <div class="banner-chinh-tmdt">
-      <div class="banner-chinh-tmdt__tag">🔥 HỘI SÁCH SINH VIÊN 2026 &bull; TRỢ GIÁ ĐẾN 25%</div>
-      <h1 class="banner-chinh-tmdt__title">
-        Giáo Trình Chuẩn Hóa<br><span>Đại Học Sư Phạm Đà Nẵng</span>
-      </h1>
-      <p class="banner-chinh-tmdt__desc">
-        Hơn 30+ đầu sách Công nghệ thông tin, Toán học &amp; Kỹ năng sống được thẩm định chính quy. Giao nhanh tận phòng ký túc xá Liên Chiểu trong vòng 24 giờ.
-      </p>
-      <div class="banner-chinh-tmdt__cta">
-        <a href="danh-sach.php" class="btn-banner-mua">⚡ Mua giáo trình ngay &rarr;</a>
-        <a href="gioi-thieu.php" class="btn-banner-nhom">👥 Đồ án Nhóm 12</a>
+    <div class="banner-chinh-tmdt" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 30px; position: relative;">
+      <div style="flex: 1; max-width: 540px; z-index: 2;">
+        <div class="banner-chinh-tmdt__tag" style="display: inline-flex; align-items: center; gap: 8px;">
+          <span class="pulsing-dot"></span>
+          <span>🔥 STUDENT BOOK FAIR 2026 &bull; UP TO 25% OFF</span>
+        </div>
+        <h1 class="banner-chinh-tmdt__title">
+          Standardized Textbooks<br><span>University of Science and Education</span>
+        </h1>
+        <p class="banner-chinh-tmdt__desc">
+          Over 50+ officially vetted textbooks in Computer Science, Economics, and Life Skills. Fast delivery directly to Lien Chieu dormitories within 24 hours.
+        </p>
+        <div class="banner-chinh-tmdt__cta" style="margin-bottom: 20px;">
+          <a href="danh-sach.php" class="btn-banner-mua">⚡ Shop Textbooks Now &rarr;</a>
+          <a href="gioi-thieu.php" class="btn-banner-nhom">👥 Team 12 Project</a>
+        </div>
+        <div style="display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.8rem; color: #cbd5e1;">
+          <span>✓ 100% Authentic</span>
+          <span>&bull;</span>
+          <span>✓ 7-Day Returns</span>
+          <span>&bull;</span>
+          <span>✓ 24h Dorm Delivery</span>
+        </div>
+      </div>
+
+      <!-- Khối bìa sách nổi bật 3D bên phải Hero (Chi-hien-tren-may-tinh) -->
+      <div class="chi-hien-tren-may-tinh" style="position: relative; width: 220px; height: 260px; flex-shrink: 0; z-index: 2; align-items: center; justify-content: center;">
+        <!-- Sách 1 nghiêng trái -->
+        <img src="uploads/book_2b9e2c40fe3ad2b0.png" alt="Featured textbook" width="130" height="175" style="position: absolute; left: 0; top: 35px; border-radius: 8px; box-shadow: -10px 15px 30px rgba(0,0,0,0.4); transform: rotate(-8deg); border: 2px solid rgba(255,255,255,0.2); transition: all 0.3s ease; object-fit: cover;">
+        <!-- Sách 2 nghiêng phải -->
+        <img src="uploads/book_479148959ef0214f.png" alt="Featured textbook" width="130" height="175" style="position: absolute; right: 0; top: 45px; border-radius: 8px; box-shadow: 10px 15px 30px rgba(0,0,0,0.4); transform: rotate(10deg); border: 2px solid rgba(255,255,255,0.2); transition: all 0.3s ease; object-fit: cover;">
+        <!-- Sách 3 chính giữa nổi bật nhất -->
+        <img src="uploads/book_53ddc2905e87fd3f.png" alt="Featured textbook" width="145" height="200" style="position: absolute; left: 35px; top: 10px; border-radius: 10px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 3; border: 2px solid #ffffff; transition: all 0.3s ease; object-fit: cover;">
       </div>
     </div>
 
@@ -58,12 +82,12 @@ require __DIR__ . '/inc/header.php';
       <!-- Khối Voucher độc quyền sinh viên UED -->
       <div class="card-voucher-sv">
         <div class="card-voucher-sv__head">
-          <strong style="color:#0f172a;font-size:0.95rem;">🎁 Voucher Ưu Đãi Sinh Viên</strong>
-          <span class="card-voucher-sv__badge">HỌC KỲ MỚI</span>
+          <strong style="color:#0f172a;font-size:0.95rem;">🎁 Exclusive Student Voucher</strong>
+          <span class="card-voucher-sv__badge">NEW SEMESTER</span>
         </div>
         <div class="card-voucher-sv__code">UED2026</div>
         <p class="card-voucher-sv__note">
-          Giảm ngay <strong>25.000đ</strong> cho đơn đặt từ 2 cuốn giáo trình trở lên. Áp dụng cho toàn thể sinh viên Trường ĐH Sư phạm!
+          Instant <strong>25,000 VNĐ discount</strong> on orders of 2 or more textbooks. Valid for all UED students!
         </p>
       </div>
 
@@ -71,14 +95,14 @@ require __DIR__ . '/inc/header.php';
       <div class="card-weather-tmdt" id="khoi-thoi-tiet-dong" aria-live="polite">
         <div class="card-weather-tmdt__head">
           <span>🌤️</span>
-          <span>Thời tiết Đà Nẵng hôm nay</span>
+          <span>Da Nang Weather Today</span>
         </div>
         <div class="card-weather-tmdt__stats">
-          <div>Nhiệt độ: <strong id="thoi-tiet-nhiet-do">26 °C</strong></div>
-          <div>Độ ẩm: <strong id="thoi-tiet-do-am">85%</strong></div>
+          <div>Temperature: <strong id="thoi-tiet-nhiet-do">26 °C</strong></div>
+          <div>Humidity: <strong id="thoi-tiet-do-am">85%</strong></div>
         </div>
         <p class="card-weather-tmdt__tip" id="thoi-tiet-loi-khuyen">
-          💡 <em>Thời tiết Đà Nẵng mát mẻ, rất thích hợp để đọc sách chuyên ngành và luyện lập trình tại thư viện!</em>
+          💡 <em>Cool and pleasant weather in Da Nang, great for reading and practicing web programming at the library!</em>
         </p>
       </div>
     </div>
@@ -89,29 +113,29 @@ require __DIR__ . '/inc/header.php';
     <div class="trust-item">
       <div class="trust-item__icon">🚚</div>
       <div>
-        <p class="trust-item__title">Giao nhanh KTX trong 24h</p>
-        <p class="trust-item__sub">Nhận sách tận phòng hoặc sảnh Khoa</p>
+        <p class="trust-item__title">Fast 24h Dorm Delivery</p>
+        <p class="trust-item__sub">Delivered to room or faculty lobby</p>
       </div>
     </div>
     <div class="trust-item">
       <div class="trust-item__icon">🛡️</div>
       <div>
-        <p class="trust-item__title">100% Chuẩn Bản Quyền</p>
-        <p class="trust-item__sub">Biên soạn bởi giảng viên uy tín ĐHĐN</p>
+        <p class="trust-item__title">100% Copyright Standard</p>
+        <p class="trust-item__sub">Vetted by experienced UED professors</p>
       </div>
     </div>
     <div class="trust-item">
       <div class="trust-item__icon">🔄</div>
       <div>
-        <p class="trust-item__title">Đổi trả trong 7 ngày</p>
-        <p class="trust-item__sub">Bảo hành nếu sách lỗi in, rách trang</p>
+        <p class="trust-item__title">7-Day Free Returns</p>
+        <p class="trust-item__sub">Instant replacement for defective pages</p>
       </div>
     </div>
     <div class="trust-item">
       <div class="trust-item__icon">🏷️</div>
       <div>
-        <p class="trust-item__title">Trợ giá sinh viên 25%</p>
-        <p class="trust-item__sub">Giá ưu đãi đặc quyền cho sinh viên UED</p>
+        <p class="trust-item__title">25% Student Subsidy</p>
+        <p class="trust-item__sub">Special discounted prices for UED students</p>
       </div>
     </div>
   </section>
@@ -120,10 +144,10 @@ require __DIR__ . '/inc/header.php';
   <section class="flash-sale-box">
     <div class="flash-sale-header">
       <div class="flash-sale-title">
-        <span>⚡ FLASH SALE HÔM NAY</span>
+        <span>⚡ TODAY'S FLASH SALE</span>
       </div>
       <div class="flash-timer">
-        <span>Kết thúc sau:</span>
+        <span>Ends in:</span>
         <span class="timer-pill" id="fs-gio">02</span> :
         <span class="timer-pill" id="fs-phut">45</span> :
         <span class="timer-pill" id="fs-giay">18</span>
@@ -131,6 +155,12 @@ require __DIR__ . '/inc/header.php';
     </div>
 
     <!-- Lưới sách Flash Sale -->
+    <?php if (empty($sachFlashSale)): ?>
+      <div style="text-align: center; padding: 30px 20px; background: rgba(255,255,255,0.7); border-radius: 12px; margin: 10px 0;">
+        <p style="font-size: 1.8rem; margin: 0 0 6px 0;">⚡</p>
+        <p style="margin: 0; color: #64748b; font-weight: 600;">No products currently in Flash Sale. Please check back soon!</p>
+      </div>
+    <?php else: ?>
     <div class="grid-books-tmdt">
       <?php foreach ($sachFlashSale as $sp): 
         $daThich = laYeuThich((int)$sp->id);
@@ -139,14 +169,14 @@ require __DIR__ . '/inc/header.php';
         <article class="the" data-id="<?= $sp->id ?>">
           <figure class="the__hinh-anh">
             <span class="the__the-loai-badge">-25%</span>
-            <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button" aria-label="Yêu thích <?= e($sp->ten) ?>" title="<?= $daThich ? 'Bỏ thích' : 'Thêm vào yêu thích' ?>">
+            <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button" aria-label="Save <?= e($sp->ten) ?>" title="<?= $daThich ? 'Remove favorite' : 'Add to favorites' ?>">
               <?= $daThich ? '❤️' : '🤍' ?>
             </button>
-            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Bìa sách <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
           </figure>
 
           <div class="the__than">
-            <span class="the__the-loai"><?= e($sp->tenDanhMuc ?? 'Giáo trình') ?></span>
+            <span class="the__the-loai"><?= e(layTenDanhMucEn($sp->danhMucId ?? null, $sp->tenDanhMuc ?? 'Textbook')) ?></span>
             <h3 class="the__tieu-de">
               <a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->ten) ?></a>
             </h3>
@@ -154,7 +184,7 @@ require __DIR__ . '/inc/header.php';
             <!-- Đánh giá sao & lượt mua -->
             <div class="rating-stars-tmdt">
               <span class="stars">★★★★★</span>
-              <span>(4.9) &bull; Đã bán <?= rand(15, 80) ?></span>
+              <span>(4.9) &bull; <?= rand(15, 80) ?> sold</span>
             </div>
 
             <div style="font-size: 0.76rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
@@ -173,16 +203,16 @@ require __DIR__ . '/inc/header.php';
             <!-- Thanh tiến độ Flash Sale -->
             <div class="deal-progress-bar">
               <div class="deal-progress-bar__fill" style="width: <?= rand(60, 90) ?>%;"></div>
-              <div class="deal-progress-bar__text">Đang bán chạy 🔥</div>
+              <div class="deal-progress-bar__text">HOT SELLER 🔥</div>
             </div>
 
             <p class="the__ton-kho <?= $sp->tonKho > 0 ? 'the__ton-kho--con' : 'the__ton-kho--het' ?>">
-              <?= $sp->tonKho > 0 ? '✓ Còn ' . $sp->tonKho . ' cuốn' : '⚠ Hết hàng tạm thời' ?>
+              <?= $sp->tonKho > 0 ? '✓ ' . $sp->tonKho . ' copies left' : '⚠ Out of stock' ?>
             </p>
 
             <!-- KHU VỰC 4 NÚT HÀNH ĐỘNG (CSRF PROTECTED) -->
             <div class="the__chan">
-              <!-- Hàng 1: Nút Mua ngay (⚡ Mua ngay) & Nút Thêm vào giỏ (🛒 + Giỏ) -->
+              <!-- Hàng 1: Nút Mua ngay (⚡ Buy Now) & Nút Thêm vào giỏ (🛒 + Cart) -->
               <?php if ($sp->tonKho > 0): ?>
                 <div class="the__chan-hang1">
                   <form method="POST" action="gio-hang.php" style="margin:0;flex:1;">
@@ -190,25 +220,25 @@ require __DIR__ . '/inc/header.php';
                     <input type="hidden" name="action" value="mua_ngay">
                     <input type="hidden" name="id" value="<?= $sp->id ?>">
                     <input type="hidden" name="soLuong" value="1">
-                    <button type="submit" class="btn-mua-ngay">⚡ Mua ngay</button>
+                    <button type="submit" class="btn-mua-ngay">⚡ Buy Now</button>
                   </form>
                   <form method="POST" action="gio-hang.php" class="form-them-nhanh" style="margin:0;flex:1;">
                     <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
                     <input type="hidden" name="action" value="them">
                     <input type="hidden" name="id" value="<?= $sp->id ?>">
                     <input type="hidden" name="soLuong" value="1">
-                    <button type="submit" class="btn-gio-hang btn-them-nhanh">🛒 + Giỏ</button>
+                    <button type="submit" class="btn-gio-hang btn-them-nhanh">🛒 + Cart</button>
                   </form>
                 </div>
               <?php else: ?>
-                <div style="color:#e02424;font-size:0.82rem;font-weight:700;text-align:center;padding:4px 0;background:#fdf2f2;border-radius:4px;">Hết hàng tạm thời</div>
+                <div style="color:#e02424;font-size:0.82rem;font-weight:700;text-align:center;padding:4px 0;background:#fdf2f2;border-radius:4px;">Out of stock</div>
               <?php endif; ?>
 
-              <!-- Hàng 2: Chi tiết (🔍 Chi tiết) & Yêu thích (🤍 Yêu thích) -->
+              <!-- Hàng 2: Chi tiết (🔍 Details) & Yêu thích (🤍 Wishlist) -->
               <div class="the__chan-hang2">
-                <a href="chi-tiet.php?id=<?= $sp->id ?>" class="btn-chi-tiet">🔍 Chi tiết</a>
+                <a href="chi-tiet.php?id=<?= $sp->id ?>" class="btn-chi-tiet">🔍 Details</a>
                 <a href="yeu-thich.php?action=toggle&id=<?= $sp->id ?>&redirect=index.php" class="nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button">
-                  <?= $daThich ? '❤️ Đã thích' : '🤍 Yêu thích' ?>
+                  <?= $daThich ? '❤️ Saved' : '🤍 Wishlist' ?>
                 </a>
               </div>
             </div>
@@ -216,20 +246,34 @@ require __DIR__ . '/inc/header.php';
         </article>
       <?php endforeach; ?>
     </div>
+    <?php endif; ?>
   </section>
 
   <!-- 4. KHỐI TẤT CẢ SÁCH MỚI CẬP NHẬT TRÊN KỆ -->
   <section>
     <div class="section-tmdt-head">
       <h2 class="section-tmdt-head__title">
-        <span>📚</span> Giáo trình mới cập nhật trên kệ
+        <span>📚</span> Latest Textbooks on Shelves
       </h2>
       <a href="danh-sach.php" class="section-tmdt-head__link">
-        <span>Xem tất cả hơn 30+ đầu sách</span>
+        <span>View all textbooks</span>
         <span>&rarr;</span>
       </a>
     </div>
 
+    <?php if (empty($sachMoi)): ?>
+      <div style="text-align: center; padding: 60px 20px; background: #ffffff; border-radius: 16px; border: 1.5px dashed #cbd5e1; box-shadow: var(--shadow-card); margin-bottom: 30px;">
+        <p style="font-size: 3.5rem; margin: 0 0 12px 0;">📚</p>
+        <h3 style="margin: 0 0 8px 0; color: #1e293b; font-size: 1.3rem;">No textbooks currently on shelves</h3>
+        <p style="color: #64748b; max-width: 520px; margin: 0 auto 24px auto; font-size: 0.95rem; line-height: 1.6;">
+          All previous inventory has been cleared. Log in with a <strong>Seller</strong> account to list your first textbook on the store!
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <a href="dang-nhap.php" class="nut nut--chinh" style="padding: 10px 22px; text-decoration: none;">🔑 Sign In as Seller</a>
+          <a href="dang-ky.php" class="nut nut--vien" style="padding: 10px 20px; text-decoration: none;">📝 Register New Seller Account</a>
+        </div>
+      </div>
+    <?php else: ?>
     <div class="grid-books-tmdt">
       <?php foreach ($sachMoi as $sp): 
         $daThich = laYeuThich((int)$sp->id);
@@ -237,22 +281,22 @@ require __DIR__ . '/inc/header.php';
       ?>
         <article class="the" data-id="<?= $sp->id ?>">
           <figure class="the__hinh-anh">
-            <span class="the__the-loai-badge" style="background:#1a56db;"><?= e($sp->tenDanhMuc ?? 'Giáo trình') ?></span>
-            <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button" aria-label="Yêu thích <?= e($sp->ten) ?>" title="<?= $daThich ? 'Bỏ thích' : 'Thêm vào yêu thích' ?>">
+            <span class="the__the-loai-badge" style="background:#1a56db;"><?= e(layTenDanhMucEn($sp->danhMucId ?? null, $sp->tenDanhMuc ?? 'Textbook')) ?></span>
+            <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button" aria-label="Save <?= e($sp->ten) ?>" title="<?= $daThich ? 'Remove favorite' : 'Add to favorites' ?>">
               <?= $daThich ? '❤️' : '🤍' ?>
             </button>
-            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Bìa sách <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+            <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
           </figure>
 
           <div class="the__than">
-            <span class="the__the-loai"><?= e($sp->tenDanhMuc ?? 'Chuyên ngành') ?></span>
+            <span class="the__the-loai"><?= e(layTenDanhMucEn($sp->danhMucId ?? null, $sp->tenDanhMuc ?? 'Category')) ?></span>
             <h3 class="the__tieu-de">
               <a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->ten) ?></a>
             </h3>
 
             <div class="rating-stars-tmdt">
               <span class="stars">★★★★★</span>
-              <span>(4.8) &bull; Đã bán <?= rand(10, 65) ?></span>
+              <span>(4.8) &bull; <?= rand(10, 65) ?> sold</span>
             </div>
 
             <div style="font-size: 0.76rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
@@ -268,7 +312,7 @@ require __DIR__ . '/inc/header.php';
             </div>
 
             <p class="the__ton-kho <?= $sp->tonKho > 0 ? 'the__ton-kho--con' : 'the__ton-kho--het' ?>">
-              <?= $sp->tonKho > 0 ? '✓ Còn ' . $sp->tonKho . ' cuốn' : '⚠ Hết hàng tạm thời' ?>
+              <?= $sp->tonKho > 0 ? '✓ ' . $sp->tonKho . ' copies left' : '⚠ Out of stock' ?>
             </p>
 
             <!-- 4 NÚT HÀNH ĐỘNG (CSRF PROTECTED) -->
@@ -280,24 +324,24 @@ require __DIR__ . '/inc/header.php';
                     <input type="hidden" name="action" value="mua_ngay">
                     <input type="hidden" name="id" value="<?= $sp->id ?>">
                     <input type="hidden" name="soLuong" value="1">
-                    <button type="submit" class="btn-mua-ngay">⚡ Mua ngay</button>
+                    <button type="submit" class="btn-mua-ngay">⚡ Buy Now</button>
                   </form>
                   <form method="POST" action="gio-hang.php" class="form-them-nhanh" style="margin:0;flex:1;">
                     <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
                     <input type="hidden" name="action" value="them">
                     <input type="hidden" name="id" value="<?= $sp->id ?>">
                     <input type="hidden" name="soLuong" value="1">
-                    <button type="submit" class="btn-gio-hang btn-them-nhanh">🛒 + Giỏ</button>
+                    <button type="submit" class="btn-gio-hang btn-them-nhanh">🛒 + Cart</button>
                   </form>
                 </div>
               <?php else: ?>
-                <div style="color:#e02424;font-size:0.82rem;font-weight:700;text-align:center;padding:4px 0;background:#fdf2f2;border-radius:4px;">Hết hàng tạm thời</div>
+                <div style="color:#e02424;font-size:0.82rem;font-weight:700;text-align:center;padding:4px 0;background:#fdf2f2;border-radius:4px;">Out of stock</div>
               <?php endif; ?>
 
               <div class="the__chan-hang2">
-                <a href="chi-tiet.php?id=<?= $sp->id ?>" class="btn-chi-tiet">🔍 Chi tiết</a>
+                <a href="chi-tiet.php?id=<?= $sp->id ?>" class="btn-chi-tiet">🔍 Details</a>
                 <a href="yeu-thich.php?action=toggle&id=<?= $sp->id ?>&redirect=index.php" class="nut-bam-yeu-thich <?= $daThich ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button">
-                  <?= $daThich ? '❤️ Đã thích' : '🤍 Yêu thích' ?>
+                  <?= $daThich ? '❤️ Saved' : '🤍 Wishlist' ?>
                 </a>
               </div>
             </div>
@@ -305,14 +349,85 @@ require __DIR__ . '/inc/header.php';
         </article>
       <?php endforeach; ?>
     </div>
+    <?php endif; ?>
   </section>
 
-  <!-- 5. KHỐI SÁCH ĐÃ XEM GẦN ĐÂY -->
+  <!-- 5. BEST-SELLING TEXTBOOKS -->
+  <?php if (!empty($sachBanChay)): ?>
+    <section style="margin-top: 40px;">
+      <div class="section-tmdt-head">
+        <h2 class="section-tmdt-head__title">
+          <span>🔥</span> Best-Selling Textbooks
+        </h2>
+        <a href="danh-sach.php?sort=ban-chay" class="section-tmdt-head__link">
+          <span>View all bestsellers</span>
+          <span>&rarr;</span>
+        </a>
+      </div>
+
+      <div class="grid-books-tmdt">
+        <?php foreach ($sachBanChay as $sp): 
+          $daThichBc = laYeuThich((int)$sp->id);
+          $giaGocBc = round($sp->gia * 1.25, -3);
+        ?>
+          <article class="the" data-id="<?= $sp->id ?>">
+            <figure class="the__hinh-anh">
+              <span class="the__the-loai-badge" style="background:#ea580c;">🔥 BESTSELLER</span>
+              <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThichBc ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button">
+                <?= $daThichBc ? '❤️' : '🤍' ?>
+              </button>
+              <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+            </figure>
+            <div class="the__than">
+              <span class="the__the-loai"><?= e(layTenDanhMucEn($sp->danhMucId ?? null, $sp->tenDanhMuc ?? 'Textbook')) ?></span>
+              <h3 class="the__tieu-de"><a href="chi-tiet.php?id=<?= $sp->id ?>"><?= e($sp->ten) ?></a></h3>
+              <div class="rating-stars-tmdt"><span class="stars">★★★★★</span><span>(4.9) &bull; Popular</span></div>
+              <div class="the__gia-row">
+                <span class="the__gia"><?= vnd($sp->gia) ?></span>
+                <span class="the__gia-goc"><?= vnd($giaGocBc) ?></span>
+              </div>
+              <p class="the__ton-kho <?= $sp->tonKho > 0 ? 'the__ton-kho--con' : 'the__ton-kho--het' ?>">
+                <?= $sp->tonKho > 0 ? '✓ ' . $sp->tonKho . ' copies left' : '⚠ Out of stock' ?>
+              </p>
+              <div class="the__chan">
+                <?php if ($sp->tonKho > 0): ?>
+                  <div class="the__chan-hang1">
+                    <form method="POST" action="gio-hang.php" style="margin:0;flex:1;">
+                      <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
+                      <input type="hidden" name="action" value="mua_ngay">
+                      <input type="hidden" name="id" value="<?= $sp->id ?>">
+                      <input type="hidden" name="soLuong" value="1">
+                      <button type="submit" class="btn-mua-ngay">⚡ Buy Now</button>
+                    </form>
+                    <form method="POST" action="gio-hang.php" class="form-them-nhanh" style="margin:0;flex:1;">
+                      <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
+                      <input type="hidden" name="action" value="them">
+                      <input type="hidden" name="id" value="<?= $sp->id ?>">
+                      <input type="hidden" name="soLuong" value="1">
+                      <button type="submit" class="btn-gio-hang btn-them-nhanh">🛒 + Cart</button>
+                    </form>
+                  </div>
+                <?php endif; ?>
+                <div class="the__chan-hang2">
+                  <a href="chi-tiet.php?id=<?= $sp->id ?>" class="btn-chi-tiet">🔍 Details</a>
+                  <a href="yeu-thich.php?action=toggle&id=<?= $sp->id ?>&redirect=index.php" class="nut-bam-yeu-thich <?= $daThichBc ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button">
+                    <?= $daThichBc ? '❤️ Saved' : '🤍 Wishlist' ?>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </article>
+        <?php endforeach; ?>
+      </div>
+    </section>
+  <?php endif; ?>
+
+  <!-- 6. KHỐI SÁCH ĐÃ XEM GẦN ĐÂY -->
   <?php if (!empty($daXem)): ?>
     <section style="margin-top: 30px;">
       <div class="section-tmdt-head">
         <h2 class="section-tmdt-head__title">
-          <span>🕒</span> Giáo trình bạn đã xem gần đây
+          <span>🕒</span> Recently Viewed Textbooks
         </h2>
       </div>
 
@@ -325,7 +440,7 @@ require __DIR__ . '/inc/header.php';
               <button class="btn-fav-corner nut-bam-yeu-thich <?= $daThichDx ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button">
                 <?= $daThichDx ? '❤️' : '🤍' ?>
               </button>
-              <img src="<?= e(anhSach($sp->anh)) ?>" alt="Bìa sách <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
+              <img src="<?= e(anhSach($sp->anh)) ?>" alt="Cover <?= e($sp->ten) ?>" width="175" height="225" loading="lazy">
             </figure>
             <div class="the__than">
               <h3 class="the__tieu-de">
@@ -343,20 +458,20 @@ require __DIR__ . '/inc/header.php';
                     <input type="hidden" name="action" value="mua_ngay">
                     <input type="hidden" name="id" value="<?= $sp->id ?>">
                     <input type="hidden" name="soLuong" value="1">
-                    <button type="submit" class="btn-mua-ngay">⚡ Mua ngay</button>
+                    <button type="submit" class="btn-mua-ngay">⚡ Buy Now</button>
                   </form>
                   <form method="POST" action="gio-hang.php" class="form-them-nhanh" style="margin:0;flex:1;">
                     <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
                     <input type="hidden" name="action" value="them">
                     <input type="hidden" name="id" value="<?= $sp->id ?>">
                     <input type="hidden" name="soLuong" value="1">
-                    <button type="submit" class="btn-gio-hang btn-them-nhanh">🛒 + Giỏ</button>
+                    <button type="submit" class="btn-gio-hang btn-them-nhanh">🛒 + Cart</button>
                   </form>
                 </div>
                 <div class="the__chan-hang2">
-                  <a href="chi-tiet.php?id=<?= $sp->id ?>" class="btn-chi-tiet">🔍 Chi tiết</a>
+                  <a href="chi-tiet.php?id=<?= $sp->id ?>" class="btn-chi-tiet">🔍 Details</a>
                   <a href="yeu-thich.php?action=toggle&id=<?= $sp->id ?>&redirect=index.php" class="nut-bam-yeu-thich <?= $daThichDx ? 'da-thich' : '' ?>" data-id="<?= $sp->id ?>" role="button">
-                    <?= $daThichDx ? '❤️ Đã thích' : '🤍 Yêu thích' ?>
+                    <?= $daThichDx ? '❤️ Saved' : '🤍 Wishlist' ?>
                   </a>
                 </div>
               </div>
@@ -400,6 +515,6 @@ require __DIR__ . '/inc/header.php';
 </script>
 
 <script type="module" src="js/trang-chu.js"></script>
-<script src="js/gio-hang.js"></script>
+<script src="js/gio-hang.js?v=<?= filemtime(__DIR__ . '/js/gio-hang.js') ?>"></script>
 
 <?php require __DIR__ . '/inc/footer.php'; ?>
