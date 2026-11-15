@@ -223,3 +223,27 @@ CREATE OR REPLACE VIEW notifications AS
   SELECT id, nguoi_dung_id AS user_id, tieu_de AS title, noi_dung AS content,
          loai AS type, da_doc AS is_read, ngay_tao AS created_at
   FROM thong_bao;
+
+-- 11. SUB ENGLISH ANNOTATIONS (Table & Column Comments)
+ALTER TABLE san_pham COMMENT = 'Books & Textbooks - Quản lý sản phẩm sách';
+ALTER TABLE danh_muc COMMENT = 'Textbook Categories - Danh mục thể loại sách';
+ALTER TABLE don_hang COMMENT = 'Orders - Quản lý đơn đặt hàng';
+ALTER TABLE chi_tiet_don COMMENT = 'Order Items / Details - Chi tiết từng cuốn sách trong đơn';
+ALTER TABLE nguoi_dung COMMENT = 'Users & Accounts - Tài khoản người dùng (Admin, Seller, Customer)';
+ALTER TABLE payments COMMENT = 'Payments & Transactions - Quản lý giao dịch thanh toán';
+ALTER TABLE payment_methods COMMENT = 'Payment Methods - Phương thức thanh toán (COD, Bank, QR, MoMo)';
+ALTER TABLE roles COMMENT = 'User Roles - Phân quyền người dùng';
+ALTER TABLE gio_hang COMMENT = 'Shopping Cart - Giỏ hàng người dùng';
+ALTER TABLE danh_gia COMMENT = 'Book Reviews & Ratings - Đánh giá và nhận xét sách';
+ALTER TABLE so_dia_chi COMMENT = 'Shipping Addresses - Sổ địa chỉ nhận hàng';
+ALTER TABLE thong_bao COMMENT = 'Notifications - Thông báo hệ thống';
+ALTER TABLE lien_he COMMENT = 'Contact Inquiries - Tin nhắn liên hệ phản hồi';
+ALTER TABLE he_thong_cai_dat COMMENT = 'System Settings - Cài đặt cấu hình hệ thống';
+ALTER TABLE dang_nhap_sai COMMENT = 'Failed Login Attempts - Nhật ký đăng nhập thất bại';
+ALTER TABLE thanh_vien COMMENT = 'Team Members - Danh sách thành viên nhóm 12';
+ALTER TABLE tv_du_an COMMENT = 'Member Projects - Dự án cá nhân thành viên';
+ALTER TABLE tv_luot_xem COMMENT = 'Member Profile Views - Lượt xem hồ sơ cá nhân';
+ALTER TABLE tv_luu_but COMMENT = 'Member Guestbook - Lưu bút và lời nhắn thành viên';
+ALTER TABLE tv_sach_yeu_thich COMMENT = 'Member Favorite Books - Sách yêu thích của thành viên';
+ALTER TABLE yeu_thich COMMENT = 'Wishlist / Saved Books - Danh sách sách yêu thích của khách hàng';
+ALTER TABLE thanh_toan COMMENT = 'Legacy Payments - Bảng thanh toán cũ (Chuyển tiếp sang payments)';
