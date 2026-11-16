@@ -8,6 +8,66 @@
 require_once __DIR__ . '/config.php';
 
 /**
+ * Get payment gateway & bank account configurations from he_thong_cai_dat
+ */
+function layCaiDatThanhToan(): array
+{
+    $db = db();
+    $rows = $db->query("SELECT khoa, gia_tri FROM he_thong_cai_dat WHERE khoa LIKE 'bank_%' OR khoa LIKE 'wallet_%' OR khoa LIKE 'qr_%' OR khoa = 'promptpay_number'")->fetchAll(PDO::FETCH_KEY_PAIR);
+    return [
+        'bank_name'           => $rows['bank_name'] ?? 'Vietcombank (VCB)',
+        'bank_branch'         => $rows['bank_branch'] ?? 'Danang City Branch',
+        'bank_account_number' => $rows['bank_account_number'] ?? '02363841323',
+        'bank_account_name'   => $rows['bank_account_name'] ?? 'BOOKNEST STORE UED',
+        'promptpay_number'    => $rows['promptpay_number'] ?? '0905123456',
+        'wallet_provider'     => $rows['wallet_provider'] ?? 'MoMo E-Wallet',
+        'wallet_receiver'     => $rows['wallet_receiver'] ?? '0905123456 (BookNest Admin)',
+        'qr_code_image'       => $rows['qr_code_image'] ?? ''
+    ];
+}
+
+/**
+ * Save payment gateway & bank account configurations
+ */
+function luuCaiDatThanhToan(array $data, ?array $fileQr = null): array
+{
+    $db = db();
+    $allowedKeys = [
+        'bank_name', 'bank_branch', 'bank_account_number',
+        'bank_account_name', 'promptpay_number',
+        'wallet_provider', 'wallet_receiver', 'qr_code_image'
+    ];
+
+    $st = $db->prepare('INSERT INTO he_thong_cai_dat (khoa, gia_tri) VALUES (?, ?) ON DUPLICATE KEY UPDATE gia_tri = VALUES(gia_tri)');
+
+    // Handle optional QR image upload
+    if ($fileQr && isset($fileQr['error']) && $fileQr['error'] === UPLOAD_ERR_OK) {
+        $allowedExts = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($fileQr['tmp_name']);
+        $ext = array_search($mime, $allowedExts, true);
+        if ($ext) {
+            $destDir = __DIR__ . '/../uploads/qr_codes';
+            if (!is_dir($destDir)) {
+                mkdir($destDir, 0755, true);
+            }
+            $filename = 'qr_' . bin2hex(random_bytes(6)) . '.' . $ext;
+            if (move_uploaded_file($fileQr['tmp_name'], $destDir . '/' . $filename)) {
+                $data['qr_code_image'] = 'uploads/qr_codes/' . $filename;
+            }
+        }
+    }
+
+    foreach ($allowedKeys as $k) {
+        if (isset($data[$k])) {
+            $st->execute([$k, trim($data[$k])]);
+        }
+    }
+
+    return ['success' => true, 'message' => 'Payment account configurations saved successfully!'];
+}
+
+/**
  * Get list of available payment methods
  */
 function layDanhSachPhuongThuc(bool $chiHoatDong = true): array

@@ -384,6 +384,7 @@ $items = $stItems->fetchAll();
 // Payment method info
 $methodCode = chuanHoaMaPhuongThuc($pay['payment_method']);
 $pmInfo = layPhuongThucTheoCode($methodCode);
+$caiDatTT = layCaiDatThanhToan();
 
 $tieuDe = 'Payment for Order #' . $orderId;
 $trang = 'don-hang';
@@ -540,26 +541,26 @@ require __DIR__ . '/inc/header.php';
           <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.92rem; color: #334155; margin-bottom: 20px;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
               <div>
-                <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">Bank Name</small>
-                <div style="font-weight: 700; color: #0f172a; font-size: 1rem;">Vietcombank (VCB)</div>
-                <small style="color: #64748b;">Danang City Branch</small>
+                <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">Bank Name / ธนาคาร</small>
+                <div style="font-weight: 700; color: #0f172a; font-size: 1rem;"><?= e($caiDatTT['bank_name']) ?></div>
+                <small style="color: #64748b;"><?= e($caiDatTT['bank_branch']) ?></small>
               </div>
 
               <div>
-                <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">Account Number</small>
+                <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">Account Number / เลขบัญชี</small>
                 <div style="font-weight: 800; color: #1e40af; font-size: 1.15rem; letter-spacing: 1px;">
-                  02363841323
-                  <button type="button" onclick="navigator.clipboard.writeText('02363841323');alert('Account number copied!');" style="background:#e0f2fe;border:none;color:#0369a1;padding:2px 8px;border-radius:4px;font-size:0.75rem;cursor:pointer;margin-left:6px;">Copy</button>
+                  <?= e($caiDatTT['bank_account_number']) ?>
+                  <button type="button" onclick="navigator.clipboard.writeText('<?= e($caiDatTT['bank_account_number']) ?>');alert('Account number copied!');" style="background:#e0f2fe;border:none;color:#0369a1;padding:2px 8px;border-radius:4px;font-size:0.75rem;cursor:pointer;margin-left:6px;">Copy</button>
                 </div>
               </div>
 
               <div>
-                <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">Account Holder</small>
-                <div style="font-weight: 700; color: #0f172a;">BOOKNEST STORE UED</div>
+                <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">Account Holder / ชื่อบัญชี</small>
+                <div style="font-weight: 700; color: #0f172a;"><?= e($caiDatTT['bank_account_name']) ?></div>
               </div>
 
               <div>
-                <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">Transfer Memo / Content</small>
+                <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">Transfer Memo / บันทึกช่วยจำ</small>
                 <div style="font-weight: 800; color: #b91c1c; font-size: 1.05rem;">
                   BN<?= $orderId ?>
                   <button type="button" onclick="navigator.clipboard.writeText('BN<?= $orderId ?>');alert('Transfer memo copied!');" style="background:#fee2e2;border:none;color:#991b1b;padding:2px 8px;border-radius:4px;font-size:0.75rem;cursor:pointer;margin-left:6px;">Copy</button>
@@ -576,53 +577,51 @@ require __DIR__ . '/inc/header.php';
               Scan this QR Code using any Banking app or PromptPay/VietQR scanner:
             </p>
             
-            <!-- Dynamic QR Code SVG -->
             <div style="display: inline-block; background: #ffffff; padding: 15px; border-radius: 12px; border: 2px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-              <svg width="200" height="200" viewBox="0 0 200 200" style="display: block;">
-                <!-- QR Frame simulation with high fidelity -->
-                <rect width="200" height="200" fill="#ffffff" />
-                <!-- Top-Left Target -->
-                <rect x="20" y="20" width="45" height="45" fill="#1e3b6d" rx="4" />
-                <rect x="27" y="27" width="31" height="31" fill="#ffffff" rx="2" />
-                <rect x="34" y="34" width="17" height="17" fill="#1e3b6d" rx="2" />
-                <!-- Top-Right Target -->
-                <rect x="135" y="20" width="45" height="45" fill="#1e3b6d" rx="4" />
-                <rect x="142" y="27" width="31" height="31" fill="#ffffff" rx="2" />
-                <rect x="149" y="34" width="17" height="17" fill="#1e3b6d" rx="2" />
-                <!-- Bottom-Left Target -->
-                <rect x="20" y="135" width="45" height="45" fill="#1e3b6d" rx="4" />
-                <rect x="27" y="142" width="31" height="31" fill="#ffffff" rx="2" />
-                <rect x="34" y="149" width="17" height="17" fill="#1e3b6d" rx="2" />
-                <!-- Data Matrix Patterns -->
-                <rect x="75" y="25" width="10" height="10" fill="#0f172a" />
-                <rect x="95" y="25" width="10" height="10" fill="#0f172a" />
-                <rect x="115" y="25" width="10" height="10" fill="#0f172a" />
-                <rect x="75" y="45" width="20" height="10" fill="#0f172a" />
-                <rect x="105" y="45" width="10" height="10" fill="#0f172a" />
-                <rect x="25" y="75" width="10" height="20" fill="#0f172a" />
-                <rect x="45" y="75" width="20" height="10" fill="#0f172a" />
-                <rect x="75" y="75" width="50" height="50" fill="#1e3b6d" rx="8" />
-                <!-- Center Logo -->
-                <text x="100" y="105" font-size="20" text-anchor="middle" fill="#ffffff">📚</text>
-                <rect x="135" y="75" width="20" height="10" fill="#0f172a" />
-                <rect x="165" y="75" width="15" height="20" fill="#0f172a" />
-                <rect x="25" y="105" width="20" height="10" fill="#0f172a" />
-                <rect x="55" y="105" width="10" height="20" fill="#0f172a" />
-                <rect x="135" y="95" width="10" height="20" fill="#0f172a" />
-                <rect x="155" y="105" width="25" height="10" fill="#0f172a" />
-                <rect x="75" y="135" width="15" height="10" fill="#0f172a" />
-                <rect x="100" y="135" width="20" height="10" fill="#0f172a" />
-                <rect x="135" y="135" width="10" height="25" fill="#0f172a" />
-                <rect x="155" y="135" width="25" height="10" fill="#0f172a" />
-                <rect x="75" y="155" width="30" height="10" fill="#0f172a" />
-                <rect x="115" y="155" width="10" height="25" fill="#0f172a" />
-                <rect x="135" y="170" width="25" height="10" fill="#0f172a" />
-                <rect x="170" y="155" width="10" height="25" fill="#0f172a" />
-              </svg>
+              <?php if (!empty($caiDatTT['qr_code_image']) && file_exists(__DIR__ . '/' . $caiDatTT['qr_code_image'])): ?>
+                <img src="<?= e($caiDatTT['qr_code_image']) ?>" alt="Payment QR Code" style="max-width: 240px; height: auto; border-radius: 6px; display: block;">
+              <?php else: ?>
+                <!-- Default Dynamic SVG QR Code -->
+                <svg width="200" height="200" viewBox="0 0 200 200" style="display: block;">
+                  <rect width="200" height="200" fill="#ffffff" />
+                  <rect x="20" y="20" width="45" height="45" fill="#1e3b6d" rx="4" />
+                  <rect x="27" y="27" width="31" height="31" fill="#ffffff" rx="2" />
+                  <rect x="34" y="34" width="17" height="17" fill="#1e3b6d" rx="2" />
+                  <rect x="135" y="20" width="45" height="45" fill="#1e3b6d" rx="4" />
+                  <rect x="142" y="27" width="31" height="31" fill="#ffffff" rx="2" />
+                  <rect x="149" y="34" width="17" height="17" fill="#1e3b6d" rx="2" />
+                  <rect x="20" y="135" width="45" height="45" fill="#1e3b6d" rx="4" />
+                  <rect x="27" y="142" width="31" height="31" fill="#ffffff" rx="2" />
+                  <rect x="34" y="149" width="17" height="17" fill="#1e3b6d" rx="2" />
+                  <rect x="75" y="25" width="10" height="10" fill="#0f172a" />
+                  <rect x="95" y="25" width="10" height="10" fill="#0f172a" />
+                  <rect x="115" y="25" width="10" height="10" fill="#0f172a" />
+                  <rect x="75" y="45" width="20" height="10" fill="#0f172a" />
+                  <rect x="105" y="45" width="10" height="10" fill="#0f172a" />
+                  <rect x="25" y="75" width="10" height="20" fill="#0f172a" />
+                  <rect x="45" y="75" width="20" height="10" fill="#0f172a" />
+                  <rect x="75" y="75" width="50" height="50" fill="#1e3b6d" rx="8" />
+                  <text x="100" y="105" font-size="20" text-anchor="middle" fill="#ffffff">💳</text>
+                  <rect x="135" y="75" width="20" height="10" fill="#0f172a" />
+                  <rect x="165" y="75" width="15" height="20" fill="#0f172a" />
+                  <rect x="25" y="105" width="20" height="10" fill="#0f172a" />
+                  <rect x="55" y="105" width="10" height="20" fill="#0f172a" />
+                  <rect x="135" y="95" width="10" height="20" fill="#0f172a" />
+                  <rect x="155" y="105" width="25" height="10" fill="#0f172a" />
+                  <rect x="75" y="135" width="15" height="10" fill="#0f172a" />
+                  <rect x="100" y="135" width="20" height="10" fill="#0f172a" />
+                  <rect x="135" y="135" width="10" height="25" fill="#0f172a" />
+                  <rect x="155" y="135" width="25" height="10" fill="#0f172a" />
+                  <rect x="75" y="155" width="30" height="10" fill="#0f172a" />
+                  <rect x="115" y="155" width="10" height="25" fill="#0f172a" />
+                  <rect x="135" y="170" width="25" height="10" fill="#0f172a" />
+                  <rect x="170" y="155" width="10" height="25" fill="#0f172a" />
+                </svg>
+              <?php endif; ?>
             </div>
 
             <div style="margin-top: 15px; font-size: 0.9rem; color: #475569;">
-              Amount: <strong style="color: #dc2626; font-size: 1.1rem;"><?= vnd($don['tong_tien']) ?></strong> &bull; Memo: <strong>BN<?= $orderId ?></strong>
+              PromptPay / Ref: <strong><?= e($caiDatTT['promptpay_number']) ?></strong> &bull; Amount: <strong style="color: #dc2626; font-size: 1.1rem;"><?= vnd($don['tong_tien']) ?></strong> &bull; Memo: <strong>BN<?= $orderId ?></strong>
             </div>
           </div>
 
@@ -632,14 +631,16 @@ require __DIR__ . '/inc/header.php';
             <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
               <span style="font-size: 2.2rem;">👛</span>
               <div>
-                <strong style="color: #9f1239; font-size: 1.05rem;">Student E-Wallet Gateway (MoMo / Digital Wallet)</strong>
+                <strong style="color: #9f1239; font-size: 1.05rem;"><?= e($caiDatTT['wallet_provider']) ?></strong>
                 <div style="font-size: 0.85rem; color: #be123c;">Pay directly using your student e-wallet application or instant sandbox simulator.</div>
               </div>
             </div>
 
             <div style="background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #fecdd3; margin-bottom: 15px; font-size: 0.9rem;">
-              <div><strong>Wallet Provider:</strong> MoMo E-Wallet</div>
-              <div><strong>Receiver:</strong> 0905123456 (BookNest Admin)</div>
+              <div><strong>Wallet Provider:</strong> <?= e($caiDatTT['wallet_provider']) ?></div>
+              <div><strong>Receiver:</strong> <?= e($caiDatTT['wallet_receiver']) ?>
+                <button type="button" onclick="navigator.clipboard.writeText('<?= e($caiDatTT['wallet_receiver']) ?>');alert('Receiver info copied!');" style="background:#fee2e2;border:none;color:#991b1b;padding:2px 8px;border-radius:4px;font-size:0.75rem;cursor:pointer;margin-left:6px;">Copy</button>
+              </div>
               <div><strong>Amount:</strong> <strong style="color: #dc2626;"><?= vnd($don['tong_tien']) ?></strong></div>
               <div><strong>Message:</strong> BN<?= $orderId ?></div>
             </div>

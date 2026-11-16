@@ -235,6 +235,41 @@ $wallet = layPhuongThucTheoCode('e_wallet');
 assertTest("layPhuongThucTheoCode('e_wallet') returns E-Wallet config", ($wallet && $wallet['code'] === 'e_wallet'));
 
 // -----------------------------------------------------------------
+// TEST 7: Dynamic Bank Account & Payment Gateway Configurations
+// -----------------------------------------------------------------
+echo "\n[7] Testing Dynamic Bank Account & Gateway Configurations:\n";
+
+$settings = layCaiDatThanhToan();
+assertTest("layCaiDatThanhToan() returns bank_name", !empty($settings['bank_name']));
+assertTest("layCaiDatThanhToan() returns bank_account_number", !empty($settings['bank_account_number']));
+assertTest("layCaiDatThanhToan() returns bank_account_name", !empty($settings['bank_account_name']));
+assertTest("layCaiDatThanhToan() returns promptpay_number", !empty($settings['promptpay_number']));
+assertTest("layCaiDatThanhToan() returns wallet_provider", !empty($settings['wallet_provider']));
+
+$resSave = luuCaiDatThanhToan([
+    'bank_name'           => 'Kasikornbank (KBank)',
+    'bank_branch'         => 'Siam Paragon Branch',
+    'bank_account_number' => '123-4-56789-0',
+    'bank_account_name'   => 'BOOKNEST OFFICIAL',
+    'promptpay_number'    => '0812345678'
+]);
+assertTest("luuCaiDatThanhToan() executes successfully", $resSave['success'] === true);
+
+$updatedSettings = layCaiDatThanhToan();
+assertTest("Updated bank_name is saved", $updatedSettings['bank_name'] === 'Kasikornbank (KBank)');
+assertTest("Updated bank_account_number is saved", $updatedSettings['bank_account_number'] === '123-4-56789-0');
+assertTest("Updated promptpay_number is saved", $updatedSettings['promptpay_number'] === '0812345678');
+
+// Restore original/default settings
+luuCaiDatThanhToan([
+    'bank_name'           => $settings['bank_name'],
+    'bank_branch'         => $settings['bank_branch'],
+    'bank_account_number' => $settings['bank_account_number'],
+    'bank_account_name'   => $settings['bank_account_name'],
+    'promptpay_number'    => $settings['promptpay_number']
+]);
+
+// -----------------------------------------------------------------
 // SUMMARY
 // -----------------------------------------------------------------
 echo "\n====================================================================\n";

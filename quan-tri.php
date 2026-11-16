@@ -284,6 +284,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_luu_phuong_thu
     exit;
 }
 
+// 4.5 Admin Save Bank Account & Payment Gateway Configurations
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_luu_cai_dat_ngan_hang'])) {
+    $res = luuCaiDatThanhToan($_POST, $_FILES['qr_code_file'] ?? null);
+    if ($res['success']) {
+        $_SESSION['flash'] = '✓ ' . $res['message'];
+    } else {
+        $_SESSION['flash_loi'] = $res['error'] ?? 'Failed to update payment settings.';
+    }
+    header('Location: quan-tri.php?tab=payments');
+    exit;
+}
+
 // 5. Seller Management Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_duyet_seller'])) {
     $sellerId = filter_var($_POST['seller_id'] ?? '', FILTER_VALIDATE_INT);
@@ -439,8 +451,9 @@ $payMetrics = $stPayMetrics->fetch();
 // Check Suspicious Transactions
 $dsNghiVan = kiemTraGiaoDichNghiVan();
 
-// Payment Methods
+// Payment Methods & Gateway Settings
 $dsAllMethods = layDanhSachPhuongThuc(false);
+$caiDatNganHang = layCaiDatThanhToan();
 
 $thongBao = $_SESSION['flash'] ?? '';
 $thongBaoLoi = $_SESSION['flash_loi'] ?? '';
@@ -1242,6 +1255,91 @@ require __DIR__ . '/inc/header.php';
               <?php endif; ?>
             </tbody>
           </table>
+        </div>
+
+        <!-- 4. Bank Account, PromptPay & QR Code Configurations -->
+        <div style="background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 25px;">
+          <div style="margin-bottom: 18px;">
+            <h3 style="margin: 0 0 4px 0; font-size: 1.2rem; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+              <span>🏦</span> Cấu hình Tài khoản Ngân hàng, PromptPay &amp; QR Code (Payment Gateway Details)
+            </h3>
+            <p style="margin: 0; color: #64748b; font-size: 0.88rem;">
+              Chỉnh sửa thông tin tài khoản thụ hưởng, số tài khoản, tên ngân hàng, số điện thoại PromptPay/MoMo và ảnh mã QR hiển thị cho khách hàng khi thanh toán.
+            </p>
+          </div>
+
+          <form method="POST" action="quan-tri.php?tab=payments" enctype="multipart/form-data">
+            <?= csrfField() ?>
+            <input type="hidden" name="action_luu_cai_dat_ngan_hang" value="1">
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-bottom: 20px;">
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 5px;">
+                  Tên Ngân hàng / Bank Name:
+                </label>
+                <input type="text" name="bank_name" value="<?= e($caiDatNganHang['bank_name']) ?>" placeholder="e.g. Vietcombank / Kasikornbank / SCB" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 5px;">
+                  Chi nhánh / Branch:
+                </label>
+                <input type="text" name="bank_branch" value="<?= e($caiDatNganHang['bank_branch']) ?>" placeholder="e.g. Danang City Branch / Bangkok" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 5px;">
+                  Số tài khoản / Account Number:
+                </label>
+                <input type="text" name="bank_account_number" value="<?= e($caiDatNganHang['bank_account_number']) ?>" placeholder="e.g. 02363841323" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; font-weight: 700; color: #1e40af; box-sizing: border-box;">
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 5px;">
+                  Tên Chủ tài khoản / Account Holder:
+                </label>
+                <input type="text" name="bank_account_name" value="<?= e($caiDatNganHang['bank_account_name']) ?>" placeholder="e.g. BOOKNEST STORE" required style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 5px;">
+                  Số PromptPay / Hotline chuyển khoản:
+                </label>
+                <input type="text" name="promptpay_number" value="<?= e($caiDatNganHang['promptpay_number']) ?>" placeholder="e.g. 0905123456" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 5px;">
+                  Nhà cung cấp Ví điện tử / Wallet Provider:
+                </label>
+                <input type="text" name="wallet_provider" value="<?= e($caiDatNganHang['wallet_provider']) ?>" placeholder="e.g. MoMo E-Wallet / TrueMoney" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 5px;">
+                  Thông tin người nhận Ví / Wallet Receiver:
+                </label>
+                <input type="text" name="wallet_receiver" value="<?= e($caiDatNganHang['wallet_receiver']) ?>" placeholder="e.g. 0905123456 (BookNest Admin)" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 5px;">
+                  Tải lên ảnh Mã QR Code (JPG, PNG, WebP):
+                </label>
+                <input type="file" name="qr_code_file" accept="image/jpeg,image/png,image/webp" style="width: 100%; padding: 6px; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box;">
+                <?php if (!empty($caiDatNganHang['qr_code_image'])): ?>
+                  <div style="margin-top: 6px; font-size: 0.8rem; color: #059669; display: flex; align-items: center; gap: 8px;">
+                    <span>✓ Current QR:</span>
+                    <a href="<?= e($caiDatNganHang['qr_code_image']) ?>" target="_blank" style="text-decoration: underline; font-weight: bold;">View Image</a>
+                  </div>
+                <?php endif; ?>
+              </div>
+            </div>
+
+            <button type="submit" class="nut nut--chinh" style="padding: 10px 24px; font-size: 0.92rem; background: #1e40af; border-color: #1e40af;">
+              💾 Lưu Cập nhật Thông tin Thanh toán (Save Bank &amp; QR Settings)
+            </button>
+          </form>
         </div>
 
         <!-- 5. Manage Available Payment Methods Section -->
