@@ -100,6 +100,75 @@ foreach ($exactViews as $ev) {
     assertCondition($evCount !== false, "Sub English View '`$ev`' exists and returns $evCount rows");
 }
 
+// 4.2 Test the exact 22 Table Comments & Views
+echo "\n4.2 Testing Exact 22 Table Comments & English Views...\n";
+$userExactComments = [
+    'chi_tiet_don'      => 'Order Details',
+    'dang_nhap_sai'     => 'Failed Login Attempts',
+    'danh_gia'          => 'Reviews / Ratings',
+    'danh_muc'          => 'Categories',
+    'don_hang'          => 'Orders',
+    'gio_hang'          => 'Shopping Cart',
+    'he_thong_cai_dat'  => 'System Settings',
+    'lien_he'           => 'Contact Messages',
+    'nguoi_dung'        => 'Users',
+    'payments'          => 'Payments',
+    'payment_methods'   => 'Payment Methods',
+    'roles'             => 'User Roles',
+    'san_pham'          => 'Products / Books',
+    'so_dia_chi'        => 'Address Book',
+    'thanh_toan'        => 'Checkout / Payment',
+    'thanh_vien'        => 'Members',
+    'thong_bao'         => 'Notifications',
+    'tv_du_an'          => 'Project Members',
+    'tv_luot_xem'       => 'View Counts',
+    'tv_luu_but'        => 'Guestbook Entries',
+    'tv_sach_yeu_thich' => "Members' Favorite Books",
+    'yeu_thich'         => 'Favorites'
+];
+
+$actualComments = $db->query("
+    SELECT TABLE_NAME, TABLE_COMMENT 
+    FROM information_schema.TABLES 
+    WHERE TABLE_SCHEMA = 'book_nest_final' AND TABLE_TYPE = 'BASE TABLE'
+")->fetchAll(PDO::FETCH_KEY_PAIR);
+
+foreach ($userExactComments as $table => $expectedComment) {
+    $cmt = $actualComments[$table] ?? '';
+    assertCondition($cmt === $expectedComment, "Table '$table' comment is '$expectedComment'");
+}
+
+$user22Views = [
+    'Order Details', 'Failed Login Attempts', 'Reviews / Ratings', 'Categories',
+    'Orders', 'Shopping Cart', 'System Settings', 'Contact Messages', 'Users',
+    'Payment Methods', 'User Roles', 'Products / Books', 'Address Book',
+    'Checkout / Payment', 'Members', 'Notifications', 'Project Members',
+    'View Counts', 'Guestbook Entries', "Members' Favorite Books", 'Favorites'
+];
+
+foreach ($user22Views as $v) {
+    $vCount = $db->query("SELECT COUNT(*) FROM `$v`")->fetchColumn();
+    assertCondition($vCount !== false, "Exact 22 English View '`$v`' is readable (rows: $vCount)");
+}
+
+// 4.3 Test Dedicated book_nest_english database
+echo "\n4.3 Testing Dedicated book_nest_english Database...\n";
+$enDb = new PDO('mysql:host=127.0.0.1;port=3306;dbname=book_nest_english;charset=utf8mb4', 'root', '', [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+]);
+$enTables = $enDb->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+$expectedEnTables = [
+    'order_details', 'failed_login_attempts', 'reviews_ratings', 'categories',
+    'orders', 'shopping_cart', 'system_settings', 'contact_messages', 'users',
+    'payments', 'payment_methods', 'user_roles', 'products_books', 'address_book',
+    'checkout_payment', 'members', 'notifications', 'project_members',
+    'view_counts', 'guestbook_entries', 'members_favorite_books', 'favorites'
+];
+
+foreach ($expectedEnTables as $et) {
+    assertCondition(in_array($et, $enTables, true), "book_nest_english table '$et' exists");
+}
+
 // 5. Test Model SanPham bilingual methods
 echo "\n5. Testing Model SanPham Bilingual Getters...\n";
 $mockData = [
@@ -154,16 +223,16 @@ $_SESSION['booknest_lang'] = 'en';
 // 7. Test KhoSanPham Repository Keyword Search with English fields
 echo "\n7. Testing KhoSanPham Repository English Keyword Search...\n";
 $kho = new KhoSanPham($db);
-$timPython = $kho->dem(['q' => 'Python']);
-assertCondition($timPython > 0, "KhoSanPham found $timPython textbooks for keyword 'Python'");
+$timHabits = $kho->dem(['q' => 'Habits']);
+assertCondition($timHabits > 0, "KhoSanPham found $timHabits textbooks for keyword 'Habits'");
 
-$timAlgorithm = $kho->dem(['q' => 'Algorithm']);
-assertCondition($timAlgorithm > 0, "KhoSanPham found $timAlgorithm textbooks for keyword 'Algorithm'");
+$timTitan = $kho->dem(['q' => 'Titan']);
+assertCondition($timTitan > 0, "KhoSanPham found $timTitan textbooks for keyword 'Titan'");
 
-$timDatabase = $kho->dem(['q' => 'Database']);
-assertCondition($timDatabase > 0, "KhoSanPham found $timDatabase textbooks for keyword 'Database'");
+$timMoney = $kho->dem(['q' => 'Money']);
+assertCondition($timMoney > 0, "KhoSanPham found $timMoney textbooks for keyword 'Money'");
 
-$sachLayRa = $kho->trang(['q' => 'Python'], 'moi', 5, 0);
+$sachLayRa = $kho->trang(['q' => 'Habits'], 'moi', 5, 0);
 assertCondition(!empty($sachLayRa), "KhoSanPham->trang() returned matched books");
 if (!empty($sachLayRa)) {
     $first = $sachLayRa[0];

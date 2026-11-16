@@ -93,26 +93,68 @@ Dự án **BookNest** được gia cố bảo mật toàn diện theo chuẩn **
 
 ---
 
-## 4. Tài khoản thử nghiệm (Mật khẩu chung: `matkhau123`)
-| Email | Họ và tên | Vai trò | Quyền hạn & Chức năng |
-|:---|:---|:---:|:---|
-| `admin@ued.vn` | Quản trị viên Hệ thống | `quan_tri` | Truy cập `quan-tri.php`, CRUD sản phẩm, cập nhật đơn hàng |
-| `lan@ued.vn` | Nguyễn Thị Lan | `khach_hang` | Mua sách, thanh toán, xem lịch sử đơn hàng tại `don-hang.php` |
-| `an@ued.vn` | Trần Văn An | `khach_hang` | Đặt mua giáo trình, quản lý giỏ hàng |
-| `yoi@ued.vn` | Xaiyasith Yoi | `quan_tri` | Chủ trang cá nhân Yoi, có quyền xóa lưu bút |
-| `hatsady@ued.vn` | Phommaket Hatsady | `khach_hang` | Chủ trang cá nhân Hatsady, quyền thêm/xóa dự án |
-| `sauphasith@ued.vn`| Vongsena Sauphasith | `khach_hang`| Chủ trang cá nhân Sauphasith, quản lý lượt xem |
-| `sinh@ued.vn` | Nguyễn Thị Sinh | `khach_hang` | Chủ trang cá nhân Sinh, đánh giá sách yêu thích |
+## 4. Tài khoản thử nghiệm (Test Accounts)
+| Vai trò / Role | Họ và tên / Name | Email | Mật khẩu / Password | Quyền hạn & Chức năng |
+|:---|:---|:---|:---|:---|
+| **Admin** | Quản trị viên Hệ thống | `admin@ued.vn` / `admin` | `admin123` | Quản trị toàn bộ hệ thống, duyệt người bán, duyệt sách, quản trị thanh toán |
+| **Seller** | Yoi Xaiyasith | `yoixaiyasith3412@gmail.com` | `123456789` | Đăng bán sách, quản lý kho hàng, quản lý đơn hàng của shop |
+| **Seller** | Vongsena Sauphasith | `sauphasith@gmail.com` | `123456789` | Quản lý gian hàng và danh mục sách |
+| **Customer** | Phommaket Hatsady | `phommaket_hatsady3412@gmail.com` | `123456789` | Xem sách song ngữ, đặt hàng, thanh toán trực tuyến / chuyển khoản |
+| **Customer** | Nguyen Thi Sinh | `sinh@gmail.com` | `123456789` | Mua giáo trình, viết đánh giá sách, quản lý sổ địa chỉ |
 
 ---
 
-## 5. Kiểm thử bảo mật (Negative Testing)
-Hệ thống cung cấp sẵn 2 tệp kịch bản kiểm thử:
-- `tests/bao-mat.http`: Sử dụng extension **REST Client** trên Visual Studio Code để thực hiện 14 ca kiểm thử phủ định.
-- `tests/bao-mat.sh`: Kịch bản lệnh **cURL** tự động chạy kiểm thử trên terminal Git Bash.
-- Kiểm tra mã nguồn bằng công cụ:
-  ```bash
-  composer audit
-  git log --all --oneline -- .env
-  git ls-files .env
-  ```
+## 5. Kiểm thử hệ thống & Bảo mật (Automated Test Suites)
+Hệ thống cung cấp sẵn các bộ kịch bản kiểm thử tự động toàn diện:
+```bash
+# Kiểm thử toàn diện hệ thống Song ngữ & 22 bảng CSDL tiếng Anh (134/134 assertions PASS)
+php tests/test_english_subsystem.php
+
+# Kiểm thử quy trình thanh toán đa phương thức (COD, Bank Transfer, QR, MoMo) (40/40 assertions PASS)
+php tests/test_payment_system.php
+
+# Kiểm thử bảo mật (Negative Testing)
+composer audit
+git log --all --oneline -- .env
+git ls-files .env
+```
+
+---
+
+## 6. Hệ thống CSDL Song ngữ & 22 Bảng tiếng Anh (Database Sub English)
+Cơ sở dữ liệu chính: `book_nest_final` (MySQL port 3306).  
+Cơ sở dữ liệu độc lập: `book_nest_english`.
+
+Tất cả 22 bảng vật lý trong `book_nest_final` được cấu hình đầy đủ `TABLE_COMMENT` và hệ thống **Views** chuẩn xác theo danh mục tiếng Anh:
+
+| STT | Bảng gốc (Vietnamese Table) | Tên tiếng Anh (English Name / View / Comment) | Bảng trong `book_nest_english` |
+|:---:|:---|:---|:---|
+| 1 | `chi_tiet_don` | `Order Details` | `order_details` |
+| 2 | `dang_nhap_sai` | `Failed Login Attempts` | `failed_login_attempts` |
+| 3 | `danh_gia` | `Reviews / Ratings` | `reviews_ratings` |
+| 4 | `danh_muc` | `Categories` | `categories` |
+| 5 | `don_hang` | `Orders` | `orders` |
+| 6 | `gio_hang` | `Shopping Cart` | `shopping_cart` |
+| 7 | `he_thong_cai_dat` | `System Settings` | `system_settings` |
+| 8 | `lien_he` | `Contact Messages` | `contact_messages` |
+| 9 | `nguoi_dung` | `Users` | `users` |
+| 10 | `payments` | `Payments` | `payments` |
+| 11 | `payment_methods` | `Payment Methods` | `payment_methods` |
+| 12 | `roles` | `User Roles` | `user_roles` |
+| 13 | `san_pham` | `Products / Books` | `products_books` |
+| 14 | `so_dia_chi` | `Address Book` | `address_book` |
+| 15 | `thanh_toan` | `Checkout / Payment` | `checkout_payment` |
+| 16 | `thanh_vien` | `Members` | `members` |
+| 17 | `thong_bao` | `Notifications` | `notifications` |
+| 18 | `tv_du_an` | `Project Members` | `project_members` |
+| 19 | `tv_luot_xem` | `View Counts` | `view_counts` |
+| 20 | `tv_luu_but` | `Guestbook Entries` | `guestbook_entries` |
+| 21 | `tv_sach_yeu_thich` | `Members' Favorite Books` | `members_favorite_books` |
+| 22 | `yeu_thich` | `Favorites` | `favorites` |
+
+### Cách xem trên HeidiSQL hoặc phpMyAdmin:
+1. Mở HeidiSQL và kết nối vào MySQL `127.0.0.1:3306`.
+2. Chọn CSDL `book_nest_final` và nhấn **F5 (Refresh)**.
+3. Trong tab **Tables**: Cột **Comment** hiển thị tên tiếng Anh chuẩn tương ứng cho từng bảng.
+4. Trong mục **Views**: Hiển thị đầy đủ danh sách các View tiếng Anh như `` `Order Details` ``, `` `Categories` ``, `` `Products / Books` ``...
+5. CSDL `book_nest_english` cũng hiển thị song song với toàn bộ 22 bảng bằng tiếng Anh.
